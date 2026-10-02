@@ -48,6 +48,12 @@ export interface AdminColumn<TRow> {
   /** Text the search box matches against. */
   searchValue?: (row: TRow) => string;
   align?: "left" | "right";
+  /**
+   * The cell holds its own controls — a switch, a row menu. Clicks inside it
+   * are kept out of `onRowClick`, so toggling availability does not also open
+   * the edit sheet.
+   */
+  interactive?: boolean;
   /** Applied to both the header and the cells. */
   className?: string;
 }
@@ -305,6 +311,11 @@ export function DataTable<TRow>({
                           column.align === "right" && "text-right",
                           column.className,
                         )}
+                        onClick={
+                          column.interactive
+                            ? (event) => event.stopPropagation()
+                            : undefined
+                        }
                       >
                         {column.cell(row)}
                       </TableCell>

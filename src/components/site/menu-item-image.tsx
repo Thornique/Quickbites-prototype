@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { useResolvedImage } from "@/features/images";
+import { isIdbImage } from "@/storage";
 import { cn } from "@/lib/utils";
 
 export interface MenuItemImageProps {
@@ -28,17 +32,29 @@ export function MenuItemImage({
   priority = false,
   placeholderLabel,
 }: MenuItemImageProps) {
-  if (src) {
+  const resolved = useResolvedImage(src);
+
+  /*
+    An admin upload lives in IndexedDB and resolves to an object URL, which
+    next/image cannot optimise — those render through a plain <img>. Seed
+    photos keep the optimised path.
+  */
+  if (resolved) {
     return (
       <div className={cn("relative overflow-hidden bg-sand-100", className)}>
-        <Image
-          src={src}
-          alt={alt}
-          fill
-          sizes={sizes}
-          priority={priority}
-          className="object-cover"
-        />
+        {isIdbImage(src ?? "") ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={resolved} alt={alt} className="absolute inset-0 size-full object-cover" />
+        ) : (
+          <Image
+            src={resolved}
+            alt={alt}
+            fill
+            sizes={sizes}
+            priority={priority}
+            className="object-cover"
+          />
+        )}
       </div>
     );
   }
