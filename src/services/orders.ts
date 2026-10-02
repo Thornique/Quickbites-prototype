@@ -808,6 +808,54 @@ export async function buildReorderLines(orderId: string): Promise<{
   return { lines, skipped };
 }
 
+/**
+ * The work waiting for whoever is running orders.
+ *
+ * Separate from the dashboard's money figures on purpose: these are what an
+ * ORDERS admin must act on, and they should not need the REPORTS permission to
+ * see that two payments are waiting.
+ */
+export async function getOperationalCounts(now = new Date()): Promise<{
+  active: number;
+  awaitingVerification: number;
+  cashPending: number;
+  overdue: number;
+  scheduledToday: number;
+}> {
+  await ready();
+  requirePermission("ORDERS");
+
+  const start = new Date(now);
+  start.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(start);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
+  let active = 0;
+  let awaitingVerification = 0;
+  let cashPending = 0;
+  let overdue = 0;
+  let scheduledToday = 0;
+
+  for (const order of readOrders()) {
+    const flags = flagsFor(order, now);
+    if (isActiveStatus(order.status)) active += 1;
+    if (flags.awaitingVerification) awaitingVerification += 1;
+    if (flags.cashPending) cashPending += 1;
+    if (flags.isOverdue) overdue += 1;
+    if (
+      order.isScheduled &&
+      order.scheduledFor &&
+      isActiveStatus(order.status) &&
+      Date.parse(order.scheduledFor) >= start.getTime() &&
+      Date.parse(order.scheduledFor) < endOfDay.getTime()
+    ) {
+      scheduledToday += 1;
+    }
+  }
+
+  return { active, awaitingVerification, cashPending, overdue, scheduledToday };
+}
+
 /** Counts for the admin dashboard's live board. */
 export async function getBoardCounts(): Promise<Record<OrderStatus, number>> {
   await ready();

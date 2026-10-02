@@ -5,6 +5,11 @@ import {
   getCategoryShare,
   getDashboardKpis,
   getItemPerformance,
+  getOrderTypeSplit,
+  getOrdersByHour,
+  getPaymentSplit,
+  getPrepTimeAccuracy,
+  getRecentActivity,
   getRevenueByDay,
   getSalesSummary,
   type DateRange,
@@ -45,4 +50,37 @@ export function useCategoryShare(range: DateRange) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stable = useMemo(() => range, [key]);
   return useStoreQuery(() => getCategoryShare(stable), ["orders"], [key]);
+}
+
+export function useOrdersByHour(range: DateRange) {
+  const key = rangeKey(range);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stable = useMemo(() => range, [key]);
+  return useStoreQuery(() => getOrdersByHour(stable), ["orders"], [key]);
+}
+
+export function usePaymentSplit(range: DateRange) {
+  const key = rangeKey(range);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stable = useMemo(() => range, [key]);
+  return useStoreQuery(() => getPaymentSplit(stable), ["orders"], [key]);
+}
+
+export function useOrderTypeSplit(range: DateRange) {
+  const key = rangeKey(range);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stable = useMemo(() => range, [key]);
+  return useStoreQuery(() => getOrderTypeSplit(stable), ["orders"], [key]);
+}
+
+export function usePrepTimeAccuracy(range: DateRange) {
+  const key = rangeKey(range);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stable = useMemo(() => range, [key]);
+  return useStoreQuery(() => getPrepTimeAccuracy(stable), ["orders"], [key]);
+}
+
+/** What the team did, newest first. Re-reads whenever anyone writes. */
+export function useRecentActivity(limit = 8) {
+  return useStoreQuery(() => getRecentActivity(limit), ["activityLog"], [limit]);
 }

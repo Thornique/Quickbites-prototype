@@ -1,6 +1,16 @@
 import { toDateKey } from "@/lib/format";
 import { readCollection } from "@/storage";
-import type { Coupon, MenuItem, Order, OrderType, PaymentMethod, User } from "@/types";
+import type {
+  ActivityLogEntry,
+  Coupon,
+  Enquiry,
+  MenuItem,
+  Order,
+  OrderType,
+  PaymentMethod,
+  TableBooking,
+  User,
+} from "@/types";
 import { flagsFor } from "./orders";
 import { ready, requirePermission } from "./common";
 
@@ -350,6 +360,10 @@ export async function getDashboardKpis(now = new Date()): Promise<{
   scheduledToday: number;
   /** Past their promised ready time and not ready yet. */
   overdue: number;
+  /** Table bookings still waiting for the cafe to confirm. */
+  pendingBookings: number;
+  /** Enquiries nobody has picked up yet. */
+  newEnquiries: number;
 }> {
   await ready();
   requirePermission("REPORTS");
@@ -398,7 +412,24 @@ export async function getDashboardKpis(now = new Date()): Promise<{
     cashPending,
     scheduledToday,
     overdue,
+    pendingBookings: readCollection<TableBooking>("bookings").filter(
+      (b) => b.status === "PENDING",
+    ).length,
+    newEnquiries: readCollection<Enquiry>("enquiries").filter((e) => e.status === "NEW")
+      .length,
   };
+}
+
+/**
+ * Activity feed for the dashboard — what the team did today.
+ *
+ * The full audit log is the super admin's (see services/staff.ts); this is the
+ * same rows trimmed to a glance, available to anyone who can read reports.
+ */
+export async function getRecentActivity(limit = 8): Promise<ActivityLogEntry[]> {
+  await ready();
+  requirePermission("REPORTS");
+  return readCollection<ActivityLogEntry>("activityLog").slice(0, limit);
 }
 
 /** Generic CSV builder used by every "Export CSV" button. */

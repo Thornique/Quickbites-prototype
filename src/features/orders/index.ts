@@ -1,7 +1,13 @@
 "use client";
 
 import { useMemo } from "react";
-import { getBoardCounts, getOrder, listMyOrders, listOrders } from "@/services/orders";
+import {
+  getBoardCounts,
+  getOperationalCounts,
+  getOrder,
+  listMyOrders,
+  listOrders,
+} from "@/services/orders";
 import type { OrderFilters } from "@/types";
 import { useStoreQuery } from "../use-store-query";
 
@@ -27,4 +33,9 @@ export function useMyOrders() {
 
 export function useBoardCounts() {
   return useStoreQuery(getBoardCounts, ["orders"]);
+}
+
+/** What orders still need doing — needs ORDERS, not REPORTS. */
+export function useOperationalCounts() {
+  return useStoreQuery(() => getOperationalCounts(), ["orders"]);
 }
