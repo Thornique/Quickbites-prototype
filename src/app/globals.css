@@ -217,3 +217,26 @@
     scroll-behavior: auto !important;
   }
 }
+
+/*
+  Printing an order should produce a receipt: the items and totals, on white,
+  without the site chrome around them.
+*/
+@media print {
+  body {
+    background: #fff;
+  }
+
+  header,
+  footer,
+  nav,
+  [data-sonner-toaster],
+  .print\:hidden {
+    display: none !important;
+  }
+
+  #receipt {
+    border: 0;
+    padding: 0;
+  }
+}

@@ -1,5 +1,11 @@
 You are building a production-grade, fully clickable PROTOTYPE web application for a client. This file (CLAUDE.md) is the single source of truth — follow it in every step. Where a build prompt says "Read PROJECT_BRIEF.md", read this file instead; do not create PROJECT_BRIEF.md.
 
+# Project nature
+- This is a CLIENT DEMO PROTOTYPE. The real product will be rebuilt separately later with a proper backend.
+- Prioritise what the client will SEE: polished design, smooth happy-path flows, realistic data, live updates between customer and admin tabs.
+- Do not gold-plate: no automated tests, no exhaustive edge-case handling, no performance tuning, no CI/CD. Handle only the errors a demo user could realistically hit.
+- Prefer finishing a screen end-to-end over perfecting one detail.
+
 # Client
 "Quick Bites" — a modern quick-service cafe in Khandwa, Madhya Pradesh, India. Sells burgers, sandwiches, wraps, fries & sides, pizzas, coffee (hot), cold beverages/shakes, desserts, and combo meals. Affordable, fast service. Single outlet. Customers mostly order from mobile.
 

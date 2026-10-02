@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
+import { DemoControls } from "./_demo-controls";
 import { DevDataPanel } from "./_panel";
 
 export const metadata: Metadata = {
@@ -29,6 +30,9 @@ export default function DevDataPage() {
           page in two tabs to watch cross-tab sync work.
         </p>
         <div className="mt-8">
+          <DemoControls />
+        </div>
+        <div className="mt-6">
           <DevDataPanel />
         </div>
       </Container>

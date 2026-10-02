@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { RequireCustomer } from "@/features/auth";
-import { OrderConfirmation } from "./_order-confirmation";
+import { OrderTracking } from "./_order-tracking";
 
 export const metadata: Metadata = {
   title: "Your order",
@@ -19,7 +19,7 @@ export default async function OrderPage({ params }: PageProps) {
   const { id } = await params;
   return (
     <RequireCustomer>
-      <OrderConfirmation id={id} />
+      <OrderTracking id={id} />
     </RequireCustomer>
   );
 }

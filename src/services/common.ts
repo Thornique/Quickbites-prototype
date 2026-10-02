@@ -39,11 +39,39 @@ export function getStoredSession(): StoredSession | null {
   return session;
 }
 
+/**
+ * Development-only "act as" override, used by the demo controls on /dev/data
+ * until the admin board lands.
+ *
+ * It lives in memory and only in this tab, so running an admin action never
+ * rewrites the shared session key — the customer stays signed in in the other
+ * tab and watches their order change live. One action at a time (the panel
+ * disables its buttons while a call is in flight).
+ */
+let actingUserId: string | null = null;
+
+export async function actingAs<T>(userId: string, fn: () => Promise<T>): Promise<T> {
+  const previous = actingUserId;
+  actingUserId = userId;
+  try {
+    return await fn();
+  } finally {
+    actingUserId = previous;
+  }
+}
+
 /** The signed-in user record, or null when signed out / expired / blocked. */
 export function getCurrentUser(): User | null {
+  const users = readCollection<User>("users");
+
+  if (actingUserId) {
+    const acting = users.find((u) => u.id === actingUserId);
+    if (acting && acting.status === "ACTIVE") return acting;
+  }
+
   const session = getStoredSession();
   if (!session) return null;
-  const user = readCollection<User>("users").find((u) => u.id === session.userId);
+  const user = users.find((u) => u.id === session.userId);
   if (!user || user.status !== "ACTIVE") return null;
   return user;
 }
