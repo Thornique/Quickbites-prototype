@@ -15,9 +15,14 @@ import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatPrice } from "@/lib/format";
 import { luhnValid, formatCardNumber, formatExpiry, expiryValid } from "@/lib/card";
-import { getOrder, placeOrder, retryOnlinePayment } from "@/services/orders";
+import {
+  getOrder,
+  placeOrder,
+  retryOnlinePayment,
+  switchToOnline,
+} from "@/services/orders";
 import { useCartStore } from "@/store/cart";
-import type { OrderType, PaymentMethod } from "@/types";
+import type { OrderType, PaymentMethod, PaymentStatus } from "@/types";
 
 const PROCESSING_MS = 1500;
 
@@ -55,6 +60,12 @@ export function PayForm() {
 
   const [draft, setDraft] = useState<CheckoutDraft | null>(null);
   const [amount, setAmount] = useState<number | null>(null);
+  /*
+    Which service the existing order needs: a rejected online payment is paid
+    again, while dine-in cash that was never collected is *switched* to online.
+    They are different service calls, and each refuses the other's case.
+  */
+  const [existingStatus, setExistingStatus] = useState<PaymentStatus | null>(null);
   const [method, setMethod] = useState<"upi" | "card">("upi");
   const [upiId, setUpiId] = useState("");
   const [card, setCard] = useState({ number: "", name: "", expiry: "", cvv: "" });
@@ -66,7 +77,10 @@ export function PayForm() {
   useEffect(() => {
     if (existingOrderId) {
       void getOrder(existingOrderId)
-        .then((order) => setAmount(order.total))
+        .then((order) => {
+          setAmount(order.total);
+          setExistingStatus(order.paymentStatus);
+        })
         .catch(() => setAmount(null));
       return;
     }
@@ -121,7 +135,11 @@ export function PayForm() {
 
     try {
       if (existingOrderId) {
-        await retryOnlinePayment(existingOrderId, paymentMethod);
+        if (existingStatus === "UNPAID") {
+          await switchToOnline(existingOrderId, paymentMethod);
+        } else {
+          await retryOnlinePayment(existingOrderId, paymentMethod);
+        }
         router.replace(`/order/${existingOrderId}`);
         return;
       }

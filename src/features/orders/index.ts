@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import {
+  getAdminNames,
   getBoardCounts,
   getOperationalCounts,
   getOrder,
@@ -38,4 +39,9 @@ export function useBoardCounts() {
 /** What orders still need doing — needs ORDERS, not REPORTS. */
 export function useOperationalCounts() {
   return useStoreQuery(() => getOperationalCounts(), ["orders"]);
+}
+
+/** id → name for the admins who touched an order. */
+export function useAdminNames() {
+  return useStoreQuery(getAdminNames, ["users"]);
 }

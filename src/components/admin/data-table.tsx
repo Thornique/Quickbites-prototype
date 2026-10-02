@@ -156,7 +156,7 @@ export function DataTable<TRow>({
   };
 
   const toolbar = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex min-w-0 flex-wrap items-center gap-2">
       {!hideSearch && searchable.length > 0 && (
         <div className="relative min-w-44 flex-1 sm:max-w-xs">
           <Search
@@ -204,7 +204,7 @@ export function DataTable<TRow>({
 
   if (isLoading) {
     return (
-      <div className={cn("grid gap-3", className)}>
+      <div className={cn("grid min-w-0 gap-3 [&>*]:min-w-0", className)}>
         {toolbar}
         <Skeleton className="h-64 w-full rounded-card" />
       </div>
@@ -212,7 +212,7 @@ export function DataTable<TRow>({
   }
 
   return (
-    <div className={cn("grid gap-3", className)}>
+    <div className={cn("grid min-w-0 gap-3 [&>*]:min-w-0", className)}>
       {toolbar}
 
       {rows.length === 0 ? (
@@ -224,7 +224,7 @@ export function DataTable<TRow>({
         <>
           {/* Cards below md — an admin holding a phone at the counter. */}
           {renderCard && (
-            <ul className="grid gap-2 md:hidden">
+            <ul className="grid gap-2 md:hidden [&>li]:min-w-0">
               {rows.map((row) => (
                 <li key={getRowId(row)}>
                   {onRowClick ? (

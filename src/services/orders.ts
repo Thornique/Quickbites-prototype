@@ -5,6 +5,7 @@ import {
   notFound,
   paymentNotVerified,
 } from "@/lib/errors";
+import { isAdminRole } from "@/lib/permissions";
 import { estimatePrepMinutes } from "@/lib/prep-time";
 import { readCollection, readSingleton, writeCollection } from "@/storage";
 import type {
@@ -806,6 +807,23 @@ export async function buildReorderLines(orderId: string): Promise<{
     }
   }
   return { lines, skipped };
+}
+
+/**
+ * Admin display names for the audit trails on an order.
+ *
+ * Not services/staff.ts: that list is the super admin's alone, and a manager
+ * reading who accepted an order should not need staff-management rights.
+ */
+export async function getAdminNames(): Promise<Record<string, string>> {
+  await ready(false);
+  requirePermission("ORDERS");
+
+  const names: Record<string, string> = {};
+  for (const user of readCollection<User>("users")) {
+    if (isAdminRole(user.role)) names[user.id] = user.name;
+  }
+  return names;
 }
 
 /**

@@ -239,4 +239,45 @@
     border: 0;
     padding: 0;
   }
+
+  /*
+    Thermal printing for the admin panel.
+
+    Both the KOT and the bill are rendered into the page but hidden; printing
+    sets data-printing on <body>, and these rules hide everything else and show
+    the one document asked for. 80mm roll, so the page box is 72mm of printable
+    width with a monospaced face — a receipt that reflows is a receipt that
+    cannot be read at a counter.
+  */
+  .print-doc {
+    display: none;
+  }
+
+  body[data-printing] > *:not(.print-portal) {
+    display: none !important;
+  }
+
+  body[data-printing] .print-portal {
+    display: block;
+    position: static;
+  }
+
+  body[data-printing="kot"] #print-kot,
+  body[data-printing="bill"] #print-bill {
+    display: block;
+    width: 72mm;
+    margin: 0;
+    padding: 0;
+    color: #000;
+    font-family: ui-monospace, "Courier New", monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  body[data-printing] .print-doc hr {
+    border-top-width: 1px;
+  }
+}
+
+@page {
+  margin: 4mm;
 }
