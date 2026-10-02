@@ -144,12 +144,17 @@ export function NotificationWatcher() {
     return subscribe(check, ["notifications"]);
   }, [user, announce]);
 
-  // Unread high-priority alerts belong in the tab title.
+  /*
+    Unread high-priority alerts belong in the tab title. Only the scope that
+    actually has somebody signed in touches it, so the site's watcher and the
+    panel's watcher never overwrite each other.
+  */
   const { data: unreadHigh } = useUnreadHigh(user?.id);
   useEffect(() => {
+    if (!user) return;
     const base = document.title.replace(/^\(\d+\)\s*/, "");
     document.title = unreadHigh > 0 ? `(${unreadHigh}) ${base}` : base;
-  }, [unreadHigh]);
+  }, [unreadHigh, user]);
 
   /*
     Ask for browser permission only once the reader has actually received

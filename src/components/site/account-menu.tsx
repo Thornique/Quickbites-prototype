@@ -14,9 +14,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useSession } from "@/features/auth";
+import { useSession, useSessionActions, useSessionScope } from "@/features/auth";
 import { useT } from "@/i18n";
-import { useSessionStore } from "@/store/session";
 import { cn } from "@/lib/utils";
 
 /** "Rohit Verma" -> "RV"; falls back to the first letter of an email. */
@@ -29,14 +28,21 @@ function initialsOf(name: string, email: string): string {
 
 /**
  * Header account control. Signed out it is a plain "Sign in" button; signed in
- * it becomes an initials avatar with the account menu. Admins additionally get
- * a link into the admin panel so they do not have to type the URL.
+ * it becomes an initials avatar with the account menu.
+ *
+ * It follows the surrounding session scope: on the site it is the customer's
+ * menu (with a shortcut into the panel for admins), inside /admin it is the
+ * admin's, and signing out of one leaves the other alone.
  */
 export function AccountMenu({ className }: { className?: string }) {
   const t = useT();
   const router = useRouter();
+  const scope = useSessionScope();
   const { user, isReady, isAdmin } = useSession();
-  const signOut = useSessionStore((s) => s.signOut);
+  const { signOut } = useSessionActions();
+
+  const isAdminScope = scope === "admin";
+  const signInHref = isAdminScope ? "/admin/login" : "/login";
 
   // Reserve the space so the header does not jump when the session resolves.
   if (!isReady) {
@@ -46,7 +52,7 @@ export function AccountMenu({ className }: { className?: string }) {
   if (!user) {
     return (
       <Button asChild variant="outline" size="sm" className={className}>
-        <Link href="/login">{t.account.signIn}</Link>
+        <Link href={signInHref}>{t.account.signIn}</Link>
       </Button>
     );
   }
@@ -54,7 +60,7 @@ export function AccountMenu({ className }: { className?: string }) {
   const handleSignOut = async () => {
     await signOut();
     toast.success(t.auth.signedOut);
-    router.push("/");
+    router.push(isAdminScope ? "/admin/login" : "/");
   };
 
   return (
@@ -83,28 +89,39 @@ export function AccountMenu({ className }: { className?: string }) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <Link href="/account/orders">
-            <Receipt aria-hidden="true" />
-            {t.account.myOrders}
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/account/profile">
-            <UserIcon aria-hidden="true" />
-            {t.account.profile}
-          </Link>
-        </DropdownMenuItem>
-
-        {isAdmin && (
+        {isAdminScope ? (
+          <DropdownMenuItem asChild>
+            <Link href="/admin">
+              <LayoutDashboard aria-hidden="true" />
+              {t.admin.dashboard}
+            </Link>
+          </DropdownMenuItem>
+        ) : (
           <>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/admin">
-                <LayoutDashboard aria-hidden="true" />
-                {t.account.openAdminPanel}
+              <Link href="/account/orders">
+                <Receipt aria-hidden="true" />
+                {t.account.myOrders}
               </Link>
             </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/account/profile">
+                <UserIcon aria-hidden="true" />
+                {t.account.profile}
+              </Link>
+            </DropdownMenuItem>
+
+            {isAdmin && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/admin">
+                    <LayoutDashboard aria-hidden="true" />
+                    {t.account.openAdminPanel}
+                  </Link>
+                </DropdownMenuItem>
+              </>
+            )}
           </>
         )}
 

@@ -9,7 +9,6 @@ import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useMenu } from "@/features/menu";
-import { AddToCartProvider } from "@/features/menu/add-to-cart";
 import { usePick, useT } from "@/i18n";
 import { matchesSearch } from "@/lib/search";
 import type { Category, MenuItem } from "@/types";
@@ -134,7 +133,7 @@ export function MenuClient() {
   const categoryName = (category: Category) => pick(category.name);
 
   return (
-    <AddToCartProvider>
+    <>
       <Container className="py-6 sm:py-10">
         <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
           {t.menu.title}
@@ -231,6 +230,6 @@ export function MenuClient() {
           </section>
         ))}
       </Container>
-    </AddToCartProvider>
+    </>
   );
 }

@@ -31,6 +31,7 @@ import {
   getCurrentUser,
   logActivity,
   ready,
+  requireActor,
   requirePermission,
   requireUser,
 } from "./common";
@@ -705,7 +706,8 @@ export async function handOver(id: string): Promise<Order> {
  */
 export async function cancelOrder(id: string, reason: string): Promise<Order> {
   await ready();
-  const user = requireUser();
+  // Either side may cancel, so the actor depends on which session is live.
+  const user = requireActor("ORDERS");
   const config = settings();
   const order = await getOrder(id);
 

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { Dictionary } from "@/i18n";
+import { ENQUIRY_SUBJECTS } from "@/types";
 
 /**
  * Schemas are built from the active dictionary rather than holding hard-coded
@@ -67,5 +68,28 @@ export function signUpSchema(t: Dictionary) {
     });
 }
 
+export function enquirySchema(t: Dictionary) {
+  return z.object({
+    name: nameField(t),
+    phone: phoneField(t),
+    email: emailField(t),
+    subject: z.enum(ENQUIRY_SUBJECTS),
+    message: z.string().trim().min(5, t.validation.messageRequired).max(600),
+  });
+}
+
+export function bookingSchema(t: Dictionary) {
+  return z.object({
+    name: nameField(t),
+    phone: phoneField(t),
+    date: z.string().min(1),
+    time: z.string().min(1, t.validation.slotRequired),
+    partySize: z.number().int().min(1).max(12),
+    specialRequest: z.string().trim().max(200).optional(),
+  });
+}
+
 export type SignInValues = z.infer<ReturnType<typeof signInSchema>>;
 export type SignUpValues = z.infer<ReturnType<typeof signUpSchema>>;
+export type EnquiryValues = z.infer<ReturnType<typeof enquirySchema>>;
+export type BookingValues = z.infer<ReturnType<typeof bookingSchema>>;

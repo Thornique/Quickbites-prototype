@@ -1,11 +1,12 @@
 import { forbidden, unauthorized } from "@/lib/errors";
 import { can, canManageStaff } from "@/lib/permissions";
 import {
-  SESSION_KEY,
   ensureSeeded,
   readCollection,
   readKey,
+  sessionKey,
   writeCollection,
+  type SessionScope,
 } from "@/storage";
 import type { ActivityLogEntry, Permission, Role, User } from "@/types";
 
@@ -32,63 +33,42 @@ export async function ready(withDelay = true): Promise<void> {
   if (withDelay) await delay();
 }
 
-export function getStoredSession(): StoredSession | null {
-  const session = readKey<StoredSession | null>(SESSION_KEY, null);
+export function getStoredSession(scope: SessionScope = "customer"): StoredSession | null {
+  const session = readKey<StoredSession | null>(sessionKey(scope), null);
   if (!session) return null;
   if (Date.parse(session.expiresAt) <= Date.now()) return null;
   return session;
 }
 
-/**
- * Development-only "act as" override, used by the demo controls on /dev/data
- * until the admin board lands.
- *
- * It lives in memory and only in this tab, so running an admin action never
- * rewrites the shared session key — the customer stays signed in in the other
- * tab and watches their order change live. One action at a time (the panel
- * disables its buttons while a call is in flight).
- */
-let actingUserId: string | null = null;
-
-export async function actingAs<T>(userId: string, fn: () => Promise<T>): Promise<T> {
-  const previous = actingUserId;
-  actingUserId = userId;
-  try {
-    return await fn();
-  } finally {
-    actingUserId = previous;
-  }
-}
-
-/** The signed-in user record, or null when signed out / expired / blocked. */
-export function getCurrentUser(): User | null {
-  const users = readCollection<User>("users");
-
-  if (actingUserId) {
-    const acting = users.find((u) => u.id === actingUserId);
-    if (acting && acting.status === "ACTIVE") return acting;
-  }
-
-  const session = getStoredSession();
+/** The user signed in to `scope`, or null when signed out / expired / blocked. */
+export function getCurrentUser(scope: SessionScope = "customer"): User | null {
+  const session = getStoredSession(scope);
   if (!session) return null;
-  const user = users.find((u) => u.id === session.userId);
+  const user = readCollection<User>("users").find((u) => u.id === session.userId);
   if (!user || user.status !== "ACTIVE") return null;
   return user;
 }
 
-/** Throws unless somebody is signed in. Returns the user. */
+/** Throws unless a customer is signed in on the site. Returns the user. */
 export function requireUser(): User {
-  const user = getCurrentUser();
+  const user = getCurrentUser("customer");
   if (!user) throw unauthorized();
   return user;
 }
 
+/** Throws unless somebody is signed in to the admin panel. */
+export function requireAdminUser(): User {
+  const user = getCurrentUser("admin");
+  if (!user) throw unauthorized("Sign in to the admin panel to do that.");
+  return user;
+}
+
 /**
- * Throws unless the signed-in user holds `permission`. Services call this
+ * Throws unless the admin session holds `permission`. Services call this
  * before every admin mutation, so a hidden button is never the only guard.
  */
 export function requirePermission(permission: Permission): User {
-  const user = requireUser();
+  const user = requireAdminUser();
   if (!can(user, permission)) {
     throw forbidden(
       `You do not have permission to manage ${permission.toLowerCase()}.`,
@@ -97,13 +77,24 @@ export function requirePermission(permission: Permission): User {
   return user;
 }
 
-/** Throws unless the signed-in user is the super admin. */
+/** Throws unless the admin session belongs to the super admin. */
 export function requireSuperAdmin(): User {
-  const user = requireUser();
+  const user = requireAdminUser();
   if (!canManageStaff(user)) {
     throw forbidden("Only the super admin can manage staff.");
   }
   return user;
+}
+
+/**
+ * Whoever is performing an action that both sides can perform — cancelling an
+ * order, for instance. The admin panel wins when it is signed in and allowed,
+ * otherwise it is the customer's own doing.
+ */
+export function requireActor(permission: Permission): User {
+  const admin = getCurrentUser("admin");
+  if (admin && can(admin, permission)) return admin;
+  return requireUser();
 }
 
 /** Appends to the admin activity log, newest first, capped to keep storage small. */

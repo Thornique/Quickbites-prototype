@@ -31,6 +31,9 @@ export const enCore = {
     gallery: "Gallery",
     contact: "Contact",
     bookTable: "Book a table",
+    reviews: "Reviews",
+    services: "Party & bulk orders",
+    pricing: "Prices",
     openMenu: "Open menu",
     closeMenu: "Close menu",
   },
@@ -109,6 +112,8 @@ export const enCore = {
     passwordNeedsNumber: "Include at least one number.",
     confirmRequired: "Please confirm your password.",
     passwordsDoNotMatch: "Those passwords don't match.",
+    messageRequired: "Please write a little more.",
+    slotRequired: "Choose a time.",
   },
 
   guard: {

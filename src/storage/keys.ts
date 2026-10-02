@@ -1,5 +1,5 @@
 /** Bumping this re-seeds every collection on next load. */
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 const NAMESPACE = "qb";
 
@@ -34,8 +34,17 @@ export function collectionKey(collection: CollectionName): string {
 /** Key holding the schema version the data was written with. */
 export const VERSION_KEY = `${NAMESPACE}:schemaVersion`;
 
-/** Session is stored outside the versioned namespace so it survives re-seeds. */
-export const SESSION_KEY = `${NAMESPACE}:session`;
+/**
+ * Which part of the app a session belongs to. The public site and the admin
+ * panel keep completely separate sessions, so one person can be signed in as a
+ * customer in one tab and as the manager in another — which is exactly how the
+ * cafe will use this during the demo.
+ */
+export const SESSION_SCOPES = ["customer", "admin"] as const;
+export type SessionScope = (typeof SESSION_SCOPES)[number];
+
+/** Sessions live outside the versioned namespace so they survive re-seeds. */
+export const sessionKey = (scope: SessionScope) => `${NAMESPACE}:session:${scope}`;
 
 /** Persisted cart, keyed per user id (or "guest"). */
 export const cartKey = (ownerId: string) => `${NAMESPACE}:cart:${ownerId}`;

@@ -14,6 +14,7 @@ import { useMyOrders } from "@/features/orders";
 import { useT } from "@/i18n";
 import { formatDate, formatTime } from "@/lib/format";
 import { isActiveStatus } from "@/services/orders";
+import { MyBookings } from "@/components/site/my-bookings";
 
 export default function AccountPage() {
   const t = useT();
@@ -99,6 +100,11 @@ export default function AccountPage() {
           ))}
         </ul>
       </section>
+
+      {/* Table bookings, with whatever the cafe has said about them. */}
+      <div className="mt-8">
+        <MyBookings limit={3} />
+      </div>
 
       {/* What happened before. */}
       <section className="mt-8">

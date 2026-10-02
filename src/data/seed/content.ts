@@ -223,6 +223,182 @@ export const SEED_SITE_CONTENT: SiteContent = {
     whatsapp: STORE.whatsappHref,
     email: STORE.email,
   },
+  services: [
+    {
+      id: "svc-party",
+      subject: "PARTY_ORDER",
+      title: { en: "Party & bulk orders", hi: "पार्टी और बल्क ऑर्डर" },
+      body: {
+        en: "Twenty burgers for a cricket final, fifty wraps for a college fest — give us a day's notice and the whole lot leaves the counter hot, at the same time.",
+        hi: "क्रिकेट फ़ाइनल के लिए बीस बर्गर, कॉलेज फ़ेस्ट के लिए पचास रोल — एक दिन पहले बता दीजिए, पूरा ऑर्डर एक ही समय पर गरम तैयार मिलेगा।",
+      },
+      bullets: [
+        { en: "Minimum 20 items, one day's notice", hi: "कम से कम 20 आइटम, एक दिन पहले" },
+        { en: "Everything packed hot at one time", hi: "सब कुछ एक ही समय पर गरम पैक" },
+        { en: "10% off above ₹5,000", hi: "₹5,000 से ऊपर 10% छूट" },
+      ],
+      priceNote: { en: "Menu price, 10% off above ₹5,000", hi: "मेन्यू दाम, ₹5,000 से ऊपर 10% छूट" },
+      image: "/images/hero/burger-combo.jpg",
+    },
+    {
+      id: "svc-catering",
+      subject: "CATERING",
+      title: { en: "Birthday & office catering", hi: "बर्थडे और ऑफ़िस कैटरिंग" },
+      body: {
+        en: "We bring the counter to you: a live burger and fries station for birthdays, farewells and small office parties anywhere in Khandwa.",
+        hi: "हम काउंटर आपके यहाँ ले आते हैं: खंडवा में कहीं भी बर्थडे, फ़ेयरवेल और छोटी ऑफ़िस पार्टी के लिए लाइव बर्गर और फ्राइज़ स्टेशन।",
+      },
+      bullets: [
+        { en: "25 to 200 guests", hi: "25 से 200 मेहमान" },
+        { en: "Live counter or packed trays", hi: "लाइव काउंटर या पैक ट्रे" },
+        { en: "Veg-only kitchen on request", hi: "कहने पर पूरी वेज रसोई" },
+      ],
+      priceNote: { en: "From ₹199 per guest", hi: "₹199 प्रति मेहमान से" },
+      image: "/images/gallery/cafe-dining.jpg",
+    },
+    {
+      id: "svc-corporate",
+      subject: "CORPORATE_LUNCH",
+      title: { en: "Corporate lunch boxes", hi: "कॉर्पोरेट लंच बॉक्स" },
+      body: {
+        en: "A standing daily order for your office — a rotating menu of wraps, rice bowls and a drink, delivered to your gate at a fixed time, billed monthly.",
+        hi: "आपके ऑफ़िस के लिए रोज़ का तय ऑर्डर — रोल, राइस बाउल और एक ड्रिंक का बदलता मेन्यू, तय समय पर गेट तक, बिल महीने के हिसाब से।",
+      },
+      bullets: [
+        { en: "Minimum 10 boxes a day", hi: "रोज़ कम से कम 10 बॉक्स" },
+        { en: "Weekly rotating menu", hi: "हफ़्ते में बदलता मेन्यू" },
+        { en: "One monthly invoice", hi: "महीने का एक बिल" },
+      ],
+      priceNote: { en: "₹120 per box, billed monthly", hi: "₹120 प्रति बॉक्स, महीने का बिल" },
+      image: "/images/gallery/cafe-counter.jpg",
+    },
+  ],
+  pricing: {
+    intro: {
+      en: "Combo prices are the same at the counter and online. Party packs need a day's notice and are paid upfront.",
+      hi: "कॉम्बो के दाम काउंटर और ऑनलाइन पर एक जैसे हैं। पार्टी पैक के लिए एक दिन पहले बताना होता है और भुगतान पहले।",
+    },
+    partyPacks: [
+      {
+        id: "pack-10",
+        name: { en: "Small pack", hi: "छोटा पैक" },
+        people: 10,
+        price: 2490,
+        inclusions: [
+          { en: "10 burgers of your choice", hi: "आपकी पसंद के 10 बर्गर" },
+          { en: "5 large salted fries", hi: "5 लार्ज सॉल्टेड फ्राइज़" },
+          { en: "10 cold drinks", hi: "10 कोल्ड ड्रिंक" },
+        ],
+      },
+      {
+        id: "pack-25",
+        name: { en: "Party pack", hi: "पार्टी पैक" },
+        people: 25,
+        price: 5990,
+        inclusions: [
+          { en: "25 burgers or wraps", hi: "25 बर्गर या रोल" },
+          { en: "3 large pizzas, cut into 8", hi: "3 लार्ज पिज़्ज़ा, 8 टुकड़ों में" },
+          { en: "12 large fries to share", hi: "बाँटने के लिए 12 लार्ज फ्राइज़" },
+          { en: "25 cold drinks", hi: "25 कोल्ड ड्रिंक" },
+        ],
+        isPopular: true,
+      },
+      {
+        id: "pack-50",
+        name: { en: "Big day pack", hi: "बड़े दिन का पैक" },
+        people: 50,
+        price: 11490,
+        inclusions: [
+          { en: "50 burgers or wraps", hi: "50 बर्गर या रोल" },
+          { en: "6 large pizzas", hi: "6 लार्ज पिज़्ज़ा" },
+          { en: "25 large fries", hi: "25 लार्ज फ्राइज़" },
+          { en: "50 cold drinks or shakes", hi: "50 कोल्ड ड्रिंक या शेक" },
+          { en: "Brownie tray for the table", hi: "टेबल के लिए ब्राउनी ट्रे" },
+        ],
+      },
+    ],
+    note: {
+      en: "All prices include GST. Packs can be made fully vegetarian at no extra cost.",
+      hi: "सभी दाम जीएसटी सहित। पैक को बिना अतिरिक्त दाम पूरी तरह शाकाहारी बनाया जा सकता है।",
+    },
+  },
+  legal: {
+    privacy: [
+      {
+        heading: { en: "What we keep", hi: "हम क्या रखते हैं" },
+        body: {
+          en: "Your name, phone number and email, so we can call you when your order is ready and send you the bill. Nothing else.",
+          hi: "आपका नाम, फ़ोन नंबर और ईमेल, ताकि ऑर्डर तैयार होने पर आपको बता सकें और बिल भेज सकें। इसके अलावा कुछ नहीं।",
+        },
+      },
+      {
+        heading: { en: "Where it is stored", hi: "यह कहाँ रखा जाता है" },
+        body: {
+          en: "In this prototype everything stays in your own browser on this device. Clearing your browser data removes it completely.",
+          hi: "इस प्रोटोटाइप में सब कुछ इसी डिवाइस पर आपके ब्राउज़र में रहता है। ब्राउज़र डेटा हटाने पर यह पूरी तरह मिट जाता है।",
+        },
+      },
+      {
+        heading: { en: "Payments", hi: "भुगतान" },
+        body: {
+          en: "We never see or store your card or UPI credentials. Payment in this prototype is simulated and no money moves.",
+          hi: "हम आपका कार्ड या यूपीआई विवरण न देखते हैं न रखते हैं। इस प्रोटोटाइप में भुगतान नकली है, कोई पैसा नहीं जाता।",
+        },
+      },
+      {
+        heading: { en: "Who we share with", hi: "हम किसके साथ साझा करते हैं" },
+        body: {
+          en: "Nobody. We do not sell contact details and we do not run advertising trackers on this site.",
+          hi: "किसी के साथ नहीं। हम संपर्क विवरण नहीं बेचते और इस साइट पर विज्ञापन ट्रैकर नहीं चलाते।",
+        },
+      },
+      {
+        heading: { en: "Asking us to delete it", hi: "हटाने के लिए कहना" },
+        body: {
+          en: "Call or WhatsApp the number on our contact page and we will remove your account and order history.",
+          hi: "संपर्क पेज पर दिए नंबर पर कॉल या व्हाट्सऐप कीजिए, हम आपका खाता और ऑर्डर इतिहास हटा देंगे।",
+        },
+      },
+    ],
+    terms: [
+      {
+        heading: { en: "Ordering", hi: "ऑर्डर करना" },
+        body: {
+          en: "Takeaway orders are paid online before the kitchen starts. Dine-in may be paid online or in cash at the counter. Prices include GST; takeaway adds ₹10 packaging.",
+          hi: "टेकअवे ऑर्डर का भुगतान रसोई शुरू करने से पहले ऑनलाइन होता है। डाइन-इन का भुगतान ऑनलाइन या काउंटर पर नकद। दाम जीएसटी सहित; टेकअवे पर ₹10 पैकेजिंग।",
+        },
+      },
+      {
+        heading: { en: "Ready times", hi: "तैयार होने का समय" },
+        body: {
+          en: "The time we show is the kitchen's best promise, set when we accept your order. On a busy evening it can move, and we will update it live rather than leave you guessing.",
+          hi: "दिखाया गया समय रसोई का सबसे सही अंदाज़ा है, जो ऑर्डर स्वीकार करते समय तय होता है। व्यस्त शाम में यह बदल सकता है, और हम आपको लाइव अपडेट देंगे।",
+        },
+      },
+      {
+        heading: { en: "Cancellation & refunds", hi: "रद्द करना और रिफ़ंड" },
+        body: {
+          en: "You can cancel before the kitchen accepts the order and the full amount is refunded. Once cooking has started we cannot refund it. Scheduled orders can be cancelled up to an hour before the slot.",
+          hi: "रसोई ऑर्डर स्वीकार करने से पहले आप रद्द कर सकते हैं और पूरी रकम वापस मिलेगी। पकना शुरू होने के बाद रिफ़ंड नहीं हो सकता। शेड्यूल ऑर्डर स्लॉट से एक घंटे पहले तक रद्द किए जा सकते हैं।",
+        },
+      },
+      {
+        heading: { en: "Uncollected orders", hi: "न लिए गए ऑर्डर" },
+        body: {
+          en: "A ready takeaway order is held for 45 minutes. After that it is treated as collected and no refund is due, because the food has been cooked.",
+          hi: "तैयार टेकअवे ऑर्डर 45 मिनट तक रखा जाता है। उसके बाद उसे लिया हुआ माना जाता है और रिफ़ंड नहीं बनता, क्योंकि खाना बन चुका है।",
+        },
+      },
+      {
+        heading: { en: "Allergies", hi: "एलर्जी" },
+        body: {
+          en: "One kitchen cooks everything, so we cannot promise a dish is free of traces of nuts, dairy or gluten. Tell us at the counter and we will tell you honestly what we can do.",
+          hi: "सब कुछ एक ही रसोई में बनता है, इसलिए हम यह नहीं कह सकते कि किसी चीज़ में मेवा, दूध या ग्लूटन का अंश नहीं है। काउंटर पर बताइए, हम साफ़-साफ़ बता देंगे कि क्या कर सकते हैं।",
+        },
+      },
+    ],
+    updatedOn: "2026-09-01",
+  },
   social: {
     instagram: STORE.social.instagram,
     facebook: STORE.social.facebook,

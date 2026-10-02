@@ -1,4 +1,5 @@
-import type { LocalizedText, Timestamped } from "./common";
+import type { IsoDate, LocalizedText, Timestamped } from "./common";
+import type { EnquirySubject } from "./engagement";
 
 export const GALLERY_CATEGORIES = ["FOOD", "CAFE", "EVENTS"] as const;
 export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
@@ -30,6 +31,31 @@ export interface ContentBlock {
   body: LocalizedText;
 }
 
+/**
+ * An off-menu service the cafe sells — party orders, catering, lunch boxes.
+ * `subject` is what the "Enquire" button prefills on the enquiry form.
+ */
+export interface ServiceOffer {
+  id: string;
+  subject: EnquirySubject;
+  title: LocalizedText;
+  body: LocalizedText;
+  bullets: LocalizedText[];
+  priceNote: LocalizedText;
+  image: string;
+}
+
+/** A fixed-price party pack on /pricing. */
+export interface PartyPack {
+  id: string;
+  name: LocalizedText;
+  /** How many people it feeds. */
+  people: number;
+  price: number;
+  inclusions: LocalizedText[];
+  isPopular?: boolean;
+}
+
 /** Per-page SEO, editable from the admin content module. */
 export interface SeoMeta {
   title: LocalizedText;
@@ -58,6 +84,18 @@ export interface SiteContent extends Timestamped {
     phone: string;
     whatsapp: string;
     email: string;
+  };
+  services: ServiceOffer[];
+  pricing: {
+    intro: LocalizedText;
+    partyPacks: PartyPack[];
+    note: LocalizedText;
+  };
+  /** Draft policy copy, shown on /privacy and /terms. */
+  legal: {
+    privacy: ContentBlock[];
+    terms: ContentBlock[];
+    updatedOn: IsoDate;
   };
   social: {
     instagram: string;

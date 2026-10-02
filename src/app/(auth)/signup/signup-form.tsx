@@ -10,11 +10,10 @@ import { Button } from "@/components/ui/button";
 import { FormField, fieldAria } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { useSession } from "@/features/auth";
+import { useSession, useSessionActions } from "@/features/auth";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { signUpSchema, type SignUpValues } from "@/lib/validation";
-import { useSessionStore } from "@/store/session";
 
 function safeNext(next: string | null): string {
   if (!next || !next.startsWith("/") || next.startsWith("//")) return "/account";
@@ -25,7 +24,7 @@ export function SignupForm() {
   const t = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const signUp = useSessionStore((s) => s.signUp);
+  const { signUp } = useSessionActions();
   const { user, isReady } = useSession();
   const [formError, setFormError] = useState<string | null>(null);
 

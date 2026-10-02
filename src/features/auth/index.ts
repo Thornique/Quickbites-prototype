@@ -5,5 +5,10 @@
  */
 
 export { Forbidden, RequireAdmin, RequireCustomer, loginHref } from "./guards";
+export {
+  SessionScopeProvider,
+  useScopedSessionStore,
+  useSessionScope,
+} from "./scope";
 export { SessionProvider } from "./session-provider";
-export { useSession, useSessionUser } from "./use-session";
+export { useSession, useSessionActions, useSessionUser } from "./use-session";

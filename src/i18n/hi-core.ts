@@ -31,6 +31,9 @@ export const hiCore: CoreDictionary = {
     gallery: "गैलरी",
     contact: "संपर्क",
     bookTable: "टेबल बुक करें",
+    reviews: "समीक्षाएँ",
+    services: "पार्टी और बल्क ऑर्डर",
+    pricing: "दाम",
     openMenu: "मेन्यू खोलें",
     closeMenu: "मेन्यू बंद करें",
   },
@@ -104,6 +107,8 @@ export const hiCore: CoreDictionary = {
     passwordNeedsNumber: "कम से कम एक अंक ज़रूर डालिए।",
     confirmRequired: "कृपया पासवर्ड दोबारा लिखिए।",
     passwordsDoNotMatch: "दोनों पासवर्ड मेल नहीं खा रहे।",
+    messageRequired: "कृपया थोड़ा और लिखिए।",
+    slotRequired: "समय चुनिए।",
   },
 
   guard: {

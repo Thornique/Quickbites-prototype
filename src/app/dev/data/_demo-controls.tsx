@@ -9,8 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toErrorMessage } from "@/lib/errors";
 import { formatPrice, formatTime } from "@/lib/format";
-import { can } from "@/lib/permissions";
-import { actingAs } from "@/services/common";
+import { getSession, signInAsAdmin } from "@/services/auth";
 import {
   accept,
   advanceOrder,
@@ -22,15 +21,17 @@ import {
   rejectPayment,
   verifyPayment,
 } from "@/services/orders";
-import { readCollection, subscribe } from "@/storage";
-import type { Order, User } from "@/types";
+import { subscribe } from "@/storage";
+import type { Order } from "@/types";
 
 /**
  * Demo controls — development only.
  *
  * Stands in for the admin order board (step 10) so a customer's tracking page
- * can be driven from a second tab. Every button calls the real service as the
- * manager, so the customer sees the genuine flow rather than a simulation.
+ * can be driven from a second tab. Every button calls the real service through
+ * the admin session, so the customer sees the genuine flow rather than a
+ * simulation — and because that session is separate from the site's, the
+ * customer stays signed in in the other tab.
  */
 export function DemoControls() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -58,16 +59,14 @@ export function DemoControls() {
     if (order?.paymentMethod === "CASH") setCashAmount(order.total);
   }, [order?.id, order?.paymentMethod, order?.total]);
 
-  /**
-   * Runs an admin action as the seeded manager without touching the stored
-   * session, so the customer tab is not signed out mid-demo.
-   */
+  /** Signs the manager in to the admin session once, then runs the action. */
   const run = async (label: string, action: () => Promise<unknown>) => {
     setIsBusy(true);
     try {
-      const manager = readCollection<User>("users").find((u) => can(u, "ORDERS"));
-      if (!manager) throw new Error("No admin account with order permissions.");
-      await actingAs(manager.id, action);
+      if (!(await getSession("admin"))) {
+        await signInAsAdmin("manager@quickbites.in", "Manager@123");
+      }
+      await action();
       toast.success(label);
       await load();
     } catch (caught) {
@@ -83,8 +82,9 @@ export function DemoControls() {
     <Card className="p-5">
       <h2 className="text-sm font-semibold text-ink">Demo controls</h2>
       <p className="mt-1 text-xs text-ink-muted">
-        Runs the real order services as the manager. Open an order&apos;s tracking page
-        in another tab and watch it react. Replaced by the admin board in step 10.
+        Signs the manager into the admin session and runs the real order services.
+        Open an order&apos;s tracking page in another tab and watch it react.
+        Replaced by the admin board in step 10.
       </p>
 
       <div className="mt-4 grid gap-1.5">

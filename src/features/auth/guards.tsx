@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useT } from "@/i18n";
 import { can, isAdminRole } from "@/lib/permissions";
-import { useSessionStore } from "@/store/session";
 import type { Permission } from "@/types";
+import { useSession } from "./use-session";
 
 /** Builds /login?next=<current url> so the reader comes back where they were. */
 export function loginHref(pathname: string, search?: string): string {
@@ -37,10 +37,8 @@ function AccessSkeleton({ label }: { label: string }) {
 export function RequireCustomer({ children }: { children: React.ReactNode }) {
   const t = useT();
   const router = useRouter();
-  const user = useSessionStore((s) => s.user);
-  const status = useSessionStore((s) => s.status);
+  const { user, isReady } = useSession();
 
-  const isReady = status === "ready";
   const isSignedOut = isReady && !user;
 
   useEffect(() => {
@@ -86,10 +84,8 @@ export function RequireAdmin({
   const t = useT();
   const router = useRouter();
   const pathname = usePathname();
-  const user = useSessionStore((s) => s.user);
-  const status = useSessionStore((s) => s.status);
+  const { user, isReady } = useSession();
 
-  const isReady = status === "ready";
   const isAdmin = !!user && isAdminRole(user.role);
   const mustSignIn = isReady && !isAdmin;
 

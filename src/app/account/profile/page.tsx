@@ -8,17 +8,16 @@ import { Card } from "@/components/ui/card";
 import { FormField, fieldAria } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
-import { useSession } from "@/features/auth";
+import { useSession, useSessionActions } from "@/features/auth";
 import { NotificationPreferences } from "@/features/notifications";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { changePassword, updateProfile } from "@/services/auth";
-import { useSessionStore } from "@/store/session";
 
 export default function AccountProfilePage() {
   const t = useT();
   const { user } = useSession();
-  const refresh = useSessionStore((s) => s.refresh);
+  const { refresh } = useSessionActions();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");

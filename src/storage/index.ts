@@ -26,13 +26,14 @@ export {
   IDB_IMAGE_PREFIX,
   LOCALE_KEY,
   SCHEMA_VERSION,
-  SESSION_KEY,
+  SESSION_SCOPES,
   SYNC_CHANNEL,
   cartKey,
   collectionKey,
   notificationPrefsKey,
+  sessionKey,
 } from "./keys";
-export type { CollectionName } from "./keys";
+export type { CollectionName, SessionScope } from "./keys";
 
 export { ensureSeeded, resetDemoData } from "./seed-loader";
 

@@ -14,7 +14,9 @@ const QUICK_LINKS = [
   { href: "/gallery", key: "gallery" },
   { href: "/reviews", key: "reviews" },
   { href: "/services", key: "services" },
+  { href: "/pricing", key: "pricing" },
   { href: "/book-table", key: "bookTable" },
+  { href: "/contact", key: "contact" },
 ] as const;
 
 /**
@@ -28,9 +30,11 @@ export function SiteFooter() {
     menu: t.nav.menu,
     about: t.nav.about,
     gallery: t.nav.gallery,
-    reviews: t.reviews.readAll,
-    services: "Party & bulk orders",
+    reviews: t.nav.reviews,
+    services: t.nav.services,
+    pricing: t.nav.pricing,
     bookTable: t.nav.bookTable,
+    contact: t.nav.contact,
   };
 
   return (
