@@ -32,7 +32,7 @@ const TAG_STYLES: Record<
   },
   combo: {
     label: "Combo",
-    className: "bg-veg/10 text-veg",
+    className: "bg-veg/10 text-veg-dark",
     Icon: Sparkles,
   },
 };

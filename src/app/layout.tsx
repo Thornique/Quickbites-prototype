@@ -4,7 +4,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/features/auth";
 import { I18nProvider } from "@/i18n";
-import { STORE } from "@/lib/constants";
+import { SITE_URL, STORE } from "@/lib/constants";
 import "./globals.css";
 
 /**
@@ -27,6 +27,8 @@ const mukta = Mukta({
 });
 
 export const metadata: Metadata = {
+  /** Resolves relative Open Graph and Twitter image URLs to absolute ones. */
+  metadataBase: new URL(SITE_URL),
   title: {
     default: `${STORE.name} — Takeaway burgers, pizzas & coffee in Khandwa`,
     template: `%s · ${STORE.name}`,

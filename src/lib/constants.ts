@@ -43,6 +43,13 @@ export const ORDER_DEFAULTS = {
   perActiveOrderMinutes: 2,
 } as const;
 
+/**
+ * Canonical origin for sitemap and Open Graph URLs. Overridden per deployment;
+ * the placeholder is fine until the client's domain is bought (see step 15).
+ */
+export const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "https://quickbites-khandwa.example";
+
 export const CURRENCY = { code: "INR", locale: "en-IN", symbol: "₹" } as const;
 
 export const TIME_ZONE = "Asia/Kolkata";

@@ -86,7 +86,7 @@ export function AdminLoginForm() {
           <h1 className="text-display mt-4 text-3xl text-white uppercase">
             {t.auth.adminTitle}
           </h1>
-          <p className="mt-2 text-sm text-white/60">{t.auth.adminSubtitle}</p>
+          <p className="mt-2 text-sm text-white/70">{t.auth.adminSubtitle}</p>
 
           <form onSubmit={onSubmit} noValidate className="mt-7 grid gap-4">
             <FormField
@@ -101,7 +101,7 @@ export function AdminLoginForm() {
                 type="email"
                 autoComplete="email"
                 placeholder={t.auth.emailPlaceholder}
-                className="border-white/15 bg-white/5 text-white placeholder:text-white/35"
+                className="border-white/15 bg-white/5 text-white placeholder:text-white/55"
               />
             </FormField>
 
@@ -115,7 +115,7 @@ export function AdminLoginForm() {
                 {...register("password")}
                 {...fieldAria("admin-password", errors.password?.message)}
                 autoComplete="current-password"
-                className="border-white/15 bg-white/5 text-white placeholder:text-white/35"
+                className="border-white/15 bg-white/5 text-white placeholder:text-white/55"
               />
             </FormField>
 
@@ -152,7 +152,7 @@ export function AdminLoginForm() {
           <p className="mt-7 text-center">
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-sm text-white/55 transition-colors hover:text-white"
+              className="inline-flex items-center gap-1.5 text-sm text-white/70 transition-colors hover:text-white"
             >
               <ArrowLeft size={16} aria-hidden="true" />
               {t.auth.backToSite}

@@ -66,7 +66,7 @@ export default function AdminDashboardPage() {
                   <Check
                     size={16}
                     strokeWidth={2.25}
-                    className="text-veg"
+                    className="text-veg-dark"
                     aria-hidden="true"
                   />
                 ) : (

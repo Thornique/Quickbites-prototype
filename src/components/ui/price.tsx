@@ -51,7 +51,7 @@ export function Price({
       )}
 
       {hasDiscount && showSavingPercent && percentOff > 0 && (
-        <span className="rounded-pill bg-veg/10 px-1.5 py-0.5 text-[0.6875rem] font-bold text-veg">
+        <span className="rounded-pill bg-veg/10 px-1.5 py-0.5 text-[0.6875rem] font-bold text-veg-dark">
           {percentOff}% OFF
         </span>
       )}

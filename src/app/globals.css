@@ -21,13 +21,22 @@
   --color-brand: #d7261e; /* tomato red */
   --color-brand-hover: #b81e17;
   --color-mustard: #f4b400; /* accent bands, deal highlights */
-  --color-mustard-dark: #c78f00; /* mustard text on light bg (AA safe) */
 
   --color-veg: #1e8e3e;
   --color-nonveg: #8b2e16;
   --color-success: #1e8e3e;
   --color-warning: #c77700;
   --color-danger: #c62828;
+
+  /*
+    Text-only variants. The bright colours above are for fills, icons and the
+    veg/non-veg marks, where WCAG asks 3:1 as graphical objects. As TEXT on
+    their own 10-18% tints they measured 2.85-4.21:1, below the 4.5:1 the
+    brief requires, so small text uses these darker tones instead.
+  */
+  --color-mustard-dark: #8a5c00;
+  --color-veg-dark: #15712f;
+  --color-warning-dark: #8f5600;
 
   /* Warm neutrals derived from the cream base, used for hovers and fills */
   --color-sand-50: #f7f2ea;

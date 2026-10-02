@@ -22,10 +22,10 @@ const badgeVariants = cva(
         mustard: "bg-mustard text-ink [a&]:hover:bg-[#e0a600]",
         secondary: "bg-sand-100 text-ink [a&]:hover:bg-sand-200",
         outline: "border-hairline bg-surface text-ink-muted [a&]:hover:bg-sand-50",
-        veg: "bg-veg/10 text-veg",
+        veg: "bg-veg/10 text-veg-dark",
         nonveg: "bg-nonveg/10 text-nonveg",
-        success: "bg-success/10 text-success",
-        warning: "bg-warning/12 text-warning",
+        success: "bg-success/10 text-veg-dark",
+        warning: "bg-warning/12 text-warning-dark",
         danger: "bg-danger/10 text-danger",
         /** Neutral low-emphasis pill for counts and metadata. */
         muted: "bg-sand-100 text-ink-muted",

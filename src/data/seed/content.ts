@@ -56,11 +56,25 @@ export const SEED_BANNERS: Banner[] = [
 ];
 
 const GALLERY_ROWS: Array<[string, string, string, GalleryImage["category"]]> = [
+  /*
+    Food and cafe shots alternate on purpose: the home page shows the first
+    eight as a social feed, and four interiors in a row read as repetition
+    rather than a feed.
+  */
+  ["/images/menu/farmhouse-pizza.jpg", "Farmhouse pizza", "फार्महाउस पिज़्ज़ा", "FOOD"],
   [
     "/images/gallery/cafe-interior.jpg",
     "Inside the cafe",
     "कैफ़े का अंदरूनी हिस्सा",
     "CAFE",
+  ],
+  ["/images/gallery/donuts.jpg", "Fresh doughnuts", "ताज़े डोनट", "FOOD"],
+  ["/images/gallery/coffee-moment.jpg", "Coffee for two", "दो के लिए कॉफ़ी", "CAFE"],
+  [
+    "/images/menu/chocolate-shake.jpg",
+    "Thick chocolate shake",
+    "थिक चॉकलेट शेक",
+    "FOOD",
   ],
   [
     "/images/gallery/cafe-counter.jpg",
@@ -68,28 +82,13 @@ const GALLERY_ROWS: Array<[string, string, string, GalleryImage["category"]]> = 
     "हमारा ऑर्डर काउंटर",
     "CAFE",
   ],
-  [
-    "/images/gallery/cafe-seating.jpg",
-    "Seating by the window",
-    "खिड़की के पास बैठने की जगह",
-    "CAFE",
-  ],
+  ["/images/menu/peri-peri-fries.jpg", "Peri peri fries", "पेरी पेरी फ्राइज़", "FOOD"],
   [
     "/images/gallery/cafe-dining.jpg",
     "Evening at Quick Bites",
     "क्विक बाइट्स में शाम",
     "EVENTS",
   ],
-  ["/images/gallery/donuts.jpg", "Fresh doughnuts", "ताज़े डोनट", "FOOD"],
-  ["/images/gallery/dessert-cups.jpg", "Dessert cups", "डेज़र्ट कप", "FOOD"],
-  ["/images/gallery/coffee-moment.jpg", "Coffee for two", "दो के लिए कॉफ़ी", "CAFE"],
-  [
-    "/images/gallery/burger-board.jpg",
-    "Burgers on the board",
-    "बोर्ड पर बर्गर",
-    "FOOD",
-  ],
-  ["/images/menu/farmhouse-pizza.jpg", "Farmhouse pizza", "फार्महाउस पिज़्ज़ा", "FOOD"],
   [
     "/images/menu/margherita-pizza.jpg",
     "Margherita, straight from the oven",
@@ -97,13 +96,19 @@ const GALLERY_ROWS: Array<[string, string, string, GalleryImage["category"]]> = 
     "FOOD",
   ],
   [
-    "/images/menu/chocolate-shake.jpg",
-    "Thick chocolate shake",
-    "थिक चॉकलेट शेक",
+    "/images/gallery/cafe-seating.jpg",
+    "Seating by the window",
+    "खिड़की के पास बैठने की जगह",
+    "CAFE",
+  ],
+  ["/images/gallery/dessert-cups.jpg", "Dessert cups", "डेज़र्ट कप", "FOOD"],
+  ["/images/menu/cold-coffee.jpg", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD"],
+  [
+    "/images/gallery/burger-board.jpg",
+    "Burgers on the board",
+    "बोर्ड पर बर्गर",
     "FOOD",
   ],
-  ["/images/menu/cold-coffee.jpg", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD"],
-  ["/images/menu/peri-peri-fries.jpg", "Peri peri fries", "पेरी पेरी फ्राइज़", "FOOD"],
   [
     "/images/menu/cappuccino.jpg",
     "Cappuccino with cocoa dust",

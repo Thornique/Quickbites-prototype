@@ -1,0 +1,160 @@
+/**
+ * English — customer-site copy: header, footer, home sections and the menu
+ * card. Written specifically for a Khandwa quick-service cafe; no filler.
+ */
+export const enSite = {
+  store: {
+    openNow: "Open now",
+    closed: "Closed",
+    tillTime: (time: string) => `till ${time}`,
+    opensAt: (time: string) => `opens ${time}`,
+    pausedOrders: "Not taking orders",
+    statusLabel: "Store status",
+  },
+
+  cart: {
+    label: "Cart",
+    empty: "Your cart is empty",
+    itemCount: (count: number) => (count === 1 ? "1 item" : `${count} items`),
+    viewCart: "View cart",
+  },
+
+  header: {
+    skipToContent: "Skip to content",
+    primaryNav: "Main navigation",
+  },
+
+  footer: {
+    visitUs: "Visit us",
+    openingHours: "Opening hours",
+    everyDay: "Every day",
+    quickLinks: "Quick links",
+    followUs: "Follow us",
+    callUs: "Call us",
+    whatsapp: "WhatsApp",
+    getDirections: "Get directions",
+    privacy: "Privacy policy",
+    terms: "Terms",
+    rights: "© Quick Bites, Khandwa",
+    prototypeNote: "Prototype build — ordering and payments are simulated.",
+    fssai: (number: string) => `FSSAI Lic. No. ${number}`,
+  },
+
+  hero: {
+    orderTakeaway: "Order takeaway",
+    seeMenu: "See menu",
+    carouselLabel: "Featured offers",
+    previous: "Previous slide",
+    next: "Next slide",
+    goToSlide: (index: number) => `Go to slide ${index}`,
+    pause: "Pause",
+    play: "Play",
+  },
+
+  ready: {
+    eyebrow: "Right now",
+    readyIn: (minutes: number) => `Ready in about ${minutes} min`,
+    closedNow: "We're closed right now",
+    opensAt: (time: string) => `Ordering opens at ${time}`,
+    pickUpAt: "Pick up at",
+    addressShort: "Bombay Bazar, Khandwa",
+    takeawayOnly: "Takeaway only — no delivery",
+    busyNow: (count: number) =>
+      count === 1 ? "1 order in the kitchen" : `${count} orders in the kitchen`,
+  },
+
+  categories: {
+    eyebrow: "What are you after?",
+    title: "Browse the menu",
+    description: "Eight sections, 40 items, most of them vegetarian.",
+    itemCount: (count: number) => (count === 1 ? "1 item" : `${count} items`),
+  },
+
+  bestsellers: {
+    eyebrow: "Most loved",
+    title: "What Khandwa orders",
+    description: "The items that leave our counter the fastest.",
+    seeAll: "See full menu",
+    scrollLeft: "Scroll left",
+    scrollRight: "Scroll right",
+  },
+
+  offers: {
+    eyebrow: "Save a little",
+    title: "Running offers",
+    description: "Apply any of these at checkout.",
+    copyCode: "Copy code",
+    copied: (code: string) => `${code} copied`,
+    minOrder: (amount: string) => `On orders above ${amount}`,
+    upTo: (amount: string) => `up to ${amount}`,
+    offFlat: (amount: string) => `${amount} off`,
+    offPercent: (percent: number) => `${percent}% off`,
+    noOffers: "No offers running right now",
+    noOffersBody: "Check back soon — we usually have something on.",
+  },
+
+  combos: {
+    eyebrow: "Better together",
+    title: "Combo meals from ₹149",
+    description:
+      "A full meal costs less than ordering the same items apart. Pick one up on your way home.",
+    cta: "See combos",
+  },
+
+  howItWorks: {
+    eyebrow: "How takeaway works",
+    title: "Three steps, about 12 minutes",
+    steps: [
+      {
+        title: "Order online",
+        body: "Pick your items, customise them, and pay by UPI or card — or choose to pay at the counter.",
+      },
+      {
+        title: "We cook fresh",
+        body: "Nothing sits under a lamp. The kitchen starts your order the moment it's accepted.",
+      },
+      {
+        title: "Pick up hot",
+        body: "Watch the live status and collect from Bombay Bazar when it says ready.",
+      },
+    ],
+  },
+
+  reviews: {
+    eyebrow: "From our counter",
+    title: "What people say",
+    readAll: "Read all reviews",
+    ratingOf: (rating: number) => `Rated ${rating} out of 5`,
+    averageOf: (average: number, total: number) =>
+      `${average} out of 5 from ${total} reviews`,
+  },
+
+  social: {
+    eyebrow: "On the gram",
+    title: "Straight from the kitchen",
+    description: "Follow along for new items and weekend specials.",
+    follow: "Follow us",
+    openPost: (caption: string) => `${caption} — opens Instagram in a new tab`,
+  },
+
+  location: {
+    eyebrow: "Find us",
+    title: "Bombay Bazar, Khandwa",
+    description:
+      "Parking is easiest in the side lane after 7 PM. We're a two-minute walk from the bus stand.",
+    mapLabel: "Map showing Quick Bites, Khandwa",
+    loadMap: "Load map",
+    mapNote: "Loads Google Maps",
+  },
+
+  menuCard: {
+    add: "Add",
+    soldOut: "Sold out",
+    customisable: "Customisable",
+    calories: (count: number) => `${count} kcal`,
+    noPhotoYet: "Photo coming soon",
+    viewItem: (name: string) => `View ${name}`,
+  },
+};
+
+export type SiteDictionary = typeof enSite;
