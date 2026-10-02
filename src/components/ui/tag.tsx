@@ -1,8 +1,10 @@
 import { Flame, Settings2, Sparkles, TrendingUp } from "lucide-react";
+import type { MenuItemTag } from "@/types";
+import { MENU_ITEM_TAGS } from "@/types";
 import { cn } from "@/lib/utils";
 
 /** Marketing/metadata labels that appear on menu items. */
-export type TagKind = "bestseller" | "new" | "spicy" | "customisable" | "combo";
+export type TagKind = MenuItemTag;
 
 const TAG_STYLES: Record<
   TagKind,
@@ -35,7 +37,7 @@ const TAG_STYLES: Record<
   },
 };
 
-export const TAG_KINDS = Object.keys(TAG_STYLES) as TagKind[];
+export const TAG_KINDS: readonly TagKind[] = MENU_ITEM_TAGS;
 
 export interface TagProps {
   kind: TagKind;

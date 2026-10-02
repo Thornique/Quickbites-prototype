@@ -1,6 +1,29 @@
-/**
- * inventory feature: stock levels, movements and low-stock alerts.
- * Hooks and components land here in later steps.
- */
+"use client";
 
-export {};
+import {
+  getInventoryValuation,
+  listInventory,
+  listLowStock,
+  listMovements,
+} from "@/services/inventory";
+import { useStoreQuery } from "../use-store-query";
+
+export function useInventory() {
+  return useStoreQuery(listInventory, ["inventoryItems"]);
+}
+
+export function useLowStock() {
+  return useStoreQuery(listLowStock, ["inventoryItems"]);
+}
+
+export function useStockMovements(inventoryItemId?: string) {
+  return useStoreQuery(
+    () => listMovements(inventoryItemId),
+    ["stockMovements"],
+    [inventoryItemId],
+  );
+}
+
+export function useInventoryValuation() {
+  return useStoreQuery(getInventoryValuation, ["inventoryItems"]);
+}

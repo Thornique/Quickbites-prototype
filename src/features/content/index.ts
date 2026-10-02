@@ -1,6 +1,17 @@
-/**
- * content feature: editable site content, banners and gallery.
- * Hooks and components land here in later steps.
- */
+"use client";
 
-export {};
+import { getSiteContent, listBanners, listGallery } from "@/services/content";
+import type { GalleryCategory } from "@/types";
+import { useStoreQuery } from "../use-store-query";
+
+export function useSiteContent() {
+  return useStoreQuery(getSiteContent, ["siteContent"]);
+}
+
+export function useBanners(activeOnly = true) {
+  return useStoreQuery(() => listBanners(activeOnly), ["banners"], [activeOnly]);
+}
+
+export function useGallery(category?: GalleryCategory) {
+  return useStoreQuery(() => listGallery(category), ["gallery"], [category]);
+}

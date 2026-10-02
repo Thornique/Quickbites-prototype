@@ -1,0 +1,130 @@
+import type { Coupon } from "@/types";
+
+const CREATED_AT = "2026-08-01T04:30:00.000Z";
+
+/** Wide validity window so the demo keeps working for months. */
+const FROM = "2026-08-01T00:00:00.000Z";
+const TO = "2027-03-31T18:29:59.000Z";
+
+export const SEED_COUPONS: Coupon[] = [
+  {
+    id: "coupon-welcome50",
+    code: "WELCOME50",
+    description: {
+      en: "₹50 off your first order above ₹299.",
+      hi: "₹299 से ऊपर के पहले ऑर्डर पर ₹50 की छूट।",
+    },
+    type: "FLAT",
+    value: 50,
+    minOrder: 299,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 500,
+    usedCount: 139,
+    perUserLimit: 1,
+    categoryIds: [],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "coupon-quick20",
+    code: "QUICK20",
+    description: {
+      en: "20% off up to ₹80 on orders above ₹249.",
+      hi: "₹249 से ऊपर के ऑर्डर पर 20% छूट, अधिकतम ₹80।",
+    },
+    type: "PERCENT",
+    value: 20,
+    minOrder: 249,
+    maxDiscount: 80,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 1000,
+    usedCount: 412,
+    perUserLimit: 3,
+    categoryIds: [],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "coupon-combo99",
+    code: "COMBO99",
+    description: {
+      en: "₹99 off any combo meal above ₹249.",
+      hi: "₹249 से ऊपर के किसी भी कॉम्बो पर ₹99 की छूट।",
+    },
+    type: "FLAT",
+    value: 99,
+    minOrder: 249,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 300,
+    usedCount: 96,
+    perUserLimit: 2,
+    categoryIds: ["cat-combos"],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "coupon-freefries",
+    code: "FREEFRIES",
+    description: {
+      en: "₹69 off — effectively free regular fries on orders above ₹349.",
+      hi: "₹349 से ऊपर के ऑर्डर पर ₹69 की छूट — यानी रेगुलर फ्राइज़ मुफ़्त।",
+    },
+    type: "FLAT",
+    value: 69,
+    minOrder: 349,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 400,
+    usedCount: 148,
+    perUserLimit: 2,
+    categoryIds: [],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "coupon-student10",
+    code: "STUDENT10",
+    description: {
+      en: "10% off up to ₹40. Show a student ID at the counter.",
+      hi: "10% छूट, अधिकतम ₹40। काउंटर पर स्टूडेंट आईडी दिखाएँ।",
+    },
+    type: "PERCENT",
+    value: 10,
+    minOrder: 149,
+    maxDiscount: 40,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 2000,
+    usedCount: 764,
+    perUserLimit: 10,
+    categoryIds: [],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    /* Deliberately expired, so the "coupon expired" path is demoable. */
+    id: "coupon-monsoon25",
+    code: "MONSOON25",
+    description: {
+      en: "25% off up to ₹100. Monsoon offer — now ended.",
+      hi: "25% छूट, अधिकतम ₹100। मानसून ऑफ़र — अब समाप्त।",
+    },
+    type: "PERCENT",
+    value: 25,
+    minOrder: 199,
+    maxDiscount: 100,
+    validFrom: "2026-06-01T00:00:00.000Z",
+    validTo: "2026-08-31T18:29:59.000Z",
+    usageLimit: 500,
+    // Deliberately below the limit so this coupon reports EXPIRED rather than
+    // EXHAUSTED — the expiry message is the one we need to demo.
+    usedCount: 318,
+    perUserLimit: 2,
+    categoryIds: [],
+    isActive: true,
+    createdAt: "2026-06-01T04:30:00.000Z",
+  },
+];
