@@ -1,105 +1,64 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ExternalLink } from "lucide-react";
-import { AccountMenu } from "@/components/site/account-menu";
-import { LanguageToggle } from "@/components/site/language-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Container } from "@/components/ui/container";
-import { RequireAdmin, useSession } from "@/features/auth";
-import { NotificationBell } from "@/features/notifications";
-import { useT } from "@/i18n";
-import { can } from "@/lib/permissions";
+import { useEffect, useState } from "react";
+import { AdminSidebar } from "@/components/admin/sidebar";
+import { AdminTopbar } from "@/components/admin/topbar";
+import { RequireAdmin } from "@/features/auth";
 import { cn } from "@/lib/utils";
 
+/** Remembers the rail state per browser; a per-viewer convenience, nothing more. */
+const COLLAPSE_KEY = "qb:admin:sidebarCollapsed";
+
 /**
- * Minimal admin shell. The real sidebar, topbar toggles and new-order alert
- * are built in step 9 — this provides just enough chrome for the 403 to be
- * rendered *inside* the panel rather than as a redirect.
+ * The admin shell: a fixed sidebar from `lg`, an icon rail when collapsed, and
+ * the whole thing inside a sheet on smaller screens.
+ *
+ * RequireAdmin wraps the content rather than the chrome, so an admin who lacks
+ * one module's permission gets the 403 inside the panel — still able to reach
+ * everything else — instead of being thrown back to a login screen.
  */
 export default function AdminPanelLayout({ children }: { children: React.ReactNode }) {
-  const t = useT();
-  const pathname = usePathname();
-  const { user, isSuperAdmin } = useSession();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
-  // Nav entries the signed-in admin is actually allowed to open.
-  const navItems = [
-    { href: "/admin", label: t.admin.dashboard, visible: true },
-    { href: "/admin/notifications", label: t.notifications.label, visible: true },
-    {
-      href: "/admin/settings",
-      label: t.admin.settings,
-      visible: can(user, "SETTINGS"),
-    },
-    { href: "/admin/staff", label: t.admin.staff, visible: isSuperAdmin },
-  ].filter((item) => item.visible);
+  useEffect(() => {
+    try {
+      setIsCollapsed(localStorage.getItem(COLLAPSE_KEY) === "1");
+    } catch {
+      // Private windows can refuse storage; the default is fine.
+    }
+  }, []);
+
+  const toggle = () => {
+    setIsCollapsed((current) => {
+      const next = !current;
+      try {
+        localStorage.setItem(COLLAPSE_KEY, next ? "1" : "0");
+      } catch {
+        // Not worth telling anybody about.
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="min-h-dvh bg-cream">
-      <header className="border-b border-hairline bg-surface">
-        <Container
-          width="wide"
-          className="flex h-16 items-center justify-between gap-4"
+      <AdminTopbar isCollapsed={isCollapsed} onToggleCollapsed={toggle} />
+
+      <div className="flex">
+        {/* Tablet and up: a persistent rail, icon-only when collapsed. */}
+        <aside
+          className={cn(
+            "sticky top-14 hidden h-[calc(100dvh-3.5rem)] shrink-0 border-r border-hairline bg-surface transition-[width] duration-150 lg:block",
+            isCollapsed ? "w-14" : "w-56",
+          )}
         >
-          <div className="flex min-w-0 items-center gap-3">
-            <Link href="/admin" className="text-display text-lg text-brand uppercase">
-              Quick Bites
-            </Link>
-            <Badge variant="muted">{t.admin.panel}</Badge>
-          </div>
+          <AdminSidebar isCollapsed={isCollapsed} onToggle={toggle} />
+        </aside>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/"
-              className="hidden items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink sm:inline-flex"
-            >
-              {t.admin.viewSite}
-              <ExternalLink size={14} aria-hidden="true" />
-            </Link>
-            <NotificationBell allHref="/admin/notifications" />
-            <LanguageToggle />
-            <AccountMenu />
-          </div>
-        </Container>
-      </header>
-
-      <RequireAdmin>
-        <>
-          <nav
-            aria-label={t.admin.panel}
-            className="border-b border-hairline bg-surface"
-          >
-            <Container width="wide" className="flex gap-1 overflow-x-auto">
-              {navItems.map((item) => {
-                const isActive =
-                  item.href === "/admin"
-                    ? pathname === "/admin"
-                    : pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "relative shrink-0 px-3 py-3 text-sm font-semibold transition-colors",
-                      isActive
-                        ? "text-brand after:absolute after:inset-x-3 after:bottom-0 after:h-0.5 after:bg-brand"
-                        : "text-ink-muted hover:text-ink",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </Container>
-          </nav>
-
-          <main className="py-8">
-            <Container width="wide">{children}</Container>
-          </main>
-        </>
-      </RequireAdmin>
+        <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 sm:py-8">
+          <RequireAdmin>{children}</RequireAdmin>
+        </main>
+      </div>
     </div>
   );
 }
