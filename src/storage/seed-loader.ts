@@ -42,6 +42,7 @@ async function writeSeed(): Promise<void> {
   writeCollection("reviews", data.reviews, "reset");
   writeCollection("gallery", data.gallery, "reset");
   writeCollection("banners", data.banners, "reset");
+  writeCollection("notifications", data.notifications, "reset");
   writeCollection("activityLog", data.activityLog, "reset");
   writeCollection("counters", data.counters, "reset");
   writeSingleton("siteContent", data.siteContent);

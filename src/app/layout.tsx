@@ -3,6 +3,7 @@ import { Archivo, Mukta } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/features/auth";
+import { NotificationWatcher } from "@/features/notifications";
 import { I18nProvider } from "@/i18n";
 import { SITE_URL, STORE } from "@/lib/constants";
 import "./globals.css";
@@ -63,6 +64,7 @@ export default function RootLayout({
         <I18nProvider>
           <SessionProvider>
             <TooltipProvider>{children}</TooltipProvider>
+            <NotificationWatcher />
           </SessionProvider>
         </I18nProvider>
         <Toaster />

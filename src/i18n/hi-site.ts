@@ -152,6 +152,39 @@ export const hiSite: SiteDictionary = {
     mapNote: "Google Maps लोड होगा",
   },
 
+  notifications: {
+    label: "सूचनाएँ",
+    open: "सूचनाएँ खोलें",
+    unreadCount: (count: number) =>
+      count === 1 ? "1 बिना पढ़ी सूचना" : `${count} बिना पढ़ी सूचनाएँ`,
+    today: "आज",
+    earlier: "पहले",
+    markAllRead: "सभी पढ़ी हुई मानें",
+    seeAll: "सारी सूचनाएँ देखें",
+    unread: "बिना पढ़ी",
+    relative: (minutes: number) => {
+      if (minutes < 1) return "अभी";
+      if (minutes < 60) return `${Math.round(minutes)} मिनट पहले`;
+      const hours = Math.round(minutes / 60);
+      return `${hours} घंटे पहले`;
+    },
+    emptyTitle: "कुछ नया नहीं",
+    emptyBody: "ऑर्डर की जानकारी और अलर्ट यहाँ दिखेंगे।",
+    title: "सूचनाएँ",
+    subtitle: "आपके ऑर्डर, बुकिंग और समीक्षाओं की जानकारी।",
+    adminSubtitle: "नए ऑर्डर, जाँचने वाले भुगतान और स्टॉक अलर्ट।",
+    preferences: "सूचना सेटिंग्स",
+    sound: "ज़रूरी अलर्ट पर आवाज़ बजाएँ",
+    soundHint: "पेज पर एक बार क्लिक करने के बाद ही बजेगी।",
+    browser: "ब्राउज़र सूचनाएँ दिखाएँ",
+    browserHint: "यह टैब पीछे हो तब भी आपको बताएगा।",
+    enableBrowser: "ब्राउज़र सूचनाएँ चालू करें?",
+    enableBrowserBody: "ऑर्डर तैयार होते ही बता देंगे, चाहे यह टैब छिपा हो।",
+    allow: "चालू करें",
+    notNow: "अभी नहीं",
+    browserBlocked: "आपके ब्राउज़र ने इस साइट की सूचनाएँ रोक रखी हैं।",
+  },
+
   menuCard: {
     add: "जोड़ें",
     soldOut: "खत्म हो गया",

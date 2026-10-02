@@ -278,6 +278,7 @@ export const SEED_STORE_SETTINGS: StoreSettings = {
   scheduleMinLeadMinutes: 30,
   maxOrdersPerSlot: 8,
   scheduleCancelCutoffMinutes: 60,
+  verificationAlertMinutes: 5,
   notificationSound: true,
   createdAt: CREATED_AT,
 };

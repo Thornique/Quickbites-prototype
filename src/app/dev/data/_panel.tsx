@@ -22,6 +22,7 @@ import type { Order } from "@/types";
 import {
   COLLECTIONS,
   ensureSeeded,
+  STORAGE_BUDGET_BYTES,
   getStorageFootprint,
   getUploadedImageFootprint,
   readCollection,
@@ -30,9 +31,6 @@ import {
   subscribe,
   type CollectionName,
 } from "@/storage";
-
-/** The budget agreed for the seeded dataset. */
-const BUDGET_BYTES = 1.5 * 1024 * 1024;
 
 /** Collections that hold a single object rather than an array. */
 const SINGLETONS: CollectionName[] = ["siteContent", "storeSettings"];
@@ -212,8 +210,10 @@ export function DevDataPanel() {
     );
   }
 
-  const overBudget = snapshot.totalBytes > BUDGET_BYTES;
-  const percentOfBudget = Math.round((snapshot.totalBytes / BUDGET_BYTES) * 100);
+  const overBudget = snapshot.totalBytes > STORAGE_BUDGET_BYTES;
+  const percentOfBudget = Math.round(
+    (snapshot.totalBytes / STORAGE_BUDGET_BYTES) * 100,
+  );
 
   return (
     <div className="space-y-6">
@@ -226,7 +226,7 @@ export function DevDataPanel() {
             {formatBytes(snapshot.totalBytes)}
           </p>
           <p className="mt-1 text-xs text-ink-muted">
-            {percentOfBudget}% of the {formatBytes(BUDGET_BYTES)} budget
+            {percentOfBudget}% of the {formatBytes(STORAGE_BUDGET_BYTES)} budget
           </p>
         </Card>
         <Card className="p-5">
@@ -257,8 +257,8 @@ export function DevDataPanel() {
         <div className="flex items-start gap-3 rounded-card border border-warning/30 bg-warning/10 p-4">
           <TriangleAlert size={20} className="mt-0.5 shrink-0 text-warning" />
           <p className="text-sm text-ink">
-            The seeded data is over the {formatBytes(BUDGET_BYTES)} budget. Trim the
-            generated order history before adding more collections.
+            The seeded data is over the {formatBytes(STORAGE_BUDGET_BYTES)} budget. Trim
+            the generated order history before adding more collections.
           </p>
         </div>
       )}

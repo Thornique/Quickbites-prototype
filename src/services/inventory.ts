@@ -8,6 +8,7 @@ import type {
   StockMovementType,
   StockStatus,
 } from "@/types";
+import { notifyStockLevels } from "./order-notifications";
 import { logActivity, newId, nowIso, ready, requirePermission } from "./common";
 
 export function stockStatus(item: InventoryItem): StockStatus {
@@ -94,6 +95,10 @@ function applyMovements(drafts: MovementDraft[]): {
 
   const nextItems = [...byId.values()];
   writeCollection("inventoryItems", nextItems, "update");
+
+  // Only the items this movement actually touched are worth alerting on.
+  const touched = new Set(drafts.map((d) => d.inventoryItemId));
+  notifyStockLevels(nextItems.filter((item) => touched.has(item.id)));
 
   if (movements.length > 0) {
     const existing = readCollection<StockMovement>("stockMovements");

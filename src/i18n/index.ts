@@ -5,4 +5,12 @@
 
 export { en, type Dictionary } from "./en";
 export { hi } from "./hi";
-export { I18nProvider, pick, useLocale, usePick, useT } from "./provider";
+export {
+  I18nProvider,
+  pick,
+  useLocale,
+  useNotificationCopy,
+  usePick,
+  useT,
+} from "./provider";
+export type { NotificationCopy } from "./en-notify";

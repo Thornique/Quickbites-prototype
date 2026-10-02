@@ -13,7 +13,6 @@ import type {
   Order,
   OrderFilters,
   OrderFlags,
-  OrderLine,
   OrderStatus,
   OrderType,
   PaymentEvent,
@@ -22,11 +21,15 @@ import type {
   User,
 } from "@/types";
 import { ACTIVE_ORDER_STATUSES, isOnlineMethod } from "@/types";
-import { countActiveOrders, priceCart, validateCartAvailability } from "./cart-pricing";
+import {
+  buildCartLine,
+  countActiveOrders,
+  priceCart,
+  validateCartAvailability,
+} from "./cart-pricing";
 import {
   getCurrentUser,
   logActivity,
-  nowIso,
   ready,
   requirePermission,
   requireUser,
@@ -45,7 +48,19 @@ import {
   needsRefund,
   nextTokenNumber,
   scheduleCancelDeadline,
+  toOrderLines,
 } from "./order-rules";
+import {
+  notifyAutoCancelled,
+  notifyOrderAccepted,
+  notifyOrderCancelled,
+  notifyOrderPlaced,
+  notifyPaymentRejected,
+  notifyReadyTimeExtended,
+  notifyStatusChange,
+  notifySwitchedToOnline,
+  reconcileOrderAlerts,
+} from "./order-notifications";
 import {
   buildSchedulableDays,
   buildSlotsForDate,
@@ -70,7 +85,21 @@ function settings(): StoreSettings {
 function readOrders(): Order[] {
   const rows = readCollection<Order>("orders");
   const { orders, changed } = applyAutoCancellations(rows, settings());
-  if (changed) writeCollection("orders", orders, "update");
+
+  if (changed) {
+    writeCollection("orders", orders, "update");
+    // Tell the people affected about the ones that just timed out.
+    const before = new Map(rows.map((o) => [o.id, o.status]));
+    for (const order of orders) {
+      if (before.get(order.id) !== "CANCELLED" && order.status === "CANCELLED") {
+        notifyAutoCancelled(order);
+      }
+    }
+  }
+
+  // Time-based alerts have no user action to hang off, so they are raised
+  // here. Each carries a dedupe key, so they fire once rather than per read.
+  reconcileOrderAlerts(orders);
   return orders;
 }
 
@@ -106,16 +135,13 @@ function withStatus(
   reason?: string,
   extra: Partial<Order> = {},
 ): Order {
-  const at = nowIso();
+  const at = Date.now();
   return {
     ...order,
     ...extra,
     status,
-    statusHistory: [
-      ...order.statusHistory,
-      { status, at, byUserId: by?.id, byName: by?.name, reason },
-    ],
-    updatedAt: at,
+    statusHistory: [...order.statusHistory, { status, at, byUserId: by?.id, reason }],
+    updatedAt: new Date(at).toISOString(),
   };
 }
 
@@ -124,7 +150,7 @@ function withPayment(order: Order, event: PaymentEvent, extra: Partial<Order>): 
     ...order,
     ...extra,
     paymentHistory: [...order.paymentHistory, event],
-    updatedAt: event.at,
+    updatedAt: new Date(event.at).toISOString(),
   };
 }
 
@@ -270,7 +296,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
   });
 
   const online = isOnlineMethod(input.paymentMethod);
-  const at = nowIso();
+  const at = Date.now();
+  const atIso = new Date(at).toISOString();
   const paymentRef = online ? generatePaymentRef() : undefined;
 
   const order: Order = {
@@ -279,7 +306,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     customerId: user.id,
     orderType: input.orderType,
     tableNumber: input.orderType === "DINE_IN" ? input.tableNumber?.trim() : undefined,
-    lines: priced.lines as OrderLine[],
+    lines: toOrderLines(priced.lines),
     itemCount: priced.itemCount,
     subtotal: priced.subtotal,
     discount: priced.discount,
@@ -313,7 +340,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     phone: input.phone.trim(),
     notes: input.notes?.trim() || undefined,
     stockDeducted: false,
-    createdAt: at,
+    createdAt: atIso,
   };
 
   writeCollection(
@@ -323,6 +350,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     order.id,
   );
   if (priced.appliedCouponCode) recordCouponUse(priced.appliedCouponCode);
+  notifyOrderPlaced(order);
   return order;
 }
 
@@ -352,7 +380,7 @@ export async function retryOnlinePayment(
   return persist(
     withPayment(
       order,
-      { action: "ONLINE_PAID", method, amount: order.total, ref, at: nowIso() },
+      { action: "ONLINE_PAID", method, amount: order.total, ref, at: Date.now() },
       { paymentMethod: method, paymentStatus: "PAID_UNVERIFIED", paymentRef: ref },
     ),
   );
@@ -382,13 +410,21 @@ export async function switchToOnline(
   if (!isOnlineMethod(method)) throw invalid("Choose UPI or card.", "paymentMethod");
 
   const ref = generatePaymentRef();
-  return persist(
+  const switched = persist(
     withPayment(
       order,
-      { action: "SWITCHED_TO_ONLINE", method, amount: order.total, ref, at: nowIso() },
+      {
+        action: "SWITCHED_TO_ONLINE",
+        method,
+        amount: order.total,
+        ref,
+        at: Date.now(),
+      },
       { paymentMethod: method, paymentStatus: "PAID_UNVERIFIED", paymentRef: ref },
     ),
   );
+  notifySwitchedToOnline(switched);
+  return switched;
 }
 
 /** Admin confirms the money landed. */
@@ -410,7 +446,7 @@ export async function verifyPayment(id: string): Promise<Order> {
         amount: order.total,
         ref: order.paymentRef,
         byUserId: admin.id,
-        at: nowIso(),
+        at: Date.now(),
       },
       { paymentStatus: "VERIFIED" },
     ),
@@ -442,11 +478,12 @@ export async function rejectPayment(id: string, reason: string): Promise<Order> 
         ref: order.paymentRef,
         reason: reason.trim(),
         byUserId: admin.id,
-        at: nowIso(),
+        at: Date.now(),
       },
       { paymentStatus: "FAILED" },
     ),
   );
+  notifyPaymentRejected(rejected, settings().unpaidTakeawayTimeoutMinutes);
   logActivity(admin, "PAYMENT_REJECTED", `Rejected payment for ${id}: ${reason}`, id);
   return rejected;
 }
@@ -475,7 +512,7 @@ export async function recordCashPayment(
         method: "CASH",
         amount: amountReceived,
         byUserId: admin.id,
-        at: nowIso(),
+        at: Date.now(),
       },
       {
         paymentStatus: "VERIFIED",
@@ -546,10 +583,10 @@ export async function accept(
     throw invalid("Give a reason for overriding the stock warning.", "overrideReason");
   }
 
-  const at = nowIso();
+  const at = Date.now();
   const estimatedReadyAt = order.isScheduled
     ? order.scheduledFor!
-    : new Date(Date.now() + readyInMinutes * 60_000).toISOString();
+    : new Date(at + readyInMinutes * 60_000).toISOString();
 
   const accepted = persist(
     withStatus(order, "ACCEPTED", admin, options.overrideReason, {
@@ -566,6 +603,7 @@ export async function accept(
   );
 
   deductForOrder(accepted, admin.id);
+  notifyOrderAccepted(accepted);
   logActivity(
     admin,
     "ORDER_ACCEPTED",
@@ -603,7 +641,7 @@ export async function extendReadyTime(
   }
   assertReadyMinutes(extraMinutes);
 
-  const at = nowIso();
+  const at = Date.now();
   const extended = persist({
     ...order,
     estimatedReadyAt: new Date(
@@ -614,9 +652,10 @@ export async function extendReadyTime(
       ...order.readyTimeHistory,
       { minutes: extraMinutes, at, byUserId: admin.id, reason },
     ],
-    updatedAt: at,
+    updatedAt: new Date(at).toISOString(),
   });
 
+  notifyReadyTimeExtended(extended, extraMinutes);
   logActivity(admin, "READY_TIME_EXTENDED", `Added ${extraMinutes} min to ${id}`, id);
   return extended;
 }
@@ -644,6 +683,7 @@ export async function advanceOrder(id: string, status: OrderStatus): Promise<Ord
   }
 
   const next = persist(withStatus(order, status, admin));
+  notifyStatusChange(next);
   logActivity(admin, `ORDER_${status}`, `Marked ${id} as ${status.toLowerCase()}`, id);
   return next;
 }
@@ -698,7 +738,7 @@ export async function cancelOrder(id: string, reason: string): Promise<Order> {
   }
 
   const refunding = needsRefund(order.paymentStatus);
-  const at = nowIso();
+  const at = Date.now();
 
   let cancelled = withStatus(order, "CANCELLED", isAdmin ? user : null, reason, {
     stockDeducted: false,
@@ -721,6 +761,7 @@ export async function cancelOrder(id: string, reason: string): Promise<Order> {
   persist(cancelled);
 
   if (order.stockDeducted) restockForOrder(order, user.id);
+  notifyOrderCancelled(cancelled, reason.trim());
   if (isAdmin) logActivity(user, "ORDER_CANCELLED", `Cancelled ${id}: ${reason}`, id);
 
   return cancelled;
@@ -744,7 +785,23 @@ export async function buildReorderLines(orderId: string): Promise<{
       skipped.push(line.name.en);
       continue;
     }
-    lines.push({ ...line, unitPrice: item.price, prepMinutes: item.prepMinutes });
+    /*
+      Orders store only the option ids, so the line is rebuilt from the live
+      menu item. That also re-prices it, which is what a customer reordering
+      a two-month-old order should get.
+    */
+    const optionIds = line.options
+      .map((option) => option.id)
+      .filter((id) =>
+        item.optionGroups.some((group) => group.options.some((o) => o.id === id)),
+      );
+    try {
+      lines.push(buildCartLine(item, optionIds, line.quantity, line.notes));
+    } catch {
+      // A required group changed since the order was placed — let the
+      // customer re-pick rather than silently dropping the item.
+      skipped.push(line.name.en);
+    }
   }
   return { lines, skipped };
 }

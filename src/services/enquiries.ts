@@ -1,6 +1,7 @@
 import { invalid, notFound } from "@/lib/errors";
 import { readCollection, writeCollection } from "@/storage";
 import type { Enquiry, EnquiryStatus, EnquirySubject } from "@/types";
+import { notifyAdmins } from "./notifications";
 import { logActivity, newId, nowIso, ready, requirePermission } from "./common";
 
 export interface CreateEnquiryInput {
@@ -29,6 +30,12 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<Enquiry>
 
   const rows = readCollection<Enquiry>("enquiries");
   writeCollection("enquiries", [enquiry, ...rows], "create", enquiry.id);
+  notifyAdmins("ENQUIRIES", {
+    type: "NEW_ENQUIRY",
+    params: { name: enquiry.name },
+    link: "/admin/enquiries",
+    dedupeKey: `enquiry:${enquiry.id}`,
+  });
   return enquiry;
 }
 

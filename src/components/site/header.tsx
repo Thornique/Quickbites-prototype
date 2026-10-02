@@ -8,6 +8,8 @@ import { AccountMenu } from "@/components/site/account-menu";
 import { CartButton } from "@/components/site/cart-button";
 import { LanguageToggle } from "@/components/site/language-toggle";
 import { StoreStatusPill } from "@/components/site/store-status-pill";
+import { useSession } from "@/features/auth";
+import { NotificationBell } from "@/features/notifications";
 import { Wordmark } from "@/components/site/wordmark";
 import { Container } from "@/components/ui/container";
 import {
@@ -34,6 +36,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const { isSignedIn } = useSession();
 
   // Compact the header once the page has moved, so the menu grid gets more room.
   useEffect(() => {
@@ -115,6 +118,7 @@ export function SiteHeader() {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <StoreStatusPill className="hidden xl:inline-flex" />
             <LanguageToggle className="hidden sm:inline-flex" />
+            {isSignedIn && <NotificationBell className="hidden sm:inline-flex" />}
             <div className="hidden sm:block">
               <AccountMenu />
             </div>
@@ -157,7 +161,10 @@ export function SiteHeader() {
 
                   <div className="mt-6 flex items-center justify-between gap-3 border-t border-hairline pt-5">
                     <LanguageToggle />
-                    <AccountMenu />
+                    <div className="flex items-center gap-2">
+                      {isSignedIn && <NotificationBell />}
+                      <AccountMenu />
+                    </div>
                   </div>
                 </div>
               </SheetContent>

@@ -2,13 +2,41 @@ import { toDateKey } from "@/lib/format";
 import { readCollection, writeCollection } from "@/storage";
 import type {
   Order,
+  OrderLine,
   OrderFlags,
   OrderType,
   PaymentMethod,
   PaymentStatus,
   StoreSettings,
 } from "@/types";
+import type { PricedCartLine } from "@/types";
 import { isOnlineMethod } from "@/types";
+
+/**
+ * Freezes priced cart lines into the compact snapshot an order keeps.
+ *
+ * The image path, slug, lineKey and option group ids are all re-derivable
+ * from menuItemId, so they are dropped — stored 500 times over they were the
+ * single largest thing in localStorage.
+ */
+export function toOrderLines(lines: PricedCartLine[]): OrderLine[] {
+  return lines.map((line) => ({
+    menuItemId: line.menuItemId,
+    name: line.name,
+    isVeg: line.isVeg,
+    quantity: line.quantity,
+    unitPrice: line.unitPrice,
+    options: line.selectedOptions.map((option) => ({
+      id: option.optionId,
+      name: option.optionName,
+      priceDelta: option.priceDelta,
+    })),
+    unitTotal: line.unitTotal,
+    lineTotal: line.lineTotal,
+    prepMinutes: line.prepMinutes,
+    notes: line.notes,
+  }));
+}
 
 /**
  * Pure rules shared by the order service, the seed generator and reports.
@@ -146,7 +174,7 @@ export function deriveFlags(
   order: Order,
   settings: Pick<
     StoreSettings,
-    "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes"
+    "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes" | "verificationAlertMinutes"
   >,
   now = new Date(),
 ): OrderFlags {
@@ -169,6 +197,10 @@ export function deriveFlags(
     now.getTime() >= startAt.getTime();
 
   const awaitingVerification = open && order.paymentStatus === "PAID_UNVERIFIED";
+  const isStalePending =
+    awaitingVerification &&
+    now.getTime() - Date.parse(order.createdAt) >
+      settings.verificationAlertMinutes * 60_000;
   const cashPending =
     open && order.paymentMethod === "CASH" && order.paymentStatus === "UNPAID";
   const blockedFromHandover = order.status === "READY" && !isPaymentVerified(order);
@@ -184,6 +216,7 @@ export function deriveFlags(
     isOverdue,
     isDueToStart,
     awaitingVerification,
+    isStalePending,
     cashPending,
     blockedFromHandover,
     canCustomerCancel,
@@ -213,12 +246,11 @@ export function applyAutoCancellations(
       .find((event) => event.action === "PAYMENT_REJECTED")?.at;
     if (!rejectedAt) return order;
 
-    const deadline =
-      Date.parse(rejectedAt) + settings.unpaidTakeawayTimeoutMinutes * 60_000;
+    const deadline = rejectedAt + settings.unpaidTakeawayTimeoutMinutes * 60_000;
     if (now.getTime() <= deadline) return order;
 
     changed = true;
-    const at = now.toISOString();
+    const at = now.getTime();
     return {
       ...order,
       status: "CANCELLED" as const,
@@ -230,7 +262,7 @@ export function applyAutoCancellations(
           reason: `Payment not completed within ${settings.unpaidTakeawayTimeoutMinutes} minutes.`,
         },
       ],
-      updatedAt: at,
+      updatedAt: now.toISOString(),
     };
   });
 

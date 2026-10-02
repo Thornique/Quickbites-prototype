@@ -5,6 +5,7 @@
  */
 
 export {
+  STORAGE_BUDGET_BYTES,
   clearAllCollections,
   getStorageFootprint,
   getStoredSchemaVersion,
@@ -14,6 +15,7 @@ export {
   readSingleton,
   removeKey,
   setStoredSchemaVersion,
+  warnIfStorageTight,
   writeCollection,
   writeKey,
   writeSingleton,
@@ -28,6 +30,7 @@ export {
   SYNC_CHANNEL,
   cartKey,
   collectionKey,
+  notificationPrefsKey,
 } from "./keys";
 export type { CollectionName } from "./keys";
 

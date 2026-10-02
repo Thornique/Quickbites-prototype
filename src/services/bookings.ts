@@ -1,7 +1,9 @@
 import { conflict, invalid, notFound } from "@/lib/errors";
+import { formatSlotLabel } from "@/lib/format";
 import { readCollection, readSingleton, writeCollection } from "@/storage";
 import type { BookingStatus, StoreSettings, TableBooking, Weekday } from "@/types";
 import { WEEKDAYS } from "@/types";
+import { notify, notifyAdmins } from "./notifications";
 import {
   getCurrentUser,
   logActivity,
@@ -104,6 +106,12 @@ export async function createBooking(input: CreateBookingInput): Promise<TableBoo
 
   const rows = readCollection<TableBooking>("bookings");
   writeCollection("bookings", [booking, ...rows], "create", booking.id);
+  notifyAdmins("BOOKINGS", {
+    type: "NEW_BOOKING",
+    params: { name: booking.name, time: formatSlotLabel(booking.time) },
+    link: "/admin/bookings",
+    dedupeKey: `booking:${booking.id}`,
+  });
   return booking;
 }
 
@@ -154,6 +162,15 @@ export async function updateBookingStatus(
     "update",
     id,
   );
+  if (next.customerId && (status === "CONFIRMED" || status === "CANCELLED")) {
+    notify({
+      userId: next.customerId,
+      type: status === "CONFIRMED" ? "BOOKING_CONFIRMED" : "BOOKING_CANCELLED",
+      params: { time: formatSlotLabel(next.time), name: next.name },
+      link: "/account",
+      dedupeKey: `booking:${id}:${status}`,
+    });
+  }
   logActivity(admin, "BOOKING_STATUS", `Booking for ${existing.name} → ${status}`, id);
   return next;
 }

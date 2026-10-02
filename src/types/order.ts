@@ -1,5 +1,4 @@
-import type { CartLine } from "./cart";
-import type { IsoDateTime, Timestamped } from "./common";
+import type { IsoDateTime, LocalizedText, Timestamped } from "./common";
 
 export const ORDER_TYPES = ["TAKEAWAY", "DINE_IN"] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
@@ -55,6 +54,16 @@ export const PAYMENT_ACTIONS = [
 ] as const;
 export type PaymentAction = (typeof PAYMENT_ACTIONS)[number];
 
+/**
+ * Epoch milliseconds.
+ *
+ * Order history arrays repeat 7-10 times per order, and 500 orders of ISO
+ * strings cost about 90KB more than the same instants as numbers. Top-level
+ * fields (createdAt, estimatedReadyAt) stay ISO — they are few, and they are
+ * what humans read when inspecting storage.
+ */
+export type EpochMs = number;
+
 /** Append-only audit trail of everything that happened to the money. */
 export interface PaymentEvent {
   action: PaymentAction;
@@ -64,16 +73,16 @@ export interface PaymentEvent {
   ref?: string;
   reason?: string;
   byUserId?: string;
-  at: IsoDateTime;
+  at: EpochMs;
 }
 
 /** One transition in an order's life, with who made it. */
 export interface OrderStatusEvent {
   status: OrderStatus;
-  at: IsoDateTime;
-  /** User id of the admin who made the change; undefined for the customer. */
+  at: EpochMs;
+  /** Admin who made the change; undefined for the customer. Names are looked
+   *  up from users at display time rather than duplicated per event. */
   byUserId?: string;
-  byName?: string;
   /** Required when status is CANCELLED. */
   reason?: string;
 }
@@ -81,15 +90,39 @@ export interface OrderStatusEvent {
 /** Each time an admin promised, or re-promised, a ready time. */
 export interface ReadyTimeEvent {
   minutes: number;
-  at: IsoDateTime;
+  at: EpochMs;
   byUserId: string;
   reason?: string;
 }
 
-/** A cart line frozen at the moment the order was placed. */
-export interface OrderLine extends CartLine {
+/** One chosen option, kept only as what a receipt needs to show. */
+export interface OrderLineOption {
+  /** Retained so "Reorder" can re-select the same choices. */
+  id: string;
+  name: LocalizedText;
+  priceDelta: number;
+}
+
+/**
+ * A cart line frozen at the moment the order was placed.
+ *
+ * Deliberately NOT a CartLine: the image path, slug, lineKey and the option
+ * group ids are re-derivable from menuItemId and are not worth storing 500
+ * times over. Name and veg mark are kept so a historical order still reads
+ * correctly after the menu item is renamed or deleted.
+ */
+export interface OrderLine {
+  menuItemId: string;
+  name: LocalizedText;
+  isVeg: boolean;
+  quantity: number;
+  /** Base price, before options. */
+  unitPrice: number;
+  options: OrderLineOption[];
   unitTotal: number;
   lineTotal: number;
+  prepMinutes: number;
+  notes?: string;
 }
 
 export interface Order extends Timestamped {
@@ -153,6 +186,8 @@ export interface OrderFlags {
   isDueToStart: boolean;
   /** Waiting for an admin to confirm an online payment. */
   awaitingVerification: boolean;
+  /** Waiting longer than verificationAlertMinutes — needs attention now. */
+  isStalePending: boolean;
   /** Dine-in cash that has not been collected yet. */
   cashPending: boolean;
   /** Blocked from handover because the money is not confirmed. */

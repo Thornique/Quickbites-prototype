@@ -13,9 +13,16 @@ import { DEFAULT_LOCALE, SUPPORTED_LOCALES, type Locale } from "@/lib/constants"
 import { LOCALE_KEY, readKey, writeKey } from "@/storage";
 import type { LocalizedText } from "@/types";
 import { en, type Dictionary } from "./en";
+import {
+  enNotify,
+  type NotificationCopy,
+  type NotificationDictionary,
+} from "./en-notify";
 import { hi } from "./hi";
+import { hiNotify } from "./hi-notify";
 
 const DICTIONARIES: Record<Locale, Dictionary> = { en, hi };
+const NOTIFY: Record<Locale, NotificationDictionary> = { en: enNotify, hi: hiNotify };
 
 interface I18nContextValue {
   locale: Locale;
@@ -23,6 +30,8 @@ interface I18nContextValue {
   setLocale: (locale: Locale) => void;
   /** Reads the right side of a {en,hi} field from the data layer. */
   pick: (text: LocalizedText) => string;
+  /** Renders a notification's title/body from its stored type and params. */
+  notifyCopy: NotificationDictionary;
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -87,6 +96,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       t,
       setLocale,
       pick: (text: LocalizedText) => text[locale] || text.en,
+      notifyCopy: NOTIFY[locale],
     };
   }, [locale, setLocale]);
 
@@ -115,6 +125,18 @@ export function useLocale() {
 /** Reads a {en,hi} value from the data layer in the active language. */
 export function usePick() {
   return useI18n().pick;
+}
+
+/**
+ * Renders a stored notification into readable text. Kept as a hook so the
+ * copy follows the language toggle without the rows being rewritten.
+ */
+export function useNotificationCopy() {
+  const copy = useI18n().notifyCopy;
+  return (
+    type: keyof NotificationDictionary,
+    params: Parameters<NotificationDictionary[typeof type]>[0],
+  ): NotificationCopy => copy[type](params);
 }
 
 /** Locale-free version for code that already knows the locale. */

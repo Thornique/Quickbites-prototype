@@ -149,6 +149,40 @@ export const enSite = {
     mapNote: "Loads Google Maps",
   },
 
+  notifications: {
+    label: "Notifications",
+    open: "Open notifications",
+    unreadCount: (count: number) =>
+      count === 1 ? "1 unread notification" : `${count} unread notifications`,
+    today: "Today",
+    earlier: "Earlier",
+    markAllRead: "Mark all as read",
+    seeAll: "See all notifications",
+    unread: "unread",
+    relative: (minutes: number) => {
+      if (minutes < 1) return "just now";
+      if (minutes < 60) return `${Math.round(minutes)} min ago`;
+      const hours = Math.round(minutes / 60);
+      return hours === 1 ? "1 hr ago" : `${hours} hr ago`;
+    },
+    emptyTitle: "Nothing new",
+    emptyBody: "Order updates and alerts will show up here.",
+    title: "Notifications",
+    subtitle: "Updates about your orders, bookings and reviews.",
+    adminSubtitle: "New orders, payments to verify and stock alerts.",
+    preferences: "Notification preferences",
+    sound: "Play a sound for urgent alerts",
+    soundHint: "Plays only after you have interacted with the page.",
+    browser: "Show browser notifications",
+    browserHint: "Alerts you when this tab is in the background.",
+    enableBrowser: "Turn on browser notifications?",
+    enableBrowserBody:
+      "We'll alert you when an order is ready, even if this tab is hidden.",
+    allow: "Allow",
+    notNow: "Not now",
+    browserBlocked: "Your browser has blocked notifications for this site.",
+  },
+
   menuCard: {
     add: "Add",
     soldOut: "Sold out",

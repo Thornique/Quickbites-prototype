@@ -1,5 +1,5 @@
 /** Bumping this re-seeds every collection on next load. */
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 9;
 
 const NAMESPACE = "qb";
 
@@ -19,6 +19,7 @@ export const COLLECTIONS = [
   "banners",
   "siteContent",
   "storeSettings",
+  "notifications",
   "activityLog",
   "counters",
 ] as const;
@@ -38,6 +39,9 @@ export const SESSION_KEY = `${NAMESPACE}:session`;
 
 /** Persisted cart, keyed per user id (or "guest"). */
 export const cartKey = (ownerId: string) => `${NAMESPACE}:cart:${ownerId}`;
+
+/** Per-user notification preferences (sound, browser alerts). */
+export const notificationPrefsKey = (userId: string) => `${NAMESPACE}:notify:${userId}`;
 
 /** Persisted language choice. */
 export const LOCALE_KEY = `${NAMESPACE}:locale`;

@@ -1,6 +1,7 @@
 import { conflict, invalid, notFound } from "@/lib/errors";
 import { readCollection, writeCollection } from "@/storage";
 import type { Order, Review } from "@/types";
+import { notify, notifyAdmins } from "./notifications";
 import {
   logActivity,
   newId,
@@ -80,6 +81,12 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
 
   const rows = readCollection<Review>("reviews");
   writeCollection("reviews", [review, ...rows], "create", review.id);
+  notifyAdmins("CONTENT", {
+    type: "NEW_REVIEW",
+    params: { rating: review.rating, name: review.customerName },
+    link: "/admin/reviews",
+    dedupeKey: `review:${review.id}`,
+  });
   return review;
 }
 
@@ -131,6 +138,13 @@ export async function replyToReview(id: string, reply: string): Promise<Review> 
     "update",
     id,
   );
+  notify({
+    userId: next.customerId,
+    type: "REVIEW_REPLIED",
+    params: { name: next.customerName },
+    link: "/reviews",
+    dedupeKey: `reply:${id}`,
+  });
   logActivity(
     admin,
     "REVIEW_REPLIED",

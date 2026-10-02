@@ -8,6 +8,7 @@ import { LanguageToggle } from "@/components/site/language-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { RequireAdmin, useSession } from "@/features/auth";
+import { NotificationBell } from "@/features/notifications";
 import { useT } from "@/i18n";
 import { can } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -25,6 +26,7 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
   // Nav entries the signed-in admin is actually allowed to open.
   const navItems = [
     { href: "/admin", label: t.admin.dashboard, visible: true },
+    { href: "/admin/notifications", label: t.notifications.label, visible: true },
     {
       href: "/admin/settings",
       label: t.admin.settings,
@@ -55,6 +57,7 @@ export default function AdminPanelLayout({ children }: { children: React.ReactNo
               {t.admin.viewSite}
               <ExternalLink size={14} aria-hidden="true" />
             </Link>
+            <NotificationBell allHref="/admin/notifications" />
             <LanguageToggle />
             <AccountMenu />
           </div>

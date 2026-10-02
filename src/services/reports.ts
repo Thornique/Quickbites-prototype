@@ -311,10 +311,11 @@ export async function getPrepTimeAccuracy(range: DateRange): Promise<PrepTimeAcc
     const readyAt = order.statusHistory.find((e) => e.status === "READY")?.at;
     if (!acceptedAt || !readyAt || !order.estimatedReadyAt) continue;
 
-    const acceptedMs = Date.parse(acceptedAt);
-    promised += (Date.parse(order.estimatedReadyAt) - acceptedMs) / 60000;
-    actual += (Date.parse(readyAt) - acceptedMs) / 60000;
-    if (Date.parse(readyAt) <= Date.parse(order.estimatedReadyAt)) onTime += 1;
+    // History timestamps are epoch ms; estimatedReadyAt is still ISO.
+    const promisedAt = Date.parse(order.estimatedReadyAt);
+    promised += (promisedAt - acceptedAt) / 60000;
+    actual += (readyAt - acceptedAt) / 60000;
+    if (readyAt <= promisedAt) onTime += 1;
     sample += 1;
   }
 

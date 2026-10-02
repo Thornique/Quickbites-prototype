@@ -118,6 +118,29 @@ export function setStoredSchemaVersion(): void {
   writeRaw(VERSION_KEY, SCHEMA_VERSION);
 }
 
+/** The agreed ceiling for seeded demo data. */
+export const STORAGE_BUDGET_BYTES = 1.5 * 1024 * 1024;
+/** Above this share of the budget we warn in development. */
+const WARN_AT = 0.8;
+
+let hasWarnedAboutSize = false;
+
+/**
+ * Warns once per session when storage passes 80% of the budget. A live demo
+ * adds orders, signups and notifications, and localStorage fails hard rather
+ * than degrading, so the warning needs to arrive well before the ceiling.
+ */
+export function warnIfStorageTight(bytes: number): void {
+  if (process.env.NODE_ENV === "production" || hasWarnedAboutSize) return;
+  if (bytes < STORAGE_BUDGET_BYTES * WARN_AT) return;
+  hasWarnedAboutSize = true;
+  const percent = Math.round((bytes / STORAGE_BUDGET_BYTES) * 100);
+  console.warn(
+    `[Quick Bites] localStorage is at ${percent}% of the ${(STORAGE_BUDGET_BYTES / 1024 / 1024).toFixed(1)}MB budget ` +
+      `(${(bytes / 1024).toFixed(0)}KB). Trim seeded history or reset the demo data before it fills.`,
+  );
+}
+
 /** Byte size of everything under our namespace, for the dev data screen. */
 export function getStorageFootprint(): {
   bytes: number;
@@ -135,6 +158,7 @@ export function getStorageFootprint(): {
     perCollection[collection] = size;
     bytes += size;
   }
+  warnIfStorageTight(bytes);
   return { bytes, perCollection };
 }
 

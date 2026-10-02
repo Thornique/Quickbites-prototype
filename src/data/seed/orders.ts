@@ -1,11 +1,10 @@
 import { toDateKey } from "@/lib/format";
 import { computeTotals, couponDiscountFor, priceLine } from "@/lib/pricing";
-import { formatToken } from "@/services/order-rules";
+import { formatToken, toOrderLines } from "@/services/order-rules";
 import type {
   Coupon,
   MenuItem,
   Order,
-  OrderLine,
   OrderStatus,
   OrderType,
   PaymentEvent,
@@ -13,13 +12,15 @@ import type {
   PaymentStatus,
   User,
 } from "@/types";
-import { createRandom, type Random } from "./random";
 import { pickLines } from "./order-lines";
+import { createRandom, type Random } from "./random";
 
 const TAX_RATE = 5;
 const PACKAGING = 10;
-const ADMIN = { id: "user-manager", name: "Sunita Deshmukh" };
+const ADMIN_ID = "user-manager";
 
+/** History window. 45 days still gives the reports a full picture of trade. */
+const HISTORY_DAYS = 45;
 /** How many of the generated orders belong to today. */
 const TODAY_COMPLETED = 12;
 
@@ -68,7 +69,7 @@ export function buildSeedOrders({
   customers,
   coupons,
   now,
-  count = 500,
+  count = 420,
 }: BuildOrdersInput): Order[] {
   const random = createRandom(90210);
   const sellable = menu.filter((item) => item.isAvailable);
@@ -123,7 +124,7 @@ export function buildSeedOrders({
         orderType === "DINE_IN" && random.chance(0.8)
           ? String(random.int(1, 12))
           : undefined,
-      lines: pricedLines as OrderLine[],
+      lines: toOrderLines(pricedLines),
       itemCount: totals.itemCount,
       subtotal: totals.subtotal,
       discount: totals.discount,
@@ -136,7 +137,7 @@ export function buildSeedOrders({
       paymentStatus: "UNPAID",
       paymentHistory: [],
       status: "PLACED",
-      statusHistory: [{ status: "PLACED", at: placedAt.toISOString() }],
+      statusHistory: [{ status: "PLACED", at: placedAt.getTime() }],
       readyTimeHistory: [],
       isScheduled: false,
       pickupName: customer.name,
@@ -147,7 +148,13 @@ export function buildSeedOrders({
     };
   }
 
-  /** A finished order: paid, verified, accepted with a promise, handed over. */
+  /**
+   * A finished order.
+   *
+   * Historical orders keep a single collapsed payment event and one ready-time
+   * entry rather than the full blow-by-blow: the audit trail earns its storage
+   * on live orders, not on the four hundred that are already closed.
+   */
   function completed(placedAt: Date, orderType: OrderType): Order {
     const order = base(placedAt, orderType);
     const method: PaymentMethod =
@@ -160,131 +167,105 @@ export function buildSeedOrders({
     let cursor = placedAt.getTime();
     const step = (minutes: number) => {
       cursor += minutes * 60_000;
-      return new Date(cursor).toISOString();
+      return cursor;
     };
 
     const history: Order["statusHistory"] = [
-      { status: "PLACED", at: placedAt.toISOString() },
+      { status: "PLACED", at: placedAt.getTime() },
     ];
-    const payments: PaymentEvent[] = [];
-
-    if (!isCash) {
-      payments.push({
-        action: "ONLINE_PAID",
-        method,
-        amount: order.total,
-        ref: paymentRef,
-        at: placedAt.toISOString(),
-      });
-    }
 
     // ~7% of past orders were cancelled before the kitchen started.
     if (random.chance(0.07)) {
       const cancelAt = step(random.int(2, 25));
-      if (!isCash) {
-        payments.push({
-          action: "REFUNDED",
-          method,
-          amount: order.total,
-          ref: paymentRef,
-          byUserId: ADMIN.id,
-          at: cancelAt,
-        });
-      }
       history.push({
         status: "CANCELLED",
         at: cancelAt,
-        byUserId: ADMIN.id,
-        byName: ADMIN.name,
+        byUserId: ADMIN_ID,
         reason: random.pick(CANCEL_REASONS),
       });
+      const refundEvent: PaymentEvent[] = isCash
+        ? []
+        : [
+            {
+              action: "REFUNDED",
+              method,
+              amount: order.total,
+              ref: paymentRef,
+              byUserId: ADMIN_ID,
+              at: cancelAt,
+            },
+          ];
       return {
         ...order,
         paymentMethod: method,
         paymentStatus: isCash ? "UNPAID" : "REFUNDED",
         paymentRef,
-        paymentHistory: payments,
+        paymentHistory: refundEvent,
         status: "CANCELLED",
         statusHistory: history,
       };
     }
 
     const verifiedAt = step(random.int(1, 3));
-    payments.push({
-      action: isCash ? "CASH_RECEIVED" : "PAYMENT_VERIFIED",
-      method,
-      amount: order.total,
-      ref: paymentRef,
-      byUserId: ADMIN.id,
-      at: verifiedAt,
-    });
-
-    // The admin promises a time; the kitchen beats it about 85% of the time.
     const promised = random.pick([10, 15, 15, 20, 20, 25, 30]);
     const acceptedAt = step(random.int(1, 2));
-    history.push({
-      status: "ACCEPTED",
-      at: acceptedAt,
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
-    });
-    const estimatedReadyAt = new Date(
-      Date.parse(acceptedAt) + promised * 60_000,
-    ).toISOString();
+    history.push({ status: "ACCEPTED", at: acceptedAt, byUserId: ADMIN_ID });
+    const estimatedReadyAt = new Date(acceptedAt + promised * 60_000).toISOString();
 
     history.push({
       status: "PREPARING",
       at: step(random.int(1, 3)),
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
+      byUserId: ADMIN_ID,
     });
 
+    // The kitchen beats the promise about 85% of the time.
     const onTime = random.chance(0.85);
     const actual = onTime
       ? random.int(Math.max(2, promised - 7), promised - 1)
       : promised + random.int(2, 12);
-    cursor = Date.parse(acceptedAt) + actual * 60_000;
-    history.push({
-      status: "READY",
-      at: new Date(cursor).toISOString(),
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
-    });
+    cursor = acceptedAt + actual * 60_000;
+    history.push({ status: "READY", at: cursor, byUserId: ADMIN_ID });
     history.push({
       status: "HANDED_OVER",
       at: step(random.int(2, 15)),
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
+      byUserId: ADMIN_ID,
     });
 
-    const cash = isCash
-      ? { cashReceived: Math.ceil(order.total / 50) * 50 }
-      : undefined;
+    const cashReceived = isCash ? Math.ceil(order.total / 50) * 50 : undefined;
 
     return {
       ...order,
       paymentMethod: method,
       paymentStatus: "VERIFIED" as PaymentStatus,
       paymentRef,
-      paymentHistory: payments,
-      cashReceived: cash?.cashReceived,
-      changeReturned: cash ? cash.cashReceived - order.total : undefined,
+      paymentHistory: [
+        {
+          action: isCash ? "CASH_RECEIVED" : "PAYMENT_VERIFIED",
+          method,
+          amount: isCash ? (cashReceived ?? order.total) : order.total,
+          ref: paymentRef,
+          byUserId: ADMIN_ID,
+          at: verifiedAt,
+        },
+      ],
+      cashReceived,
+      changeReturned: cashReceived ? cashReceived - order.total : undefined,
       status: "HANDED_OVER",
       statusHistory: history,
       estimatedReadyAt,
-      readyTimeSetBy: ADMIN.id,
-      readyTimeHistory: [{ minutes: promised, at: acceptedAt, byUserId: ADMIN.id }],
+      readyTimeSetBy: ADMIN_ID,
+      readyTimeHistory: [{ minutes: promised, at: acceptedAt, byUserId: ADMIN_ID }],
       stockDeducted: true,
     };
   }
 
   const orders: Order[] = [];
 
-  // ---- Days 1–59 ago: everything is finished ----------------------------
+  // ---- Earlier days: everything is finished -----------------------------
   const historyCount = Math.max(0, count - TODAY_COMPLETED - 12);
   for (let i = 0; i < historyCount; i += 1) {
     const placedAt = new Date(now);
-    placedAt.setDate(placedAt.getDate() - random.int(1, 59));
+    placedAt.setDate(placedAt.getDate() - random.int(1, HISTORY_DAYS));
     placedAt.setHours(
       random.weighted(HOUR_WEIGHTS),
       random.int(0, 59),
@@ -310,7 +291,7 @@ export function buildSeedOrders({
 
 /**
  * The live board. Every state the admin UI has to handle is represented, so
- * step 10 can be built and demoed without anyone having to stage data by hand.
+ * step 10 can be built and demoed without anyone staging data by hand.
  */
 function buildOpenOrders({
   random,
@@ -321,11 +302,11 @@ function buildOpenOrders({
   now: Date;
   base: (placedAt: Date, orderType: OrderType) => Order;
 }): Order[] {
-  const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000);
-  const iso = (d: Date) => d.toISOString();
+  const agoMs = (m: number) => now.getTime() - m * 60_000;
+  const agoDate = (m: number) => new Date(agoMs(m));
   const out: Order[] = [];
 
-  const paid = (order: Order, method: PaymentMethod, at: string): Order => ({
+  const paid = (order: Order, method: PaymentMethod, at: number): Order => ({
     ...order,
     paymentMethod: method,
     paymentStatus: "PAID_UNVERIFIED",
@@ -335,7 +316,7 @@ function buildOpenOrders({
     ],
   });
 
-  const verify = (order: Order, at: string): Order => ({
+  const verify = (order: Order, at: number): Order => ({
     ...order,
     paymentStatus: "VERIFIED",
     paymentHistory: [
@@ -345,44 +326,36 @@ function buildOpenOrders({
         method: order.paymentMethod,
         amount: order.total,
         ref: order.paymentRef,
-        byUserId: ADMIN.id,
+        byUserId: ADMIN_ID,
         at,
       },
     ],
   });
 
-  const acceptAt = (order: Order, at: string, promised: number): Order => ({
+  const acceptAt = (order: Order, at: number, promised: number): Order => ({
     ...order,
     statusHistory: [
       ...order.statusHistory,
-      { status: "ACCEPTED", at, byUserId: ADMIN.id, byName: ADMIN.name },
+      { status: "ACCEPTED", at, byUserId: ADMIN_ID },
     ],
     status: "ACCEPTED",
-    estimatedReadyAt: iso(new Date(Date.parse(at) + promised * 60_000)),
-    readyTimeSetBy: ADMIN.id,
-    readyTimeHistory: [{ minutes: promised, at, byUserId: ADMIN.id }],
+    estimatedReadyAt: new Date(at + promised * 60_000).toISOString(),
+    readyTimeSetBy: ADMIN_ID,
+    readyTimeHistory: [{ minutes: promised, at, byUserId: ADMIN_ID }],
     stockDeducted: true,
   });
 
-  const advance = (order: Order, status: OrderStatus, at: string): Order => ({
+  const advance = (order: Order, status: OrderStatus, at: number): Order => ({
     ...order,
     status,
-    statusHistory: [
-      ...order.statusHistory,
-      { status, at, byUserId: ADMIN.id, byName: ADMIN.name },
-    ],
+    statusHistory: [...order.statusHistory, { status, at, byUserId: ADMIN_ID }],
   });
 
   // 1. Takeaway awaiting payment verification.
-  out.push(paid(base(minutesAgo(4), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(4))));
+  out.push(paid(base(agoDate(4), "TAKEAWAY"), "ONLINE_UPI", agoMs(4)));
 
   // 2. Takeaway whose payment was rejected — customer must pay again.
-  const rejectedAt = iso(minutesAgo(6));
-  const rejected = paid(
-    base(minutesAgo(9), "TAKEAWAY"),
-    "ONLINE_CARD",
-    iso(minutesAgo(9)),
-  );
+  const rejected = paid(base(agoDate(9), "TAKEAWAY"), "ONLINE_CARD", agoMs(9));
   out.push({
     ...rejected,
     paymentStatus: "FAILED",
@@ -394,55 +367,54 @@ function buildOpenOrders({
         amount: rejected.total,
         ref: rejected.paymentRef,
         reason: "No matching transaction in the UPI statement.",
-        byUserId: ADMIN.id,
-        at: rejectedAt,
+        byUserId: ADMIN_ID,
+        at: agoMs(6),
       },
     ],
   });
 
   // 3. Dine-in cash, unpaid, already being prepared.
-  const cashOrder = base(minutesAgo(12), "DINE_IN");
+  const cashOrder = base(agoDate(12), "DINE_IN");
   out.push(
     advance(
-      acceptAt({ ...cashOrder, paymentMethod: "CASH" }, iso(minutesAgo(10)), 20),
+      acceptAt({ ...cashOrder, paymentMethod: "CASH" }, agoMs(10), 20),
       "PREPARING",
-      iso(minutesAgo(8)),
+      agoMs(8),
     ),
   );
 
   // 4. READY but blocked from handover — the money is not confirmed.
-  const blocked = base(minutesAgo(26), "DINE_IN");
+  const blocked = base(agoDate(26), "DINE_IN");
   out.push(
     advance(
       advance(
-        acceptAt({ ...blocked, paymentMethod: "CASH" }, iso(minutesAgo(24)), 20),
+        acceptAt({ ...blocked, paymentMethod: "CASH" }, agoMs(24), 20),
         "PREPARING",
-        iso(minutesAgo(22)),
+        agoMs(22),
       ),
       "READY",
-      iso(minutesAgo(3)),
+      agoMs(3),
     ),
   );
 
   // 5. Overdue: promised 15 minutes, 28 minutes ago, still preparing.
   const overdue = verify(
-    paid(base(minutesAgo(32), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(32))),
-    iso(minutesAgo(30)),
+    paid(base(agoDate(32), "TAKEAWAY"), "ONLINE_UPI", agoMs(32)),
+    agoMs(30),
   );
-  out.push(
-    advance(
-      acceptAt(overdue, iso(minutesAgo(28)), 15),
-      "PREPARING",
-      iso(minutesAgo(26)),
-    ),
-  );
+  out.push(advance(acceptAt(overdue, agoMs(28), 15), "PREPARING", agoMs(26)));
 
-  // 6. A straightforward verified takeaway waiting to be accepted.
+  /*
+    6. A takeaway paid 9 minutes ago that nobody has verified yet. Scenario 1
+       is only 4 minutes old, so it is pending but not yet late; this one is
+       past verificationAlertMinutes and so drives the STALE_PENDING flag and
+       its alert.
+  */
+  out.push(paid(base(agoDate(9), "TAKEAWAY"), "ONLINE_UPI", agoMs(9)));
+
+  // 7. A verified takeaway waiting to be accepted — the clean happy path.
   out.push(
-    verify(
-      paid(base(minutesAgo(2), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(2))),
-      iso(minutesAgo(1)),
-    ),
+    verify(paid(base(agoDate(2), "TAKEAWAY"), "ONLINE_UPI", agoMs(2)), agoMs(1)),
   );
 
   // ---- Scheduled: three later today, two tomorrow ----------------------
@@ -463,17 +435,17 @@ function buildOpenOrders({
 
   for (const [dayOffset, hour, minute] of scheduledSlots) {
     const slot = slotAt(dayOffset, hour, minute);
-    const placedAt = minutesAgo(random.int(20, 120));
+    const placedAt = agoDate(random.int(20, 120));
     const order = verify(
-      paid(base(placedAt, "TAKEAWAY"), "ONLINE_UPI", iso(placedAt)),
-      iso(minutesAgo(random.int(5, 15))),
+      paid(base(placedAt, "TAKEAWAY"), "ONLINE_UPI", placedAt.getTime()),
+      agoMs(random.int(5, 15)),
     );
     out.push({
       ...order,
       isScheduled: true,
-      scheduledFor: iso(slot),
+      scheduledFor: slot.toISOString(),
       // A scheduled order's promise is the slot, not a countdown from accept.
-      estimatedReadyAt: iso(slot),
+      estimatedReadyAt: slot.toISOString(),
     });
   }
 

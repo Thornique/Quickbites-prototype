@@ -5,6 +5,7 @@ export * from "./coupon";
 export * from "./engagement";
 export * from "./inventory";
 export * from "./menu";
+export * from "./notification";
 export * from "./order";
 export * from "./settings";
 export * from "./user";

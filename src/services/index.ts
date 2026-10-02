@@ -20,6 +20,7 @@ export * as customers from "./customers";
 export * as enquiries from "./enquiries";
 export * as inventory from "./inventory";
 export * as menu from "./menu";
+export * as notifications from "./notifications";
 export * as orders from "./orders";
 export * as reports from "./reports";
 export * as reviews from "./reviews";

@@ -58,6 +58,12 @@ export interface StoreSettings extends Timestamped {
   /** Customers may cancel a scheduled order until this long before the slot. */
   scheduleCancelCutoffMinutes: number;
 
+  /**
+   * How long an online payment may sit unverified before the board flags it
+   * as stale and the admins are alerted.
+   */
+  verificationAlertMinutes: number;
+
   /** Plays a sound in the admin panel when a new order arrives. */
   notificationSound: boolean;
 }

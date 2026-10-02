@@ -4,6 +4,7 @@ import { Check, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { useSession } from "@/features/auth";
+import { NotificationPreferences } from "@/features/notifications";
 import { useT } from "@/i18n";
 import { can } from "@/lib/permissions";
 import { PERMISSIONS } from "@/types";
@@ -86,6 +87,8 @@ export default function AdminDashboardPage() {
           })}
         </ul>
       </section>
+
+      <NotificationPreferences className="mt-8 max-w-xl" />
 
       <p className="mt-8 text-xs text-ink-muted">
         Placeholder dashboard — KPI cards, charts and the live order board arrive in

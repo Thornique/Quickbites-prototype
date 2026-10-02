@@ -1,6 +1,7 @@
 import { toDateKey } from "@/lib/format";
 import type {
   ActivityLogEntry,
+  AppNotification,
   Banner,
   Category,
   Coupon,
@@ -27,6 +28,7 @@ import { SEED_COUPONS } from "./coupons";
 import { buildSeedBookings, buildSeedEnquiries, buildSeedReviews } from "./engagement";
 import { SEED_INVENTORY } from "./inventory";
 import { SEED_MENU_ITEMS } from "./menu-items";
+import { buildSeedNotifications } from "./notifications";
 import { buildSeedOrders } from "./orders";
 import { buildSeedUsers } from "./users";
 
@@ -47,6 +49,7 @@ export interface SeedData {
   banners: Banner[];
   siteContent: SiteContent;
   storeSettings: StoreSettings;
+  notifications: AppNotification[];
   activityLog: ActivityLogEntry[];
   counters: Array<{ id: string; value: number }>;
 }
@@ -102,6 +105,7 @@ export async function buildSeedData(now = new Date()): Promise<SeedData> {
     banners: SEED_BANNERS,
     siteContent: SEED_SITE_CONTENT,
     storeSettings: SEED_STORE_SETTINGS,
+    notifications: buildSeedNotifications(orders, now),
     activityLog: [],
     counters: [
       { id: "orderNumber", value: lastNumber },
