@@ -57,3 +57,5 @@ export function useCartLinesFor(menuItemId: string) {
     };
   }, [lines, isHydrated, menuItemId]);
 }
+
+export { CartSync } from "./cart-sync";

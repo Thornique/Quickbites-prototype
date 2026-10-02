@@ -1,34 +1,64 @@
 "use client";
 
 import { create } from "zustand";
-import { persist, createJSONStorage } from "zustand/middleware";
+import { createJSONStorage, persist } from "zustand/middleware";
 import { cartLineKey } from "@/lib/pricing";
-import type { CartLine } from "@/types";
+import { cartKey, readKey, removeKey, writeKey } from "@/storage";
+import type { CartLine, OrderType } from "@/types";
 
 /**
  * Cart state.
  *
- * STEP 4 SCOPE: enough to hold lines and drive the header badge. Step 6 adds
- * pricing through CartPricingService, coupon handling, guest-cart merging on
- * login and the undo-remove toast. The persisted shape is deliberately just
- * the lines, so that work can extend it without a migration.
+ * The active cart is persisted under one key. Each signed-in customer also
+ * gets their own stored cart, so signing out does not hand the next person at
+ * the counter the previous customer's basket — and signing in merges whatever
+ * was built as a guest into the account's cart rather than discarding it.
  */
+
+const GUEST = "guest";
 
 interface CartState {
   lines: CartLine[];
+  orderType: OrderType;
+  couponCode?: string;
+  /** Whose cart is currently loaded: a user id, or "guest". */
+  ownerId: string;
   /** Server render and first paint must agree; flips true after rehydration. */
   isHydrated: boolean;
 
   addLine: (line: CartLine) => void;
   setQuantity: (lineKey: string, quantity: number) => void;
-  removeLine: (lineKey: string) => void;
+  removeLine: (lineKey: string) => CartLine | null;
+  restoreLine: (line: CartLine, index: number) => void;
+  setOrderType: (orderType: OrderType) => void;
+  setCoupon: (code: string | undefined) => void;
   clear: () => void;
+  /** Called when the session changes; merges or swaps carts as needed. */
+  syncOwner: (userId: string | null) => void;
+}
+
+interface StoredCart {
+  lines: CartLine[];
+  couponCode?: string;
+}
+
+function mergeLines(base: CartLine[], incoming: CartLine[]): CartLine[] {
+  const merged = [...base];
+  for (const line of incoming) {
+    const existing = merged.find((l) => l.lineKey === line.lineKey);
+    if (existing) existing.quantity += line.quantity;
+    else merged.push({ ...line });
+  }
+  return merged;
 }
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       lines: [],
+      orderType: "TAKEAWAY",
+      couponCode: undefined,
+      ownerId: GUEST,
       isHydrated: false,
 
       addLine: (line) =>
@@ -63,15 +93,68 @@ export const useCartStore = create<CartState>()(
                 ),
         })),
 
-      removeLine: (lineKey) =>
-        set((state) => ({ lines: state.lines.filter((l) => l.lineKey !== lineKey) })),
+      removeLine: (lineKey) => {
+        const removed = get().lines.find((l) => l.lineKey === lineKey) ?? null;
+        set((state) => ({ lines: state.lines.filter((l) => l.lineKey !== lineKey) }));
+        return removed;
+      },
 
-      clear: () => set({ lines: [] }),
+      /** Puts an undone removal back where it was, not at the end. */
+      restoreLine: (line, index) =>
+        set((state) => {
+          if (state.lines.some((l) => l.lineKey === line.lineKey)) return state;
+          const lines = [...state.lines];
+          lines.splice(Math.min(index, lines.length), 0, line);
+          return { lines };
+        }),
+
+      setOrderType: (orderType) => set({ orderType }),
+      setCoupon: (couponCode) => set({ couponCode }),
+      clear: () => set({ lines: [], couponCode: undefined }),
+
+      syncOwner: (userId) => {
+        const state = get();
+        const nextOwner = userId ?? GUEST;
+        if (!state.isHydrated || state.ownerId === nextOwner) return;
+
+        // Park the cart that is on screen under whoever owned it.
+        writeKey(cartKey(state.ownerId), {
+          lines: state.ownerId === GUEST ? [] : state.lines,
+          couponCode: state.ownerId === GUEST ? undefined : state.couponCode,
+        } satisfies StoredCart);
+
+        const stored = readKey<StoredCart>(cartKey(nextOwner), {
+          lines: [],
+          couponCode: undefined,
+        });
+
+        if (state.ownerId === GUEST && state.lines.length > 0) {
+          // Signing in: fold the guest basket into the account's cart.
+          set({
+            ownerId: nextOwner,
+            lines: mergeLines(stored.lines, state.lines),
+            couponCode: stored.couponCode ?? state.couponCode,
+          });
+          removeKey(cartKey(GUEST));
+          return;
+        }
+
+        set({
+          ownerId: nextOwner,
+          lines: stored.lines,
+          couponCode: stored.couponCode,
+        });
+      },
     }),
     {
-      name: "qb:cart:guest",
+      name: "qb:cart:active",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ lines: state.lines }),
+      partialize: (state) => ({
+        lines: state.lines,
+        orderType: state.orderType,
+        couponCode: state.couponCode,
+        ownerId: state.ownerId,
+      }),
       onRehydrateStorage: () => (state) => {
         if (state) state.isHydrated = true;
       },

@@ -29,6 +29,12 @@ A customer can browse the menu, customise items, add to cart, apply coupons, "pa
 7. The ADMIN sets the ready time on acceptance — accept(orderId, readyInMinutes) and verifyAndAccept(orderId, readyInMinutes) require 1–90 minutes. Before acceptance the customer sees "Waiting for the cafe to confirm" plus a provisional estimate from lib/prep-time.ts. estimatedReadyAt = acceptedAt + readyInMinutes, recorded with readyTimeSetBy and readyTimeHistory[]. extendReadyTime(+5/+10) is logged and pushed live. Marking READY early is allowed. Past the promised time and not READY → customer sees "Almost ready…" (never a negative countdown) and the order is flagged OVERDUE.
 8. Scheduled takeaway: "As soon as possible" or a 15-minute slot today/tomorrow within opening hours, minimum lead scheduleMinLeadMinutes (30), capacity maxOrdersPerSlot (8). Payment is still upfront and online. estimatedReadyAt = scheduledFor, and the order is flagged DUE_TO_START once scheduledFor − max prepMinutes − basePrepBuffer has passed. Customers may cancel until scheduleCancelCutoffMinutes (60) before the slot, then the reason is shown instead.
 
+# Working speed
+- Verification budget per step: test only that step's core flows in the browser, at 360px and 1440px, English only, plus one quick Hindi spot-check of the new screens.
+- No axe or Lighthouse runs and no full screenshot matrix — those happen once in Step 13.
+- Don't restart the dev server unless needed; never run dev and build at the same time.
+- Keep the final report under 15 lines: what was built, how to test, anything the client must decide.
+
 # Libraries (use these, nothing heavier without asking)
 - UI primitives: Radix UI (via shadcn/ui CLI, but RESTYLED to our design tokens — never ship default shadcn look)
 - Icons: lucide-react (stroke 1.75, consistent sizes 16/20/24)

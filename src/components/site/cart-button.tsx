@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
+import { CartDrawer } from "@/components/site/cart-drawer";
 import { useT } from "@/i18n";
 import { useCartCount } from "@/store/cart";
 import { cn } from "@/lib/utils";
@@ -14,7 +15,7 @@ export function CartButton({ className }: { className?: string }) {
   const t = useT();
   const count = useCartCount();
 
-  return (
+  const trigger = (
     <Link
       href="/cart"
       aria-label={`${t.cart.label}${count > 0 ? `, ${t.cart.itemCount(count)}` : ""}`}
@@ -37,4 +38,6 @@ export function CartButton({ className }: { className?: string }) {
       )}
     </Link>
   );
+
+  return <CartDrawer>{trigger}</CartDrawer>;
 }
