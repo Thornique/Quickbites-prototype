@@ -1,0 +1,210 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+/*
+  Quick Bites design tokens.
+  Single source of truth for colour, radius, type, shadow and motion.
+  Light theme only — dark mode is deliberately out of scope for this prototype.
+*/
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* ---- Brand palette -------------------------------------------------- */
+  --color-cream: #fbf7f0; /* page background, warm off-white */
+  --color-surface: #ffffff; /* cards, sheets, inputs */
+  --color-ink: #1a1714; /* primary text */
+  --color-ink-muted: #6b645c; /* secondary text */
+  --color-hairline: #e8e1d6; /* borders & separators */
+
+  --color-brand: #d7261e; /* tomato red */
+  --color-brand-hover: #b81e17;
+  --color-mustard: #f4b400; /* accent bands, deal highlights */
+  --color-mustard-dark: #c78f00; /* mustard text on light bg (AA safe) */
+
+  --color-veg: #1e8e3e;
+  --color-nonveg: #8b2e16;
+  --color-success: #1e8e3e;
+  --color-warning: #c77700;
+  --color-danger: #c62828;
+
+  /* Warm neutrals derived from the cream base, used for hovers and fills */
+  --color-sand-50: #f7f2ea;
+  --color-sand-100: #f2eadf;
+  --color-sand-200: #ebe2d4;
+
+  /* ---- Radius --------------------------------------------------------- */
+  --radius: 0.625rem; /* 10px — cards */
+  --radius-control: 6px; /* inputs, buttons, selects */
+  --radius-card: 10px; /* cards, sheets, dialogs */
+  --radius-pill: 9999px; /* chips & tags ONLY */
+
+  /* ---- Elevation — exactly one subtle level ---------------------------- */
+  --shadow-card: 0 1px 2px rgb(26 23 20 / 0.06), 0 1px 1px rgb(26 23 20 / 0.04);
+  --shadow-pop: 0 4px 16px rgb(26 23 20 / 0.1), 0 1px 2px rgb(26 23 20 / 0.06);
+
+  /* ---- Layout --------------------------------------------------------- */
+  --container-content: 1240px;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+  Map shadcn/Radix semantic variables onto the brand palette so all 21
+  generated primitives inherit our identity instead of the default look.
+  NOTE: --accent stays a warm neutral because shadcn uses it for menu/list
+  hover fills; the mustard brand accent is `--color-mustard`.
+*/
+@theme inline {
+  /* ---- Typography — resolved at the element, see note above ----------- */
+  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-background: var(--color-cream);
+  --color-foreground: var(--color-ink);
+
+  --color-card: var(--color-surface);
+  --color-card-foreground: var(--color-ink);
+  --color-popover: var(--color-surface);
+  --color-popover-foreground: var(--color-ink);
+
+  --color-primary: var(--color-brand);
+  --color-primary-foreground: #ffffff;
+
+  --color-secondary: var(--color-sand-100);
+  --color-secondary-foreground: var(--color-ink);
+
+  --color-muted: var(--color-sand-50);
+  --color-muted-foreground: var(--color-ink-muted);
+
+  --color-accent: var(--color-sand-100);
+  --color-accent-foreground: var(--color-ink);
+
+  --color-destructive: var(--color-danger);
+
+  --color-border: var(--color-hairline);
+  --color-input: var(--color-hairline);
+  --color-ring: var(--color-brand);
+
+  /* Chart palette — brand-led, distinguishable, AA on cream */
+  --color-chart-1: var(--color-brand);
+  --color-chart-2: var(--color-mustard);
+  --color-chart-3: #2f6f6b;
+  --color-chart-4: #8b2e16;
+  --color-chart-5: #6b645c;
+
+  /* Admin sidebar — calm neutrals, red reserved for primary actions */
+  --color-sidebar: var(--color-surface);
+  --color-sidebar-foreground: var(--color-ink);
+  --color-sidebar-primary: var(--color-brand);
+  --color-sidebar-primary-foreground: #ffffff;
+  --color-sidebar-accent: var(--color-sand-100);
+  --color-sidebar-accent-foreground: var(--color-ink);
+  --color-sidebar-border: var(--color-hairline);
+  --color-sidebar-ring: var(--color-brand);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  /*
+    Archivo is loaded with the `wdth` axis. Big headings use the condensed
+    width (75) at weight 800 for fast-food punch; body text stays Mukta.
+  */
+  .font-display {
+    font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  }
+
+  /* Prices, totals and table figures must not jitter between values. */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Devanagari needs more leading than Latin at the same size. */
+  :lang(hi) body,
+  html[lang="hi"] body {
+    line-height: 1.7;
+  }
+
+  /* Keyboard focus is always visible and always brand-coloured. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Comfortable reading measure for prose blocks. */
+  .measure {
+    max-width: 70ch;
+  }
+}
+
+@layer utilities {
+  /*
+    Condensed display type — short headings and labels only.
+    Mukta sits in the fallback chain because Archivo has no Devanagari
+    glyphs; without it, mixed EN/HI headings drop to a random system font.
+  */
+  .text-display {
+    font-family:
+      var(--font-archivo), var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
+    font-variation-settings: "wdth" 75;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.02;
+  }
+
+  /*
+    Hindi headings use Mukta at weight 800 — it carries Devanagari and still
+    reads bold. The condensed width axis does not exist there, so drop it and
+    relax the leading, which Devanagari needs for its matras.
+  */
+  :lang(hi) .text-display,
+  [lang="hi"] .text-display {
+    font-family: var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+    line-height: 1.25;
+  }
+
+  /* Clamp helpers for menu card descriptions. */
+  .clamp-1 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+    overflow: hidden;
+  }
+
+  .clamp-2 {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
