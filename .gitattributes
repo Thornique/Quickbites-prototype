@@ -1,0 +1,8 @@
+# Normalise to LF in the repo; deploy scripts must keep LF on the Linux VPS.
+* text=auto eol=lf
+*.sh text eol=lf
+*.png binary
+*.jpg binary
+*.webp binary
+*.ico binary
+package-lock.json -diff
