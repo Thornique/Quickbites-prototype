@@ -1,61 +1,37 @@
+import { toDateKey } from "@/lib/format";
 import { computeTotals, couponDiscountFor, priceLine } from "@/lib/pricing";
+import { formatToken } from "@/services/order-rules";
 import type {
-  CartLine,
   Coupon,
   MenuItem,
   Order,
   OrderLine,
   OrderStatus,
-  OrderStatusEvent,
+  OrderType,
+  PaymentEvent,
   PaymentMethod,
   PaymentStatus,
-  SelectedOption,
   User,
 } from "@/types";
 import { createRandom, type Random } from "./random";
+import { pickLines } from "./order-lines";
 
 const TAX_RATE = 5;
 const PACKAGING = 10;
 const ADMIN = { id: "user-manager", name: "Sunita Deshmukh" };
 
 /** How many of the generated orders belong to today. */
-const TODAY_COUNT = 16;
-/** Of those, how many are still open on the kitchen board. */
-const LIVE_COUNT = 6;
+const TODAY_COMPLETED = 12;
 
 /**
  * Orders per hour of the day, indexed 0–23. Khandwa trade is bimodal: a lunch
- * rush at 1–3pm and a heavier evening peak at 6–10pm. Zeroes outside the
- * 10:00–23:00 opening hours.
+ * rush at 1–3pm and a heavier evening peak at 6–10pm.
  */
 const HOUR_WEIGHTS = [
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0,
-  0, // 00:00–09:00 closed
-  2,
-  3,
-  6,
-  12,
-  11,
-  7,
-  4,
-  5,
-  9,
-  13,
-  14,
-  10,
-  5, // 10:00–22:00
-  0, // 23:00 — kitchen closes
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 6, 12, 11, 7, 4, 5, 9, 13, 14, 10, 5, 0,
 ];
 
-const PICKUP_NOTES = [
+const NOTES = [
   undefined,
   undefined,
   undefined,
@@ -73,131 +49,16 @@ const CANCEL_REASONS = [
   "Duplicate order",
 ];
 
-/** Picks 1–4 items, favouring popular ones. */
-function pickLines(random: Random, menu: MenuItem[]): CartLine[] {
-  const weights = menu.map((item) => item.popularity);
-  const count = random.weighted([38, 34, 18, 10]) + 1;
-  const chosen = new Map<string, MenuItem>();
-
-  while (chosen.size < count) {
-    const item = menu[random.weighted(weights)];
-    if (!chosen.has(item.id)) chosen.set(item.id, item);
-  }
-
-  return [...chosen.values()].map((item) => {
-    const selectedOptions: SelectedOption[] = [];
-
-    for (const group of item.optionGroups) {
-      if (group.type === "single") {
-        // Required groups always get a choice; optional ones usually default.
-        if (!group.isRequired && random.chance(0.75)) continue;
-        const option = random.pick(group.options);
-        selectedOptions.push({
-          groupId: group.id,
-          groupName: group.name,
-          optionId: option.id,
-          optionName: option.name,
-          priceDelta: option.priceDelta,
-        });
-      } else if (random.chance(0.35)) {
-        for (const option of random.sample(group.options, random.int(1, 2))) {
-          selectedOptions.push({
-            groupId: group.id,
-            groupName: group.name,
-            optionId: option.id,
-            optionName: option.name,
-            priceDelta: option.priceDelta,
-          });
-        }
-      }
-    }
-
-    const optionIds = selectedOptions
-      .map((o) => o.optionId)
-      .sort()
-      .join(",");
-
-    return {
-      lineKey: `${item.id}|${optionIds}|`,
-      menuItemId: item.id,
-      slug: item.slug,
-      name: item.name,
-      image: item.images[0] ?? "",
-      isVeg: item.isVeg,
-      unitPrice: item.price,
-      selectedOptions,
-      quantity: random.weighted([70, 22, 8]) + 1,
-      prepMinutes: item.prepMinutes,
-    } satisfies CartLine;
-  });
-}
-
-/** Status trail for a finished order, with plausible gaps between steps. */
-function completedHistory(
-  random: Random,
-  placedAt: Date,
-  finalStatus: OrderStatus,
-): { history: OrderStatusEvent[]; readyAt: Date } {
-  const history: OrderStatusEvent[] = [
-    { status: "PLACED", at: placedAt.toISOString() },
-  ];
-  let cursor = placedAt.getTime();
-  const step = (minutes: number) => {
-    cursor += minutes * 60_000;
-    return new Date(cursor).toISOString();
-  };
-
-  if (finalStatus === "CANCELLED") {
-    history.push({
-      status: "CANCELLED",
-      at: step(random.int(2, 25)),
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
-      reason: random.pick(CANCEL_REASONS),
-    });
-    return { history, readyAt: new Date(cursor) };
-  }
-
-  const by = { byUserId: ADMIN.id, byName: ADMIN.name };
-  history.push({ status: "ACCEPTED", at: step(random.int(1, 4)), ...by });
-  history.push({ status: "PREPARING", at: step(random.int(1, 3)), ...by });
-  const readyIso = step(random.int(5, 14));
-  history.push({ status: "READY", at: readyIso, ...by });
-  history.push({ status: "PICKED_UP", at: step(random.int(2, 18)), ...by });
-
-  return { history, readyAt: new Date(readyIso) };
-}
-
-/** Trail for an order still open on the board, stopping at `status`. */
-function liveHistory(
-  random: Random,
-  placedAt: Date,
-  status: OrderStatus,
-): OrderStatusEvent[] {
-  const sequence: OrderStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY"];
-  const upto = sequence.indexOf(status);
-  const history: OrderStatusEvent[] = [
-    { status: "PLACED", at: placedAt.toISOString() },
-  ];
-  let cursor = placedAt.getTime();
-
-  for (let i = 1; i <= upto; i += 1) {
-    cursor += random.int(1, 4) * 60_000;
-    history.push({
-      status: sequence[i],
-      at: new Date(cursor).toISOString(),
-      byUserId: ADMIN.id,
-      byName: ADMIN.name,
-    });
-  }
-  return history;
+function ref(random: Random): string {
+  let out = "";
+  for (let i = 0; i < 12; i += 1) out += random.int(0, 9);
+  return out;
 }
 
 export interface BuildOrdersInput {
   menu: MenuItem[];
   customers: User[];
   coupons: Coupon[];
-  /** "Now" for the generated history — the demo day. */
   now: Date;
   count?: number;
 }
@@ -218,16 +79,22 @@ export function buildSeedOrders({
   );
 
   let index = 0;
+  const tokensByDay = new Map<string, number>();
 
-  function makeOrder(placedAt: Date, status: OrderStatus): Order {
+  function tokenFor(at: Date): string {
+    const key = toDateKey(at);
+    const next = (tokensByDay.get(key) ?? 0) + 1;
+    tokensByDay.set(key, next);
+    return formatToken(next);
+  }
+
+  /** Base order with money worked out; status and payment applied by callers. */
+  function base(placedAt: Date, orderType: OrderType): Order {
     index += 1;
-    // Give the demo account roughly every twelfth order so their history fills.
     const customer = demo && index % 12 === 0 ? demo : random.pick(pool);
-
     const pricedLines = pickLines(random, sellable).map(priceLine);
     const subtotal = pricedLines.reduce((sum, l) => sum + l.lineTotal, 0);
 
-    // ~30% of orders used a coupon, and only when the minimum is actually met.
     let discount = 0;
     let couponCode: string | undefined;
     if (activeCoupons.length > 0 && random.chance(0.3)) {
@@ -244,41 +111,18 @@ export function buildSeedOrders({
       packagingCharge: PACKAGING,
       taxRate: TAX_RATE,
       appliedCouponCode: couponCode,
+      orderType,
     });
 
-    const isLive = status !== "PICKED_UP" && status !== "CANCELLED";
-    const { history, readyAt } = isLive
-      ? {
-          history: liveHistory(random, placedAt, status),
-          readyAt: new Date(placedAt.getTime() + random.int(12, 25) * 60_000),
-        }
-      : completedHistory(random, placedAt, status);
-
-    const paymentMethod = random.pick<PaymentMethod>([
-      "UPI",
-      "UPI",
-      "UPI",
-      "UPI",
-      "UPI",
-      "UPI",
-      "CARD",
-      "CARD",
-      "COUNTER",
-      "COUNTER",
-    ]);
-    const paymentStatus: PaymentStatus =
-      paymentMethod === "COUNTER"
-        ? status === "PICKED_UP"
-          ? "PAID"
-          : "PAY_AT_COUNTER"
-        : status === "CANCELLED"
-          ? "REFUNDED"
-          : "PAID";
-
     return {
-      // Replaced with a chronological number once everything is sorted.
       id: `tmp-${index}`,
+      tokenNumber: tokenFor(placedAt),
       customerId: customer.id,
+      orderType,
+      tableNumber:
+        orderType === "DINE_IN" && random.chance(0.8)
+          ? String(random.int(1, 12))
+          : undefined,
       lines: pricedLines as OrderLine[],
       itemCount: totals.itemCount,
       subtotal: totals.subtotal,
@@ -288,24 +132,156 @@ export function buildSeedOrders({
       taxRate: totals.taxRate,
       tax: totals.tax,
       total: totals.total,
-      paymentMethod,
-      paymentStatus,
-      status,
-      statusHistory: history,
-      estimatedReadyAt: readyAt.toISOString(),
+      paymentMethod: "ONLINE_UPI",
+      paymentStatus: "UNPAID",
+      paymentHistory: [],
+      status: "PLACED",
+      statusHistory: [{ status: "PLACED", at: placedAt.toISOString() }],
+      readyTimeHistory: [],
+      isScheduled: false,
       pickupName: customer.name,
       phone: customer.phone,
-      notes: random.pick(PICKUP_NOTES),
-      // Anything past PLACED has already consumed its ingredients.
-      stockDeducted: status !== "PLACED" && status !== "CANCELLED",
+      notes: random.pick(NOTES),
+      stockDeducted: false,
       createdAt: placedAt.toISOString(),
+    };
+  }
+
+  /** A finished order: paid, verified, accepted with a promise, handed over. */
+  function completed(placedAt: Date, orderType: OrderType): Order {
+    const order = base(placedAt, orderType);
+    const method: PaymentMethod =
+      orderType === "TAKEAWAY"
+        ? random.pick<PaymentMethod>(["ONLINE_UPI", "ONLINE_UPI", "ONLINE_CARD"])
+        : random.pick<PaymentMethod>(["ONLINE_UPI", "CASH", "CASH"]);
+    const isCash = method === "CASH";
+    const paymentRef = isCash ? undefined : ref(random);
+
+    let cursor = placedAt.getTime();
+    const step = (minutes: number) => {
+      cursor += minutes * 60_000;
+      return new Date(cursor).toISOString();
+    };
+
+    const history: Order["statusHistory"] = [
+      { status: "PLACED", at: placedAt.toISOString() },
+    ];
+    const payments: PaymentEvent[] = [];
+
+    if (!isCash) {
+      payments.push({
+        action: "ONLINE_PAID",
+        method,
+        amount: order.total,
+        ref: paymentRef,
+        at: placedAt.toISOString(),
+      });
+    }
+
+    // ~7% of past orders were cancelled before the kitchen started.
+    if (random.chance(0.07)) {
+      const cancelAt = step(random.int(2, 25));
+      if (!isCash) {
+        payments.push({
+          action: "REFUNDED",
+          method,
+          amount: order.total,
+          ref: paymentRef,
+          byUserId: ADMIN.id,
+          at: cancelAt,
+        });
+      }
+      history.push({
+        status: "CANCELLED",
+        at: cancelAt,
+        byUserId: ADMIN.id,
+        byName: ADMIN.name,
+        reason: random.pick(CANCEL_REASONS),
+      });
+      return {
+        ...order,
+        paymentMethod: method,
+        paymentStatus: isCash ? "UNPAID" : "REFUNDED",
+        paymentRef,
+        paymentHistory: payments,
+        status: "CANCELLED",
+        statusHistory: history,
+      };
+    }
+
+    const verifiedAt = step(random.int(1, 3));
+    payments.push({
+      action: isCash ? "CASH_RECEIVED" : "PAYMENT_VERIFIED",
+      method,
+      amount: order.total,
+      ref: paymentRef,
+      byUserId: ADMIN.id,
+      at: verifiedAt,
+    });
+
+    // The admin promises a time; the kitchen beats it about 85% of the time.
+    const promised = random.pick([10, 15, 15, 20, 20, 25, 30]);
+    const acceptedAt = step(random.int(1, 2));
+    history.push({
+      status: "ACCEPTED",
+      at: acceptedAt,
+      byUserId: ADMIN.id,
+      byName: ADMIN.name,
+    });
+    const estimatedReadyAt = new Date(
+      Date.parse(acceptedAt) + promised * 60_000,
+    ).toISOString();
+
+    history.push({
+      status: "PREPARING",
+      at: step(random.int(1, 3)),
+      byUserId: ADMIN.id,
+      byName: ADMIN.name,
+    });
+
+    const onTime = random.chance(0.85);
+    const actual = onTime
+      ? random.int(Math.max(2, promised - 7), promised - 1)
+      : promised + random.int(2, 12);
+    cursor = Date.parse(acceptedAt) + actual * 60_000;
+    history.push({
+      status: "READY",
+      at: new Date(cursor).toISOString(),
+      byUserId: ADMIN.id,
+      byName: ADMIN.name,
+    });
+    history.push({
+      status: "HANDED_OVER",
+      at: step(random.int(2, 15)),
+      byUserId: ADMIN.id,
+      byName: ADMIN.name,
+    });
+
+    const cash = isCash
+      ? { cashReceived: Math.ceil(order.total / 50) * 50 }
+      : undefined;
+
+    return {
+      ...order,
+      paymentMethod: method,
+      paymentStatus: "VERIFIED" as PaymentStatus,
+      paymentRef,
+      paymentHistory: payments,
+      cashReceived: cash?.cashReceived,
+      changeReturned: cash ? cash.cashReceived - order.total : undefined,
+      status: "HANDED_OVER",
+      statusHistory: history,
+      estimatedReadyAt,
+      readyTimeSetBy: ADMIN.id,
+      readyTimeHistory: [{ minutes: promised, at: acceptedAt, byUserId: ADMIN.id }],
+      stockDeducted: true,
     };
   }
 
   const orders: Order[] = [];
 
-  // ---- Days 1–59 ago: everything is finished -----------------------------
-  const historyCount = Math.max(0, count - TODAY_COUNT);
+  // ---- Days 1–59 ago: everything is finished ----------------------------
+  const historyCount = Math.max(0, count - TODAY_COMPLETED - 12);
   for (let i = 0; i < historyCount; i += 1) {
     const placedAt = new Date(now);
     placedAt.setDate(placedAt.getDate() - random.int(1, 59));
@@ -315,39 +291,191 @@ export function buildSeedOrders({
       random.int(0, 59),
       0,
     );
-    orders.push(makeOrder(placedAt, random.chance(0.07) ? "CANCELLED" : "PICKED_UP"));
+    // Roughly 65% takeaway, 35% dine-in.
+    orders.push(completed(placedAt, random.chance(0.65) ? "TAKEAWAY" : "DINE_IN"));
   }
 
-  /*
-    Today needs care. Picking a random peak hour and discarding anything in the
-    future leaves the kitchen board empty whenever the demo runs before lunch,
-    so today's orders are placed in the time that has ALREADY passed, and the
-    most recent few are left open across the board's four columns.
-  */
-  const completedToday = TODAY_COUNT - LIVE_COUNT;
-  for (let i = 0; i < completedToday; i += 1) {
-    // Somewhere between opening and 40 minutes ago.
-    const placedAt = new Date(now.getTime() - random.int(40, 10 * 60) * 60_000);
+  // ---- Earlier today, already finished ----------------------------------
+  for (let i = 0; i < TODAY_COMPLETED; i += 1) {
+    const placedAt = new Date(now.getTime() - random.int(60, 9 * 60) * 60_000);
     if (placedAt.getDate() !== now.getDate()) continue;
-    orders.push(makeOrder(placedAt, random.chance(0.06) ? "CANCELLED" : "PICKED_UP"));
+    orders.push(completed(placedAt, random.chance(0.65) ? "TAKEAWAY" : "DINE_IN"));
   }
 
-  // The live board: one order per column, plus a couple of extras waiting.
-  const liveStatuses: OrderStatus[] = [
-    "PLACED",
-    "PLACED",
-    "ACCEPTED",
-    "PREPARING",
-    "PREPARING",
-    "READY",
-  ];
-  liveStatuses.slice(0, LIVE_COUNT).forEach((status, i) => {
-    // Newest first: a PLACED order is ~2 minutes old, a READY one ~25.
-    const minutesAgo = 2 + i * 4 + (i === LIVE_COUNT - 1 ? 8 : 0);
-    orders.push(makeOrder(new Date(now.getTime() - minutesAgo * 60_000), status));
-  });
+  orders.push(...buildOpenOrders({ random, now, base }));
 
-  // Oldest first, so the order numbers read chronologically.
   orders.sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
   return orders.map((order, i) => ({ ...order, id: `QB-${1001 + i}` }));
+}
+
+/**
+ * The live board. Every state the admin UI has to handle is represented, so
+ * step 10 can be built and demoed without anyone having to stage data by hand.
+ */
+function buildOpenOrders({
+  random,
+  now,
+  base,
+}: {
+  random: Random;
+  now: Date;
+  base: (placedAt: Date, orderType: OrderType) => Order;
+}): Order[] {
+  const minutesAgo = (m: number) => new Date(now.getTime() - m * 60_000);
+  const iso = (d: Date) => d.toISOString();
+  const out: Order[] = [];
+
+  const paid = (order: Order, method: PaymentMethod, at: string): Order => ({
+    ...order,
+    paymentMethod: method,
+    paymentStatus: "PAID_UNVERIFIED",
+    paymentRef: ref(random),
+    paymentHistory: [
+      { action: "ONLINE_PAID", method, amount: order.total, ref: ref(random), at },
+    ],
+  });
+
+  const verify = (order: Order, at: string): Order => ({
+    ...order,
+    paymentStatus: "VERIFIED",
+    paymentHistory: [
+      ...order.paymentHistory,
+      {
+        action: "PAYMENT_VERIFIED",
+        method: order.paymentMethod,
+        amount: order.total,
+        ref: order.paymentRef,
+        byUserId: ADMIN.id,
+        at,
+      },
+    ],
+  });
+
+  const acceptAt = (order: Order, at: string, promised: number): Order => ({
+    ...order,
+    statusHistory: [
+      ...order.statusHistory,
+      { status: "ACCEPTED", at, byUserId: ADMIN.id, byName: ADMIN.name },
+    ],
+    status: "ACCEPTED",
+    estimatedReadyAt: iso(new Date(Date.parse(at) + promised * 60_000)),
+    readyTimeSetBy: ADMIN.id,
+    readyTimeHistory: [{ minutes: promised, at, byUserId: ADMIN.id }],
+    stockDeducted: true,
+  });
+
+  const advance = (order: Order, status: OrderStatus, at: string): Order => ({
+    ...order,
+    status,
+    statusHistory: [
+      ...order.statusHistory,
+      { status, at, byUserId: ADMIN.id, byName: ADMIN.name },
+    ],
+  });
+
+  // 1. Takeaway awaiting payment verification.
+  out.push(paid(base(minutesAgo(4), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(4))));
+
+  // 2. Takeaway whose payment was rejected — customer must pay again.
+  const rejectedAt = iso(minutesAgo(6));
+  const rejected = paid(
+    base(minutesAgo(9), "TAKEAWAY"),
+    "ONLINE_CARD",
+    iso(minutesAgo(9)),
+  );
+  out.push({
+    ...rejected,
+    paymentStatus: "FAILED",
+    paymentHistory: [
+      ...rejected.paymentHistory,
+      {
+        action: "PAYMENT_REJECTED",
+        method: rejected.paymentMethod,
+        amount: rejected.total,
+        ref: rejected.paymentRef,
+        reason: "No matching transaction in the UPI statement.",
+        byUserId: ADMIN.id,
+        at: rejectedAt,
+      },
+    ],
+  });
+
+  // 3. Dine-in cash, unpaid, already being prepared.
+  const cashOrder = base(minutesAgo(12), "DINE_IN");
+  out.push(
+    advance(
+      acceptAt({ ...cashOrder, paymentMethod: "CASH" }, iso(minutesAgo(10)), 20),
+      "PREPARING",
+      iso(minutesAgo(8)),
+    ),
+  );
+
+  // 4. READY but blocked from handover — the money is not confirmed.
+  const blocked = base(minutesAgo(26), "DINE_IN");
+  out.push(
+    advance(
+      advance(
+        acceptAt({ ...blocked, paymentMethod: "CASH" }, iso(minutesAgo(24)), 20),
+        "PREPARING",
+        iso(minutesAgo(22)),
+      ),
+      "READY",
+      iso(minutesAgo(3)),
+    ),
+  );
+
+  // 5. Overdue: promised 15 minutes, 28 minutes ago, still preparing.
+  const overdue = verify(
+    paid(base(minutesAgo(32), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(32))),
+    iso(minutesAgo(30)),
+  );
+  out.push(
+    advance(
+      acceptAt(overdue, iso(minutesAgo(28)), 15),
+      "PREPARING",
+      iso(minutesAgo(26)),
+    ),
+  );
+
+  // 6. A straightforward verified takeaway waiting to be accepted.
+  out.push(
+    verify(
+      paid(base(minutesAgo(2), "TAKEAWAY"), "ONLINE_UPI", iso(minutesAgo(2))),
+      iso(minutesAgo(1)),
+    ),
+  );
+
+  // ---- Scheduled: three later today, two tomorrow ----------------------
+  const slotAt = (dayOffset: number, hour: number, minute: number) => {
+    const at = new Date(now);
+    at.setDate(at.getDate() + dayOffset);
+    at.setHours(hour, minute, 0, 0);
+    return at;
+  };
+
+  const scheduledSlots: Array<[number, number, number]> = [
+    [0, Math.min(21, now.getHours() + 3), 30],
+    [0, Math.min(22, now.getHours() + 4), 0],
+    [0, Math.min(22, now.getHours() + 5), 15],
+    [1, 13, 0],
+    [1, 19, 30],
+  ];
+
+  for (const [dayOffset, hour, minute] of scheduledSlots) {
+    const slot = slotAt(dayOffset, hour, minute);
+    const placedAt = minutesAgo(random.int(20, 120));
+    const order = verify(
+      paid(base(placedAt, "TAKEAWAY"), "ONLINE_UPI", iso(placedAt)),
+      iso(minutesAgo(random.int(5, 15))),
+    );
+    out.push({
+      ...order,
+      isScheduled: true,
+      scheduledFor: iso(slot),
+      // A scheduled order's promise is the slot, not a countdown from accept.
+      estimatedReadyAt: iso(slot),
+    });
+  }
+
+  return out;
 }

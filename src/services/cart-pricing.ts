@@ -5,6 +5,7 @@ import { readCollection, readSingleton } from "@/storage";
 import type {
   CartLine,
   Coupon,
+  OrderType,
   MenuItem,
   Order,
   PricedCart,
@@ -89,12 +90,15 @@ export function buildCartLine(
 export interface PriceCartInput {
   lines: CartLine[];
   couponCode?: string;
+  /** Packaging is charged on takeaway only. Defaults to takeaway. */
+  orderType?: OrderType;
 }
 
 /** Full costing: options, coupon, packaging, GST. */
 export async function priceCart({
   lines,
   couponCode,
+  orderType = "TAKEAWAY",
 }: PriceCartInput): Promise<PricedCart> {
   await ready(false);
   const config = settings();
@@ -123,9 +127,10 @@ export async function priceCart({
   return computeTotals({
     lines: pricedLines,
     discount,
-    packagingCharge: pricedLines.length > 0 ? config.packagingCharge : 0,
+    packagingCharge: config.packagingCharge,
     taxRate: config.taxRate,
     appliedCouponCode: appliedCode,
+    orderType,
   });
 }
 

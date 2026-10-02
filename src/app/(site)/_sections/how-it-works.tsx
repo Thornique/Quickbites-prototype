@@ -17,7 +17,11 @@ export function HowItWorks() {
   return (
     <section className="bg-surface py-12 sm:py-16">
       <Container>
-        <SectionHeading eyebrow={t.howItWorks.eyebrow} title={t.howItWorks.title} />
+        <SectionHeading
+          eyebrow={t.howItWorks.eyebrow}
+          title={t.howItWorks.title}
+          description={t.howItWorks.note}
+        />
 
         <ol className="relative mt-9 grid gap-8 sm:grid-cols-3 sm:gap-6">
           {/* The rule that makes it a timeline rather than a grid. */}

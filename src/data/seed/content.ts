@@ -273,6 +273,11 @@ export const SEED_STORE_SETTINGS: StoreSettings = {
   packagingCharge: ORDER_DEFAULTS.packagingCharge,
   bookingSlotMinutes: 30,
   maxCoversPerSlot: 16,
+  unpaidTakeawayTimeoutMinutes: 15,
+  requirePaymentBeforePrepForCash: false,
+  scheduleMinLeadMinutes: 30,
+  maxOrdersPerSlot: 8,
+  scheduleCancelCutoffMinutes: 60,
   notificationSound: true,
   createdAt: CREATED_AT,
 };

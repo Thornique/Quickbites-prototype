@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/table";
 import { toErrorMessage } from "@/lib/errors";
 import { formatNumber } from "@/lib/format";
+import { flagsFor } from "@/services/orders";
+import type { Order } from "@/types";
 import {
   COLLECTIONS,
   ensureSeeded,
@@ -41,16 +43,92 @@ interface Row {
   bytes: number;
 }
 
+interface OrderBreakdown {
+  byType: Record<string, number>;
+  byPaymentStatus: Record<string, number>;
+  byPaymentMethod: Record<string, number>;
+  scheduled: number;
+  overdue: number;
+  awaitingVerification: number;
+  cashPending: number;
+  blockedFromHandover: number;
+}
+
 interface Snapshot {
   rows: Row[];
   totalBytes: number;
   images: { count: number; bytes: number };
+  orders: OrderBreakdown;
+}
+
+/** Order-flow counts, so the new rules can be checked at a glance. */
+function breakdownOf(orders: Order[]): OrderBreakdown {
+  const byType: Record<string, number> = {};
+  const byPaymentStatus: Record<string, number> = {};
+  const byPaymentMethod: Record<string, number> = {};
+  let scheduled = 0;
+  let overdue = 0;
+  let awaitingVerification = 0;
+  let cashPending = 0;
+  let blockedFromHandover = 0;
+
+  for (const order of orders) {
+    byType[order.orderType] = (byType[order.orderType] ?? 0) + 1;
+    byPaymentStatus[order.paymentStatus] =
+      (byPaymentStatus[order.paymentStatus] ?? 0) + 1;
+    byPaymentMethod[order.paymentMethod] =
+      (byPaymentMethod[order.paymentMethod] ?? 0) + 1;
+    if (order.isScheduled && order.status !== "CANCELLED") scheduled += 1;
+
+    const flags = flagsFor(order);
+    if (flags.isOverdue) overdue += 1;
+    if (flags.awaitingVerification) awaitingVerification += 1;
+    if (flags.cashPending) cashPending += 1;
+    if (flags.blockedFromHandover) blockedFromHandover += 1;
+  }
+
+  return {
+    byType,
+    byPaymentStatus,
+    byPaymentMethod,
+    scheduled,
+    overdue,
+    awaitingVerification,
+    cashPending,
+    blockedFromHandover,
+  };
 }
 
 function formatBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+}
+
+function CountCard({
+  title,
+  counts,
+}: {
+  title: string;
+  counts: Record<string, number>;
+}) {
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  return (
+    <Card className="p-4">
+      <p className="text-xs font-semibold tracking-wide text-ink-muted uppercase">
+        {title}
+      </p>
+      <dl className="mt-2 grid gap-1">
+        {entries.length === 0 && <dd className="text-sm text-ink-muted">None</dd>}
+        {entries.map(([label, value]) => (
+          <div key={label} className="flex items-baseline justify-between gap-3">
+            <dt className="truncate text-sm text-ink-muted">{label}</dt>
+            <dd className="nums text-sm font-semibold text-ink">{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </Card>
+  );
 }
 
 export function DevDataPanel() {
@@ -69,7 +147,12 @@ export function DevDataPanel() {
       bytes: footprint.perCollection[collection] ?? 0,
     }));
     const images = await getUploadedImageFootprint();
-    setSnapshot({ rows, totalBytes: footprint.bytes, images });
+    setSnapshot({
+      rows,
+      totalBytes: footprint.bytes,
+      images,
+      orders: breakdownOf(readCollection<Order>("orders")),
+    });
   }, []);
 
   useEffect(() => {
@@ -179,6 +262,31 @@ export function DevDataPanel() {
           </p>
         </div>
       )}
+
+      <section>
+        <h2 className="text-sm font-semibold text-ink">Order flow</h2>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <CountCard title="By order type" counts={snapshot.orders.byType} />
+          <CountCard
+            title="By payment status"
+            counts={snapshot.orders.byPaymentStatus}
+          />
+          <CountCard
+            title="By payment method"
+            counts={snapshot.orders.byPaymentMethod}
+          />
+          <CountCard
+            title="Needs attention"
+            counts={{
+              Scheduled: snapshot.orders.scheduled,
+              Overdue: snapshot.orders.overdue,
+              "Awaiting verification": snapshot.orders.awaitingVerification,
+              "Cash pending": snapshot.orders.cashPending,
+              "Blocked handover": snapshot.orders.blockedFromHandover,
+            }}
+          />
+        </div>
+      </section>
 
       <Card flush>
         <Table>

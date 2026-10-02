@@ -58,7 +58,8 @@ export const enSite = {
     opensAt: (time: string) => `Ordering opens at ${time}`,
     pickUpAt: "Pick up at",
     addressShort: "Bombay Bazar, Khandwa",
-    takeawayOnly: "Takeaway only — no delivery",
+    dineInOrTakeaway: "Takeaway or dine in — no delivery",
+    prepaidNote: "Takeaway orders are prepaid — so we cook only for you, fresh.",
     busyNow: (count: number) =>
       count === 1 ? "1 order in the kitchen" : `${count} orders in the kitchen`,
   },
@@ -104,18 +105,19 @@ export const enSite = {
   howItWorks: {
     eyebrow: "How takeaway works",
     title: "Three steps, about 12 minutes",
+    note: "Takeaway orders are prepaid — so we cook only for you, fresh.",
     steps: [
       {
         title: "Order online",
-        body: "Pick your items, customise them, and pay by UPI or card — or choose to pay at the counter.",
+        body: "Choose takeaway or dine in, customise your items, and pay by UPI or card. Dining in, you can also pay cash at the counter.",
       },
       {
         title: "We cook fresh",
-        body: "Nothing sits under a lamp. The kitchen starts your order the moment it's accepted.",
+        body: "Nothing sits under a lamp. The kitchen starts the moment we confirm your order, and tells you exactly how long it will take.",
       },
       {
-        title: "Pick up hot",
-        body: "Watch the live status and collect from Bombay Bazar when it says ready.",
+        title: "Pick up or sit down",
+        body: "Watch the live status and collect from Bombay Bazar when it says ready — or take a seat and we'll bring it over.",
       },
     ],
   },

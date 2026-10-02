@@ -1,20 +1,27 @@
-import { conflict, forbidden, invalid, notFound } from "@/lib/errors";
-import { estimateReadyAtForLines } from "@/lib/prep-time";
+import {
+  conflict,
+  forbidden,
+  invalid,
+  notFound,
+  paymentNotVerified,
+} from "@/lib/errors";
+import { estimatePrepMinutes } from "@/lib/prep-time";
 import { readCollection, readSingleton, writeCollection } from "@/storage";
 import type {
   CartLine,
   MenuItem,
   Order,
   OrderFilters,
+  OrderFlags,
   OrderLine,
   OrderStatus,
-  OrderStatusEvent,
+  OrderType,
+  PaymentEvent,
   PaymentMethod,
-  PaymentStatus,
   StoreSettings,
   User,
 } from "@/types";
-import { ACTIVE_ORDER_STATUSES } from "@/types";
+import { ACTIVE_ORDER_STATUSES, isOnlineMethod } from "@/types";
 import { countActiveOrders, priceCart, validateCartAvailability } from "./cart-pricing";
 import {
   getCurrentUser,
@@ -26,21 +33,45 @@ import {
 } from "./common";
 import { recordCouponUse } from "./coupons";
 import { deductForOrder, projectShortfall, restockForOrder } from "./inventory";
+import {
+  NEXT_STATUS,
+  applyAutoCancellations,
+  canHandOver,
+  canStartKitchen,
+  deriveFlags,
+  generatePaymentRef,
+  isMethodAllowed,
+  isPaymentVerified,
+  needsRefund,
+  nextTokenNumber,
+  scheduleCancelDeadline,
+} from "./order-rules";
+import {
+  buildSchedulableDays,
+  buildSlotsForDate,
+  checkSlot,
+  type ScheduleSlot,
+} from "./order-schedule";
 
-/** Which transitions the kitchen board is allowed to make. */
-const NEXT_STATUS: Record<OrderStatus, OrderStatus[]> = {
-  PLACED: ["ACCEPTED", "CANCELLED"],
-  ACCEPTED: ["PREPARING", "CANCELLED"],
-  PREPARING: ["READY", "CANCELLED"],
-  READY: ["PICKED_UP", "CANCELLED"],
-  PICKED_UP: [],
-  CANCELLED: [],
-};
+const MIN_READY_MINUTES = 1;
+const MAX_READY_MINUTES = 90;
 
 function settings(): StoreSettings {
   const stored = readSingleton<StoreSettings>("storeSettings");
   if (!stored) throw notFound("Store settings");
   return stored;
+}
+
+/**
+ * Reads orders, first applying the auto-cancel rule for takeaway payments
+ * that were rejected and never retried. There is no server to run a timer, so
+ * the rule is evaluated on read and only written when it actually fires.
+ */
+function readOrders(): Order[] {
+  const rows = readCollection<Order>("orders");
+  const { orders, changed } = applyAutoCancellations(rows, settings());
+  if (changed) writeCollection("orders", orders, "update");
+  return orders;
 }
 
 function nextOrderNumber(): string {
@@ -57,6 +88,46 @@ function nextOrderNumber(): string {
   return `QB-${value}`;
 }
 
+function persist(order: Order): Order {
+  const rows = readCollection<Order>("orders");
+  writeCollection(
+    "orders",
+    rows.map((o) => (o.id === order.id ? order : o)),
+    "update",
+    order.id,
+  );
+  return order;
+}
+
+function withStatus(
+  order: Order,
+  status: OrderStatus,
+  by: Pick<User, "id" | "name"> | null,
+  reason?: string,
+  extra: Partial<Order> = {},
+): Order {
+  const at = nowIso();
+  return {
+    ...order,
+    ...extra,
+    status,
+    statusHistory: [
+      ...order.statusHistory,
+      { status, at, byUserId: by?.id, byName: by?.name, reason },
+    ],
+    updatedAt: at,
+  };
+}
+
+function withPayment(order: Order, event: PaymentEvent, extra: Partial<Order>): Order {
+  return {
+    ...order,
+    ...extra,
+    paymentHistory: [...order.paymentHistory, event],
+    updatedAt: event.at,
+  };
+}
+
 export function isActiveStatus(status: OrderStatus): boolean {
   return (ACTIVE_ORDER_STATUSES as readonly OrderStatus[]).includes(status);
 }
@@ -66,8 +137,12 @@ export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order
 
   if (filters.customerId)
     rows = rows.filter((o) => o.customerId === filters.customerId);
+  if (filters.orderType) rows = rows.filter((o) => o.orderType === filters.orderType);
   if (filters.paymentMethod)
     rows = rows.filter((o) => o.paymentMethod === filters.paymentMethod);
+  if (filters.paymentStatus)
+    rows = rows.filter((o) => o.paymentStatus === filters.paymentStatus);
+  if (filters.scheduledOnly) rows = rows.filter((o) => o.isScheduled);
 
   if (filters.status && filters.status !== "ALL") {
     rows =
@@ -87,7 +162,10 @@ export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order
   const term = filters.search?.trim().toLowerCase();
   if (term) {
     rows = rows.filter((o) =>
-      [o.id, o.pickupName, o.phone].join(" ").toLowerCase().includes(term),
+      [o.id, o.tokenNumber, o.pickupName, o.phone, o.tableNumber ?? ""]
+        .join(" ")
+        .toLowerCase()
+        .includes(term),
     );
   }
 
@@ -96,34 +174,62 @@ export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order
 
 export async function listOrders(filters: OrderFilters = {}): Promise<Order[]> {
   await ready();
-  return filterOrders(readCollection<Order>("orders"), filters);
+  return filterOrders(readOrders(), filters);
 }
 
-/** The signed-in customer's own orders. */
 export async function listMyOrders(): Promise<Order[]> {
   await ready();
   const user = requireUser();
-  return filterOrders(readCollection<Order>("orders"), { customerId: user.id });
+  return filterOrders(readOrders(), { customerId: user.id });
 }
 
 export async function getOrder(id: string): Promise<Order> {
   await ready();
-  const order = readCollection<Order>("orders").find((o) => o.id === id);
+  const order = readOrders().find((o) => o.id === id);
   if (!order) throw notFound(`Order ${id}`);
   return order;
 }
 
+/** Computed flags (overdue, due-to-start, blocked handover, …). */
+export function flagsFor(order: Order, now = new Date()): OrderFlags {
+  return deriveFlags(order, settings(), now);
+}
+
+/**
+ * Provisional estimate shown before an admin has accepted the order. The real
+ * promise is set by the admin on acceptance — this is only "usually about N".
+ */
+export async function getProvisionalEstimate(lines: CartLine[]): Promise<number> {
+  await ready(false);
+  const config = settings();
+  return estimatePrepMinutes({
+    prepMinutes: lines.map((line) => line.prepMinutes),
+    activeOrders: countActiveOrders(),
+    basePrepBufferMinutes: config.basePrepBufferMinutes,
+    perActiveOrderMinutes: config.perActiveOrderMinutes,
+  });
+}
+
 export interface PlaceOrderInput {
   lines: CartLine[];
+  orderType: OrderType;
+  paymentMethod: PaymentMethod;
   pickupName: string;
   phone: string;
   notes?: string;
   couponCode?: string;
-  paymentMethod: PaymentMethod;
-  /** Set when the customer picked a later slot rather than "as soon as possible". */
+  tableNumber?: string;
+  /** ISO slot start; takeaway only. */
   scheduledFor?: string;
 }
 
+/**
+ * Creates the order.
+ *
+ * For an online payment this runs *after* the simulated gateway succeeded, so
+ * the order is born PAID_UNVERIFIED carrying a reference the admin will check.
+ * Dine-in cash is born UNPAID.
+ */
 export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
   await ready();
   const user = requireUser();
@@ -133,22 +239,46 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
   if (!config.acceptingOrders) {
     throw conflict("We've paused new orders for now. Please try again shortly.");
   }
+  if (!isMethodAllowed(input.orderType, input.paymentMethod)) {
+    throw invalid(
+      input.orderType === "TAKEAWAY"
+        ? "Takeaway orders are prepaid online — cash is only available for dine-in."
+        : "That payment method isn't available for dine-in.",
+      "paymentMethod",
+    );
+  }
 
-  // Re-check availability: an item can sell out between cart and payment.
+  const isScheduled = !!input.scheduledFor;
+  if (isScheduled) {
+    if (input.orderType !== "TAKEAWAY") {
+      throw invalid("Only takeaway orders can be scheduled.", "scheduledFor");
+    }
+    const slot = checkSlot(input.scheduledFor!, config, readOrders());
+    if (!slot.ok) throw conflict(slot.reason ?? "That slot is not available.");
+  }
+
   const availability = await validateCartAvailability(input.lines);
   if (!availability.ok) {
     const names = availability.unavailable.map((u) => u.name).join(", ");
     throw conflict(`${names} just sold out. Please remove it and try again.`);
   }
 
-  const priced = await priceCart({ lines: input.lines, couponCode: input.couponCode });
+  const priced = await priceCart({
+    lines: input.lines,
+    couponCode: input.couponCode,
+    orderType: input.orderType,
+  });
 
-  const readyAt = estimateReadyAtForLines(input.lines, countActiveOrders(), config);
+  const online = isOnlineMethod(input.paymentMethod);
+  const at = nowIso();
+  const paymentRef = online ? generatePaymentRef() : undefined;
 
-  const placedAt = nowIso();
   const order: Order = {
     id: nextOrderNumber(),
+    tokenNumber: nextTokenNumber(),
     customerId: user.id,
+    orderType: input.orderType,
+    tableNumber: input.orderType === "DINE_IN" ? input.tableNumber?.trim() : undefined,
     lines: priced.lines as OrderLine[],
     itemCount: priced.itemCount,
     subtotal: priced.subtotal,
@@ -159,172 +289,439 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     tax: priced.tax,
     total: priced.total,
     paymentMethod: input.paymentMethod,
-    paymentStatus: input.paymentMethod === "COUNTER" ? "PAY_AT_COUNTER" : "PAID",
+    paymentStatus: online ? "PAID_UNVERIFIED" : "UNPAID",
+    paymentRef,
+    paymentHistory: online
+      ? [
+          {
+            action: "ONLINE_PAID",
+            method: input.paymentMethod,
+            amount: priced.total,
+            ref: paymentRef,
+            at,
+          },
+        ]
+      : [],
     status: "PLACED",
-    statusHistory: [{ status: "PLACED", at: placedAt }],
-    estimatedReadyAt: (input.scheduledFor
-      ? new Date(input.scheduledFor)
-      : readyAt
-    ).toISOString(),
+    statusHistory: [{ status: "PLACED", at }],
+    // Deliberately unset for ASAP orders: the cafe promises a time on accept.
+    estimatedReadyAt: isScheduled ? input.scheduledFor : undefined,
+    readyTimeHistory: [],
+    isScheduled,
     scheduledFor: input.scheduledFor,
     pickupName: input.pickupName.trim(),
     phone: input.phone.trim(),
     notes: input.notes?.trim() || undefined,
     stockDeducted: false,
-    createdAt: placedAt,
+    createdAt: at,
   };
 
-  const orders = readCollection<Order>("orders");
-  writeCollection("orders", [...orders, order], "create", order.id);
-
+  writeCollection(
+    "orders",
+    [...readCollection<Order>("orders"), order],
+    "create",
+    order.id,
+  );
   if (priced.appliedCouponCode) recordCouponUse(priced.appliedCouponCode);
-
   return order;
 }
 
-function writeStatus(
-  order: Order,
-  status: OrderStatus,
-  by: Pick<User, "id" | "name"> | null,
-  reason?: string,
-  extra: Partial<Order> = {},
-): Order {
-  const event: OrderStatusEvent = {
-    status,
-    at: nowIso(),
-    byUserId: by?.id,
-    byName: by?.name,
-    reason,
-  };
-  const next: Order = {
-    ...order,
-    ...extra,
-    status,
-    statusHistory: [...order.statusHistory, event],
-    updatedAt: event.at,
-  };
+/* ---------------------------------------------------------------- */
+/* Payment actions                                                   */
+/* ---------------------------------------------------------------- */
 
-  const orders = readCollection<Order>("orders");
-  writeCollection(
-    "orders",
-    orders.map((o) => (o.id === order.id ? next : o)),
-    "update",
-    order.id,
+/** Customer pays again after the cafe rejected the first attempt. */
+export async function retryOnlinePayment(
+  id: string,
+  method: PaymentMethod,
+): Promise<Order> {
+  await ready();
+  const user = requireUser();
+  const order = await getOrder(id);
+
+  if (order.customerId !== user.id) throw forbidden("That isn't your order.");
+  if (order.status === "CANCELLED") {
+    throw conflict("This order was cancelled. Please place a new one.");
+  }
+  if (order.paymentStatus !== "FAILED") {
+    throw conflict("This order doesn't need another payment.");
+  }
+  if (!isOnlineMethod(method)) throw invalid("Choose UPI or card.", "paymentMethod");
+
+  const ref = generatePaymentRef();
+  return persist(
+    withPayment(
+      order,
+      { action: "ONLINE_PAID", method, amount: order.total, ref, at: nowIso() },
+      { paymentMethod: method, paymentStatus: "PAID_UNVERIFIED", paymentRef: ref },
+    ),
   );
-  return next;
+}
+
+/** Dine-in customer decides to pay online instead of cash. */
+export async function switchToOnline(
+  id: string,
+  method: PaymentMethod,
+): Promise<Order> {
+  await ready();
+  const user = requireUser();
+  const order = await getOrder(id);
+
+  if (order.customerId !== user.id) throw forbidden("That isn't your order.");
+  if (order.orderType !== "DINE_IN") throw conflict("Only dine-in orders can switch.");
+  /*
+    Online → cash is deliberately not offered: money already taken online
+    would have to be refunded first, which this prototype does not simulate.
+  */
+  if (order.paymentMethod !== "CASH" || order.paymentStatus !== "UNPAID") {
+    throw conflict("This order can't be switched to online payment.");
+  }
+  if (order.status === "CANCELLED" || order.status === "HANDED_OVER") {
+    throw conflict("This order is already closed.");
+  }
+  if (!isOnlineMethod(method)) throw invalid("Choose UPI or card.", "paymentMethod");
+
+  const ref = generatePaymentRef();
+  return persist(
+    withPayment(
+      order,
+      { action: "SWITCHED_TO_ONLINE", method, amount: order.total, ref, at: nowIso() },
+      { paymentMethod: method, paymentStatus: "PAID_UNVERIFIED", paymentRef: ref },
+    ),
+  );
+}
+
+/** Admin confirms the money landed. */
+export async function verifyPayment(id: string): Promise<Order> {
+  await ready();
+  const admin = requirePermission("ORDERS");
+  const order = await getOrder(id);
+
+  if (order.paymentStatus !== "PAID_UNVERIFIED") {
+    throw conflict("There is no online payment waiting to be verified.");
+  }
+
+  const verified = persist(
+    withPayment(
+      order,
+      {
+        action: "PAYMENT_VERIFIED",
+        method: order.paymentMethod,
+        amount: order.total,
+        ref: order.paymentRef,
+        byUserId: admin.id,
+        at: nowIso(),
+      },
+      { paymentStatus: "VERIFIED" },
+    ),
+  );
+  logActivity(admin, "PAYMENT_VERIFIED", `Verified payment for ${id}`, id);
+  return verified;
+}
+
+/** Admin rejects the claimed payment; the customer may pay again. */
+export async function rejectPayment(id: string, reason: string): Promise<Order> {
+  await ready();
+  const admin = requirePermission("ORDERS");
+  const order = await getOrder(id);
+
+  if (!reason.trim()) {
+    throw invalid("Give a reason for rejecting the payment.", "reason");
+  }
+  if (order.paymentStatus !== "PAID_UNVERIFIED") {
+    throw conflict("There is no online payment waiting to be verified.");
+  }
+
+  const rejected = persist(
+    withPayment(
+      order,
+      {
+        action: "PAYMENT_REJECTED",
+        method: order.paymentMethod,
+        amount: order.total,
+        ref: order.paymentRef,
+        reason: reason.trim(),
+        byUserId: admin.id,
+        at: nowIso(),
+      },
+      { paymentStatus: "FAILED" },
+    ),
+  );
+  logActivity(admin, "PAYMENT_REJECTED", `Rejected payment for ${id}: ${reason}`, id);
+  return rejected;
+}
+
+/** Admin takes cash at the counter; change is worked out for them. */
+export async function recordCashPayment(
+  id: string,
+  amountReceived: number,
+): Promise<Order> {
+  await ready();
+  const admin = requirePermission("ORDERS");
+  const order = await getOrder(id);
+
+  if (order.paymentMethod !== "CASH") throw conflict("This is not a cash order.");
+  if (order.paymentStatus === "VERIFIED") throw conflict("This order is already paid.");
+  if (amountReceived < order.total) {
+    throw invalid(`That is less than the bill of ₹${order.total}.`, "amountReceived");
+  }
+
+  const change = amountReceived - order.total;
+  const paid = persist(
+    withPayment(
+      order,
+      {
+        action: "CASH_RECEIVED",
+        method: "CASH",
+        amount: amountReceived,
+        byUserId: admin.id,
+        at: nowIso(),
+      },
+      {
+        paymentStatus: "VERIFIED",
+        cashReceived: amountReceived,
+        changeReturned: change,
+      },
+    ),
+  );
+  logActivity(admin, "CASH_RECEIVED", `Took ₹${amountReceived} cash for ${id}`, id);
+  return paid;
+}
+
+/* ---------------------------------------------------------------- */
+/* Kitchen actions                                                   */
+/* ---------------------------------------------------------------- */
+
+function assertReadyMinutes(minutes: number): void {
+  if (
+    !Number.isFinite(minutes) ||
+    minutes < MIN_READY_MINUTES ||
+    minutes > MAX_READY_MINUTES
+  ) {
+    throw invalid(
+      `Set a ready time between ${MIN_READY_MINUTES} and ${MAX_READY_MINUTES} minutes.`,
+      "readyInMinutes",
+    );
+  }
 }
 
 export interface AcceptOptions {
-  /** Minutes the admin added in the Accept dialog (+5 / +10). */
-  extraMinutes?: number;
   /** Proceed even though stock would go negative; requires a reason. */
   overrideShortfall?: boolean;
   overrideReason?: string;
 }
 
 /**
- * Accepting is the point stock is committed. Refuses when an ingredient would
- * go negative unless the admin explicitly overrides with a reason.
+ * Accepts an order and promises a ready time.
+ *
+ * `readyInMinutes` is required: the admin, not the algorithm, decides what the
+ * customer is told. Scheduled orders ignore it — their ready time is the slot.
  */
-export async function acceptOrder(
+export async function accept(
   id: string,
+  readyInMinutes: number,
   options: AcceptOptions = {},
 ): Promise<Order> {
   await ready();
   const admin = requirePermission("ORDERS");
+  const config = settings();
   const order = await getOrder(id);
 
   if (order.status !== "PLACED") {
     throw conflict(`Order ${id} has already been ${order.status.toLowerCase()}.`);
   }
 
+  const gate = canStartKitchen(order, config);
+  if (!gate.ok) throw paymentNotVerified(gate.reason!);
+
+  if (!order.isScheduled) assertReadyMinutes(readyInMinutes);
+
   const shortfall = projectShortfall(order);
   if (shortfall.length > 0 && !options.overrideShortfall) {
-    const names = shortfall.map((s) => s.item.name).join(", ");
-    throw conflict(`Not enough stock for: ${names}. Accept anyway to override.`);
+    throw conflict(
+      `Not enough stock for: ${shortfall.map((s) => s.item.name).join(", ")}. Accept anyway to override.`,
+    );
   }
   if (shortfall.length > 0 && !options.overrideReason?.trim()) {
     throw invalid("Give a reason for overriding the stock warning.", "overrideReason");
   }
 
-  const extra = Math.max(0, options.extraMinutes ?? 0);
-  const estimatedReadyAt = new Date(
-    Date.parse(order.estimatedReadyAt) + extra * 60_000,
-  ).toISOString();
+  const at = nowIso();
+  const estimatedReadyAt = order.isScheduled
+    ? order.scheduledFor!
+    : new Date(Date.now() + readyInMinutes * 60_000).toISOString();
 
-  const accepted = writeStatus(order, "ACCEPTED", admin, options.overrideReason, {
-    estimatedReadyAt,
-    stockDeducted: true,
-  });
+  const accepted = persist(
+    withStatus(order, "ACCEPTED", admin, options.overrideReason, {
+      estimatedReadyAt,
+      readyTimeSetBy: admin.id,
+      readyTimeHistory: order.isScheduled
+        ? order.readyTimeHistory
+        : [
+            ...order.readyTimeHistory,
+            { minutes: readyInMinutes, at, byUserId: admin.id },
+          ],
+      stockDeducted: true,
+    }),
+  );
 
   deductForOrder(accepted, admin.id);
-  logActivity(admin, "ORDER_ACCEPTED", `Accepted order ${id}`, id);
+  logActivity(
+    admin,
+    "ORDER_ACCEPTED",
+    `Accepted ${id}, ready in ${readyInMinutes} min`,
+    id,
+  );
   return accepted;
 }
 
-/** Generic forward transition used by the board's one-click buttons. */
-export async function advanceOrder(id: string, status: OrderStatus): Promise<Order> {
+/** The single action behind the admin's "Verify & accept" button. */
+export async function verifyAndAccept(
+  id: string,
+  readyInMinutes: number,
+  options: AcceptOptions = {},
+): Promise<Order> {
+  await verifyPayment(id);
+  return accept(id, readyInMinutes, options);
+}
+
+/** +5 / +10 when the kitchen is running late. Pushed to the customer live. */
+export async function extendReadyTime(
+  id: string,
+  extraMinutes: number,
+  reason?: string,
+): Promise<Order> {
   await ready();
   const admin = requirePermission("ORDERS");
   const order = await getOrder(id);
 
-  if (status === "ACCEPTED") return acceptOrder(id);
-  if (status === "CANCELLED") {
-    throw invalid("Use cancelOrder so a reason is recorded.");
+  if (!order.estimatedReadyAt) {
+    throw conflict("Accept the order before changing its ready time.");
   }
+  if (order.status === "HANDED_OVER" || order.status === "CANCELLED") {
+    throw conflict("This order is already closed.");
+  }
+  assertReadyMinutes(extraMinutes);
+
+  const at = nowIso();
+  const extended = persist({
+    ...order,
+    estimatedReadyAt: new Date(
+      Date.parse(order.estimatedReadyAt) + extraMinutes * 60_000,
+    ).toISOString(),
+    readyTimeSetBy: admin.id,
+    readyTimeHistory: [
+      ...order.readyTimeHistory,
+      { minutes: extraMinutes, at, byUserId: admin.id, reason },
+    ],
+    updatedAt: at,
+  });
+
+  logActivity(admin, "READY_TIME_EXTENDED", `Added ${extraMinutes} min to ${id}`, id);
+  return extended;
+}
+
+/** Forward transition for the board's one-click buttons. */
+export async function advanceOrder(id: string, status: OrderStatus): Promise<Order> {
+  await ready();
+  const admin = requirePermission("ORDERS");
+  const config = settings();
+  const order = await getOrder(id);
+
+  if (status === "ACCEPTED") throw invalid("Use accept() so a ready time is recorded.");
+  if (status === "CANCELLED") throw invalid("Use cancelOrder so a reason is recorded.");
   if (!NEXT_STATUS[order.status].includes(status)) {
     throw conflict(`Order ${id} cannot go from ${order.status} to ${status}.`);
   }
 
-  const next = writeStatus(order, status, admin);
-  logActivity(
-    admin,
-    `ORDER_${status}`,
-    `Marked order ${id} as ${status.toLowerCase()}`,
-    id,
-  );
+  if (status === "PREPARING") {
+    const gate = canStartKitchen(order, config);
+    if (!gate.ok) throw paymentNotVerified(gate.reason!);
+  }
+  if (status === "HANDED_OVER") {
+    const gate = canHandOver(order);
+    if (!gate.ok) throw paymentNotVerified(gate.reason!);
+  }
+
+  const next = persist(withStatus(order, status, admin));
+  logActivity(admin, `ORDER_${status}`, `Marked ${id} as ${status.toLowerCase()}`, id);
   return next;
 }
 
+/** Marking ready early is allowed, so this is just a guarded transition. */
+export async function markReady(id: string): Promise<Order> {
+  return advanceOrder(id, "READY");
+}
+
+/** "Picked up" for takeaway, "Served" for dine-in. */
+export async function handOver(id: string): Promise<Order> {
+  return advanceOrder(id, "HANDED_OVER");
+}
+
 /**
- * Cancellation. Admins may cancel any open order; a customer may only cancel
- * their own, and only before the kitchen has accepted it.
+ * Cancellation. Admins may cancel any open order. A customer may cancel their
+ * own before the kitchen accepts it, or — for a scheduled order — until the
+ * cutoff before the slot.
  */
 export async function cancelOrder(id: string, reason: string): Promise<Order> {
   await ready();
   const user = requireUser();
+  const config = settings();
   const order = await getOrder(id);
 
-  if (!reason.trim())
+  if (!reason.trim()) {
     throw invalid("Please give a reason for the cancellation.", "reason");
+  }
   if (order.status === "CANCELLED") throw conflict("That order is already cancelled.");
-  if (order.status === "PICKED_UP")
-    throw conflict("That order has already been picked up.");
+  if (order.status === "HANDED_OVER") throw conflict("That order is already closed.");
 
-  const isOwner = order.customerId === user.id;
   const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
-
   if (!isAdmin) {
-    if (!isOwner) throw forbidden("You can only cancel your own orders.");
-    if (order.status !== "PLACED") {
+    if (order.customerId !== user.id) {
+      throw forbidden("You can only cancel your own orders.");
+    }
+    if (order.isScheduled) {
+      const deadline = scheduleCancelDeadline(
+        order,
+        config.scheduleCancelCutoffMinutes,
+      );
+      if (deadline && Date.now() >= deadline.getTime()) {
+        throw conflict(
+          `Scheduled orders can only be cancelled up to ${config.scheduleCancelCutoffMinutes} minutes before pickup. Please call the store.`,
+        );
+      }
+    } else if (order.status !== "PLACED") {
       throw conflict(
         "The kitchen has already started this order. Please call the store.",
       );
     }
   }
 
-  const cancelled = writeStatus(order, "CANCELLED", isAdmin ? user : null, reason, {
-    paymentStatus:
-      order.paymentStatus === "PAID"
-        ? ("REFUNDED" as PaymentStatus)
-        : order.paymentStatus,
+  const refunding = needsRefund(order.paymentStatus);
+  const at = nowIso();
+
+  let cancelled = withStatus(order, "CANCELLED", isAdmin ? user : null, reason, {
     stockDeducted: false,
   });
+  if (refunding) {
+    cancelled = withPayment(
+      cancelled,
+      {
+        action: "REFUNDED",
+        method: order.paymentMethod,
+        amount: order.total,
+        ref: order.paymentRef,
+        reason: reason.trim(),
+        byUserId: isAdmin ? user.id : undefined,
+        at,
+      },
+      { paymentStatus: "REFUNDED" },
+    );
+  }
+  persist(cancelled);
 
-  // Only return stock that was actually taken.
   if (order.stockDeducted) restockForOrder(order, user.id);
-  if (isAdmin)
-    logActivity(user, "ORDER_CANCELLED", `Cancelled order ${id}: ${reason}`, id);
+  if (isAdmin) logActivity(user, "ORDER_CANCELLED", `Cancelled ${id}: ${reason}`, id);
 
   return cancelled;
 }
@@ -347,10 +744,8 @@ export async function buildReorderLines(orderId: string): Promise<{
       skipped.push(line.name.en);
       continue;
     }
-    // Re-read the current price rather than the historical one.
     lines.push({ ...line, unitPrice: item.price, prepMinutes: item.prepMinutes });
   }
-
   return { lines, skipped };
 }
 
@@ -362,14 +757,14 @@ export async function getBoardCounts(): Promise<Record<OrderStatus, number>> {
     ACCEPTED: 0,
     PREPARING: 0,
     READY: 0,
-    PICKED_UP: 0,
+    HANDED_OVER: 0,
     CANCELLED: 0,
   } satisfies Record<OrderStatus, number>;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  for (const order of readCollection<Order>("orders")) {
+  for (const order of readOrders()) {
     if (
       Date.parse(order.createdAt) >= today.getTime() ||
       isActiveStatus(order.status)
@@ -380,8 +775,25 @@ export async function getBoardCounts(): Promise<Record<OrderStatus, number>> {
   return counts;
 }
 
-/** Used by the customer tracking page to decide whether cancelling is allowed. */
 export function canCustomerCancel(order: Order): boolean {
   const user = getCurrentUser();
-  return !!user && order.customerId === user.id && order.status === "PLACED";
+  if (!user || order.customerId !== user.id) return false;
+  return flagsFor(order).canCustomerCancel;
 }
+
+/** Bookable scheduled-takeaway slots for one date. */
+export async function getAvailableSlots(date: Date): Promise<ScheduleSlot[]> {
+  await ready(false);
+  return buildSlotsForDate(date, settings(), readOrders());
+}
+
+/** Today and tomorrow, which is as far ahead as scheduling is offered. */
+export async function getSchedulableDays(): Promise<
+  Array<{ date: string; slots: ScheduleSlot[] }>
+> {
+  await ready(false);
+  return buildSchedulableDays(settings());
+}
+
+export { isPaymentVerified };
+export type { ScheduleSlot };

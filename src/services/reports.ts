@@ -1,6 +1,7 @@
 import { toDateKey } from "@/lib/format";
 import { readCollection } from "@/storage";
-import type { Coupon, MenuItem, Order, PaymentMethod, User } from "@/types";
+import type { Coupon, MenuItem, Order, OrderType, PaymentMethod, User } from "@/types";
+import { flagsFor } from "./orders";
 import { ready, requirePermission } from "./common";
 
 export interface DateRange {
@@ -264,6 +265,75 @@ export async function getCustomerMix(range: DateRange): Promise<{
   return { newCustomers, returningCustomers };
 }
 
+/** Revenue and order count split by takeaway vs dine-in. */
+export async function getOrderTypeSplit(
+  range: DateRange,
+): Promise<Array<{ orderType: OrderType; count: number; revenue: number }>> {
+  await ready();
+  requirePermission("REPORTS");
+
+  const totals = new Map<OrderType, { count: number; revenue: number }>();
+  for (const order of salesOrders(range)) {
+    const existing = totals.get(order.orderType) ?? { count: 0, revenue: 0 };
+    existing.count += 1;
+    existing.revenue += order.total;
+    totals.set(order.orderType, existing);
+  }
+  return [...totals.entries()].map(([orderType, value]) => ({ orderType, ...value }));
+}
+
+export interface PrepTimeAccuracy {
+  /** Minutes the cafe promised, averaged over accepted orders. */
+  averagePromisedMinutes: number;
+  /** Minutes it actually took from acceptance to READY. */
+  averageActualMinutes: number;
+  /** Share of orders that hit the promised time. */
+  onTimePercent: number;
+  sampleSize: number;
+}
+
+/**
+ * How honest the promised ready times were. Only orders that were both
+ * accepted and marked ready can answer this, so cancellations and orders
+ * still in the kitchen are excluded rather than counted as zero.
+ */
+export async function getPrepTimeAccuracy(range: DateRange): Promise<PrepTimeAccuracy> {
+  await ready();
+  requirePermission("REPORTS");
+
+  let promised = 0;
+  let actual = 0;
+  let onTime = 0;
+  let sample = 0;
+
+  for (const order of salesOrders(range)) {
+    const acceptedAt = order.statusHistory.find((e) => e.status === "ACCEPTED")?.at;
+    const readyAt = order.statusHistory.find((e) => e.status === "READY")?.at;
+    if (!acceptedAt || !readyAt || !order.estimatedReadyAt) continue;
+
+    const acceptedMs = Date.parse(acceptedAt);
+    promised += (Date.parse(order.estimatedReadyAt) - acceptedMs) / 60000;
+    actual += (Date.parse(readyAt) - acceptedMs) / 60000;
+    if (Date.parse(readyAt) <= Date.parse(order.estimatedReadyAt)) onTime += 1;
+    sample += 1;
+  }
+
+  if (sample === 0) {
+    return {
+      averagePromisedMinutes: 0,
+      averageActualMinutes: 0,
+      onTimePercent: 0,
+      sampleSize: 0,
+    };
+  }
+  return {
+    averagePromisedMinutes: Math.round(promised / sample),
+    averageActualMinutes: Math.round(actual / sample),
+    onTimePercent: Math.round((onTime / sample) * 100),
+    sampleSize: sample,
+  };
+}
+
 /** KPI block on the admin dashboard. */
 export async function getDashboardKpis(now = new Date()): Promise<{
   todayRevenue: number;
@@ -271,26 +341,62 @@ export async function getDashboardKpis(now = new Date()): Promise<{
   averageOrderValue: number;
   activeOrders: number;
   totalCustomers: number;
+  /** Online payments the admin still has to confirm. */
+  awaitingVerification: number;
+  /** Dine-in cash not yet collected. */
+  cashPending: number;
+  /** Scheduled orders due later today. */
+  scheduledToday: number;
+  /** Past their promised ready time and not ready yet. */
+  overdue: number;
 }> {
   await ready();
   requirePermission("REPORTS");
 
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(start);
+  endOfDay.setDate(endOfDay.getDate() + 1);
+
   const today = salesOrders({ from: start, to: now });
   const summary = summarise(today);
+  const all = readCollection<Order>("orders");
 
-  const activeOrders = readCollection<Order>("orders").filter(
-    (o) => o.status !== "PICKED_UP" && o.status !== "CANCELLED",
-  ).length;
+  let awaitingVerification = 0;
+  let cashPending = 0;
+  let scheduledToday = 0;
+  let overdue = 0;
+
+  for (const order of all) {
+    const flags = flagsFor(order, now);
+    if (flags.awaitingVerification) awaitingVerification += 1;
+    if (flags.cashPending) cashPending += 1;
+    if (flags.isOverdue) overdue += 1;
+    if (
+      order.isScheduled &&
+      order.scheduledFor &&
+      order.status !== "CANCELLED" &&
+      order.status !== "HANDED_OVER" &&
+      Date.parse(order.scheduledFor) >= start.getTime() &&
+      Date.parse(order.scheduledFor) < endOfDay.getTime()
+    ) {
+      scheduledToday += 1;
+    }
+  }
 
   return {
     todayRevenue: today.reduce((sum, o) => sum + o.total, 0),
     todayOrders: summary.orderCount,
     averageOrderValue: summary.averageOrderValue,
-    activeOrders,
+    activeOrders: all.filter(
+      (o) => o.status !== "HANDED_OVER" && o.status !== "CANCELLED",
+    ).length,
     totalCustomers: readCollection<User>("users").filter((u) => u.role === "CUSTOMER")
       .length,
+    awaitingVerification,
+    cashPending,
+    scheduledToday,
+    overdue,
   };
 }
 

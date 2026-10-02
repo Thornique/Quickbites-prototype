@@ -66,7 +66,7 @@ export function ReadyStrip() {
             className="shrink-0"
             aria-hidden="true"
           />
-          {t.ready.takeawayOnly}
+          {t.ready.dineInOrTakeaway}
         </p>
       </Container>
     </div>

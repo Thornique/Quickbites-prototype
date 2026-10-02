@@ -1,4 +1,4 @@
-import type { CartLine, Coupon, PricedCart, PricedCartLine } from "@/types";
+import type { CartLine, Coupon, OrderType, PricedCart, PricedCartLine } from "@/types";
 
 /**
  * Pure money maths, shared by the cart-pricing service and the seed generator
@@ -45,10 +45,23 @@ export function couponDiscountFor(coupon: Coupon, eligibleSubtotal: number): num
 export interface TotalsInput {
   lines: PricedCartLine[];
   discount: number;
+  /** The configured charge; only applied when the order is a takeaway. */
   packagingCharge: number;
   /** GST percentage, e.g. 5. */
   taxRate: number;
   appliedCouponCode?: string;
+  /** Dine-in food is served on a plate, so it carries no packaging charge. */
+  orderType: OrderType;
+}
+
+/** Packaging is charged on takeaway only, and only on a non-empty cart. */
+export function packagingFor(
+  orderType: OrderType,
+  configuredCharge: number,
+  lineCount: number,
+): number {
+  if (orderType !== "TAKEAWAY" || lineCount === 0) return 0;
+  return configuredCharge;
 }
 
 /**
@@ -61,10 +74,12 @@ export function computeTotals({
   packagingCharge,
   taxRate,
   appliedCouponCode,
+  orderType,
 }: TotalsInput): PricedCart {
   const subtotal = subtotalOf(lines);
   const safeDiscount = Math.min(roundRupee(discount), subtotal);
-  const taxableBase = Math.max(0, subtotal - safeDiscount + packagingCharge);
+  const packaging = packagingFor(orderType, packagingCharge, lines.length);
+  const taxableBase = Math.max(0, subtotal - safeDiscount + packaging);
   const tax = roundRupee((taxableBase * taxRate) / 100);
 
   return {
@@ -73,7 +88,8 @@ export function computeTotals({
     subtotal,
     discount: safeDiscount,
     appliedCouponCode,
-    packagingCharge,
+    packagingCharge: packaging,
+    orderType,
     taxRate,
     tax,
     total: taxableBase + tax,

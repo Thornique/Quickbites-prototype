@@ -4,6 +4,7 @@ export const APP_ERROR_CODES = [
   "UNAUTHORIZED",
   "FORBIDDEN",
   "CONFLICT",
+  "PAYMENT_NOT_VERIFIED",
   "STORAGE_FULL",
 ] as const;
 
@@ -49,3 +50,6 @@ export const forbidden = (message = "You do not have access to this.") =>
 export const unauthorized = (message = "Please sign in to continue.") =>
   new AppError("UNAUTHORIZED", message);
 export const conflict = (message: string) => new AppError("CONFLICT", message);
+/** The money is not confirmed, so the kitchen must not act on the order. */
+export const paymentNotVerified = (message: string) =>
+  new AppError("PAYMENT_NOT_VERIFIED", message);

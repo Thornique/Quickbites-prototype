@@ -1,4 +1,5 @@
 import type { LocalizedText } from "./common";
+import type { OrderType } from "./order";
 
 /** A choice the customer made inside an option group, snapshotted with its price. */
 export interface SelectedOption {
@@ -36,7 +37,9 @@ export interface PricedCart {
   subtotal: number;
   discount: number;
   appliedCouponCode?: string;
+  /** Zero for dine-in — see packagingFor() in lib/pricing.ts. */
   packagingCharge: number;
+  orderType: OrderType;
   taxRate: number;
   tax: number;
   total: number;

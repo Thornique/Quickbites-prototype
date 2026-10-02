@@ -1,3 +1,4 @@
+import { toDateKey } from "@/lib/format";
 import type {
   ActivityLogEntry,
   Banner,
@@ -69,6 +70,18 @@ export async function buildSeedData(now = new Date()): Promise<SeedData> {
   const lastNumber =
     orders.length > 0 ? Number(orders[orders.length - 1].id.split("-")[1]) : 1000;
 
+  /*
+    Daily token counters must continue from the seeded orders too, otherwise
+    the first order placed today would be handed token A01 — which a seeded
+    order is already holding at the counter.
+  */
+  const tokenCounters = new Map<string, number>();
+  for (const order of orders) {
+    // Must match nextTokenNumber(), which keys by Asia/Kolkata, not UTC.
+    const dateKey = toDateKey(order.createdAt);
+    tokenCounters.set(dateKey, (tokenCounters.get(dateKey) ?? 0) + 1);
+  }
+
   return {
     users,
     categories: SEED_CATEGORIES,
@@ -90,6 +103,12 @@ export async function buildSeedData(now = new Date()): Promise<SeedData> {
     siteContent: SEED_SITE_CONTENT,
     storeSettings: SEED_STORE_SETTINGS,
     activityLog: [],
-    counters: [{ id: "orderNumber", value: lastNumber }],
+    counters: [
+      { id: "orderNumber", value: lastNumber },
+      ...[...tokenCounters.entries()].map(([dateKey, value]) => ({
+        id: `token:${dateKey}`,
+        value,
+      })),
+    ],
   };
 }

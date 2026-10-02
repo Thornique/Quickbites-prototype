@@ -58,8 +58,8 @@ export async function createReview(input: CreateReviewInput): Promise<Review> {
     if (order.customerId !== user.id) {
       throw conflict("You can only review your own orders.");
     }
-    if (order.status !== "PICKED_UP") {
-      throw conflict("You can rate an order once it has been picked up.");
+    if (order.status !== "HANDED_OVER") {
+      throw conflict("You can rate an order once it has been handed over.");
     }
     const already = readCollection<Review>("reviews").some(
       (r) => r.orderId === input.orderId,
@@ -150,6 +150,6 @@ export async function listRateableOrders(): Promise<Order[]> {
       .map((r) => r.orderId as string),
   );
   return readCollection<Order>("orders").filter(
-    (o) => o.customerId === user.id && o.status === "PICKED_UP" && !rated.has(o.id),
+    (o) => o.customerId === user.id && o.status === "HANDED_OVER" && !rated.has(o.id),
   );
 }

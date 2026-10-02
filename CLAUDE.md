@@ -8,8 +8,8 @@ A customer can browse the menu, customise items, add to cart, apply coupons, "pa
 
 # Hard rules
 - UI ONLY: Next.js 15 (App Router) + TypeScript strict + Tailwind v4. NO backend of any kind — no Express/Node server code, no database, no Next.js API routes (no app/api/*), no server actions, no external APIs. Everything runs in the browser. All dummy data lives in localStorage, accessed through small typed helper modules in src/services (one file per domain). UI components never call localStorage directly.
-- No delivery. Order type = Takeaway only. Show estimated "ready by" time.
-- Payment is simulated (UPI / Card / Pay at counter). No real gateway.
+- No delivery. Order type is chosen at checkout: TAKEAWAY or DINE_IN. See "Order & payment flow".
+- Payment is simulated (UPI / Card / Cash). No real gateway.
 - No chatbot / AI features.
 - Bilingual: English + Hindi (हिन्दी) with a toggle in header; choice persisted. Every user-facing string comes from dictionaries; menu items have name/description in both languages.
 - Currency INR, formatted with Intl.NumberFormat('en-IN') → ₹1,249. Dates in Asia/Kolkata.
@@ -18,6 +18,16 @@ A customer can browse the menu, customise items, add to cart, apply coupons, "pa
 - Roles: CUSTOMER, ADMIN, SUPER_ADMIN. Exactly ONE super admin (cannot be deleted/demoted). Super admin has all access and manages admins. Admins have a configurable permission set.
 - Mobile-first, fully responsive, accessible (keyboard, focus states, aria labels, colour contrast AA).
 - Code must be clean enough to become the production frontend: typed, modular, no `any`, no dead code, no giant files (>300 lines → split).
+
+# Order & payment flow (client-approved, supersedes earlier takeaway-only rules)
+1. Order type is chosen at checkout: TAKEAWAY or DINE_IN. Every order gets a short daily token (e.g. #A23) shown big to the customer; DINE_IN may carry a table number. The packaging charge applies to TAKEAWAY only.
+2. Allowed payment methods: TAKEAWAY → ONLINE only (UPI or Card). Cash is never offered for takeaway — food is not cooked for customers who may not arrive. DINE_IN → ONLINE or CASH.
+3. TAKEAWAY is prepaid. The order is created only after the simulated payment succeeds, as PAID_UNVERIFIED with a 12-digit reference. An admin must verify the payment before the order can be ACCEPTED. "Reject payment" with a reason sets FAILED and the customer sees "Pay again"; if not re-paid within unpaidTakeawayTimeoutMinutes (default 15) the order auto-cancels. HARD RULE: a TAKEAWAY order cannot reach ACCEPTED or PREPARING unless paymentStatus = VERIFIED (AppError PAYMENT_NOT_VERIFIED).
+4. DINE_IN online behaves like takeaway. DINE_IN cash starts UNPAID and the kitchen may begin immediately, unless requirePaymentBeforePrepForCash (default false) is on, which blocks PREPARING until VERIFIED. Admin records cash with the amount received and the change is calculated. While a dine-in cash order is UNPAID and still open the customer may switch to paying online; online → cash is never allowed.
+5. Statuses: PLACED → ACCEPTED → PREPARING → READY → HANDED_OVER | CANCELLED. Label HANDED_OVER as "Picked up" for takeaway and "Served" for dine-in. HARD RULE: nothing reaches HANDED_OVER unless paymentStatus = VERIFIED. Cancelling a VERIFIED or PAID_UNVERIFIED order sets REFUNDED.
+6. Every payment action is appended to paymentHistory[] {action, method, amount, ref?, reason?, byUserId?, at}.
+7. The ADMIN sets the ready time on acceptance — accept(orderId, readyInMinutes) and verifyAndAccept(orderId, readyInMinutes) require 1–90 minutes. Before acceptance the customer sees "Waiting for the cafe to confirm" plus a provisional estimate from lib/prep-time.ts. estimatedReadyAt = acceptedAt + readyInMinutes, recorded with readyTimeSetBy and readyTimeHistory[]. extendReadyTime(+5/+10) is logged and pushed live. Marking READY early is allowed. Past the promised time and not READY → customer sees "Almost ready…" (never a negative countdown) and the order is flagged OVERDUE.
+8. Scheduled takeaway: "As soon as possible" or a 15-minute slot today/tomorrow within opening hours, minimum lead scheduleMinLeadMinutes (30), capacity maxOrdersPerSlot (8). Payment is still upfront and online. estimatedReadyAt = scheduledFor, and the order is flagged DUE_TO_START once scheduledFor − max prepMinutes − basePrepBuffer has passed. Customers may cancel until scheduleCancelCutoffMinutes (60) before the slot, then the reason is shown instead.
 
 # Libraries (use these, nothing heavier without asking)
 - UI primitives: Radix UI (via shadcn/ui CLI, but RESTYLED to our design tokens — never ship default shadcn look)
