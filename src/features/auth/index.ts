@@ -1,9 +1,9 @@
 "use client";
 
-import { getSession } from "@/services/auth";
-import { useStoreQuery } from "../use-store-query";
+/**
+ * auth feature: sign-in/sign-up, session and guards.
+ */
 
-/** Current session user, refreshed when the users collection changes. */
-export function useSession() {
-  return useStoreQuery(getSession, ["users"]);
-}
+export { Forbidden, RequireAdmin, RequireCustomer, loginHref } from "./guards";
+export { SessionProvider } from "./session-provider";
+export { useSession, useSessionUser } from "./use-session";

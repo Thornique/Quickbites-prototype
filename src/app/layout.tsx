@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, Mukta } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { SessionProvider } from "@/features/auth";
+import { I18nProvider } from "@/i18n";
 import { STORE } from "@/lib/constants";
 import "./globals.css";
 
@@ -55,7 +58,11 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body>
-        {children}
+        <I18nProvider>
+          <SessionProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </SessionProvider>
+        </I18nProvider>
         <Toaster />
       </body>
     </html>
