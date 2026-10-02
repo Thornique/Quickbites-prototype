@@ -102,6 +102,19 @@ export function MenuItemSheet({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item?.id]);
 
+  /*
+    The categories arrive a tick after the sheet opens, so a new item can start
+    with no category and an un-saveable form. Backfill the first one as soon as
+    the list is there.
+  */
+  useEffect(() => {
+    if (!open || item) return;
+    const first = categories?.[0]?.id;
+    if (first) {
+      setDraft((current) => (current.categoryId ? current : { ...current, categoryId: first }));
+    }
+  }, [open, item, categories]);
+
   const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }));
 
   const setNameEn = (value: string) =>
