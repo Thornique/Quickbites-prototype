@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, Mukta } from "next/font/google";
+import { Baloo_2, Mukta } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { SessionProvider } from "@/features/auth";
@@ -9,13 +9,16 @@ import { SITE_URL, STORE } from "@/lib/constants";
 import "./globals.css";
 
 /**
- * Display face. The `wdth` axis is requested so headings can use the
- * condensed width (75) via the `.text-display` utility.
+ * Display face — the chunky, rounded voice the headings are set in.
+ *
+ * It carries Devanagari as well as Latin, so an English and a Hindi heading
+ * are the same typeface rather than two faces pretending to match. That is
+ * also why the display utility needs no separate Hindi branch any more.
  */
-const archivo = Archivo({
-  subsets: ["latin"],
-  axes: ["wdth"],
-  variable: "--font-archivo",
+const baloo = Baloo_2({
+  subsets: ["latin", "devanagari"],
+  weight: ["600", "700", "800"],
+  variable: "--font-display-face",
   display: "swap",
 });
 
@@ -40,7 +43,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#D7261E",
+  themeColor: "#D62300",
   width: "device-width",
   initialScale: 1,
 };
@@ -57,7 +60,7 @@ export default function RootLayout({
     */
     <html
       lang="en"
-      className={`${archivo.variable} ${mukta.variable}`}
+      className={`${baloo.variable} ${mukta.variable}`}
       suppressHydrationWarning
     >
       <body>

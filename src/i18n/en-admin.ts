@@ -505,7 +505,7 @@ const admin = {
     },
     status: { NEW: "New", IN_PROGRESS: "In progress", CLOSED: "Closed" },
     setInProgress: "Mark in progress",
-    setClosed: "Close",
+    setClosed: "Close enquiry",
     reopen: "Reopen",
     statusChanged: "Enquiry updated",
     call: "Call",

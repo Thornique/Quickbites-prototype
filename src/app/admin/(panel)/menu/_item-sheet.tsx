@@ -404,7 +404,7 @@ export function MenuItemSheet({
             </p>
           )}
 
-          <ul className="grid gap-2">
+          <ul className="grid gap-2 [&>li]:min-w-0">
             {draft.stockItemLinks.map((link) => {
               const stock = (inventory ?? []).find(
                 (entry) => entry.id === link.inventoryItemId,

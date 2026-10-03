@@ -508,7 +508,7 @@ export const hiAdmin: AdminDictionary = {
       },
       status: { NEW: "नया", IN_PROGRESS: "चल रहा है", CLOSED: "बंद" },
       setInProgress: "चल रहा है कहें",
-      setClosed: "बंद करें",
+      setClosed: "पूछताछ बंद करें",
       reopen: "फिर खोलें",
       statusChanged: "पूछताछ बदली",
       call: "कॉल",

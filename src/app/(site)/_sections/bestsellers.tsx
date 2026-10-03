@@ -65,7 +65,7 @@ export function Bestsellers() {
 
         <ul
           ref={railRef}
-          className="relative -mx-4 mt-7 flex snap-x snap-mandatory [scrollbar-width:thin] gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
+          className="relative -mx-4 mt-7 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0"
         >
           {isLoading &&
             Array.from({ length: 4 }).map((_, i) => (

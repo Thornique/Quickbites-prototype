@@ -83,7 +83,7 @@ export function MenuItemImage({
       {placeholderLabel && (
         <span
           aria-hidden="true"
-          className="relative max-w-[80%] truncate text-[0.625rem] font-semibold tracking-[0.1em] text-ink-muted/70 uppercase"
+          className="relative max-w-[80%] truncate text-[0.625rem] font-semibold tracking-[0.1em] text-ink-muted uppercase"
         >
           {placeholderLabel}
         </span>

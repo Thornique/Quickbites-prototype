@@ -3,10 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Menu } from "lucide-react";
+import { Menu, Search } from "lucide-react";
 import { AccountMenu } from "@/components/site/account-menu";
 import { CartButton } from "@/components/site/cart-button";
+import { HeaderNavLinks } from "@/components/site/header-nav";
 import { LanguageToggle } from "@/components/site/language-toggle";
+import { OrderModeSwitch } from "@/components/site/order-mode-switch";
+import { OutletPill } from "@/components/site/outlet-pill";
 import { StoreStatusPill } from "@/components/site/store-status-pill";
 import { useSession } from "@/features/auth";
 import { NotificationBell } from "@/features/notifications";
@@ -22,14 +25,8 @@ import {
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
-const NAV = [
-  { href: "/menu", key: "menu" },
-  { href: "/#offers", key: "offers" },
-  { href: "/about", key: "about" },
-  { href: "/gallery", key: "gallery" },
-  { href: "/contact", key: "contact" },
-  { href: "/book-table", key: "bookTable" },
-] as const;
+/** Jumps to — and focuses — the search field on the menu page. */
+const SEARCH_HREF = "/menu#menu-search";
 
 export function SiteHeader() {
   const t = useT();
@@ -51,15 +48,6 @@ export function SiteHeader() {
     setIsSheetOpen(false);
   }, [pathname]);
 
-  const labels: Record<(typeof NAV)[number]["key"], string> = {
-    menu: t.nav.menu,
-    offers: t.nav.offers,
-    about: t.nav.about,
-    gallery: t.nav.gallery,
-    contact: t.nav.contact,
-    bookTable: t.nav.bookTable,
-  };
-
   return (
     <>
       <a
@@ -76,10 +64,11 @@ export function SiteHeader() {
           isScrolled && "shadow-card",
         )}
       >
+        {/* Utility row: identity, how you are eating, where you collect. */}
         <Container
           className={cn(
-            "flex items-center gap-3 transition-[height] duration-150",
-            isScrolled ? "h-14" : "h-16 sm:h-20",
+            "flex items-center gap-3 transition-[height] duration-150 sm:gap-4",
+            isScrolled ? "h-14" : "h-16 sm:h-18",
           )}
         >
           <Link href="/" className="shrink-0" aria-label="Quick Bites — home">
@@ -91,38 +80,28 @@ export function SiteHeader() {
             />
           </Link>
 
-          <nav
-            aria-label={t.header.primaryNav}
-            className="ml-4 hidden flex-1 items-center gap-1 lg:flex"
-          >
-            {NAV.map((item) => {
-              const isActive = pathname === item.href;
-              return (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(
-                    "rounded-control px-3 py-2 text-sm font-semibold transition-colors",
-                    isActive
-                      ? "text-brand"
-                      : "text-ink hover:bg-sand-50 hover:text-brand",
-                  )}
-                >
-                  {labels[item.key]}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="hidden min-w-0 items-center gap-4 lg:flex">
+            <OrderModeSwitch />
+            <span aria-hidden="true" className="h-6 w-px bg-hairline" />
+            <OutletPill className="max-w-64" />
+          </div>
 
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <StoreStatusPill className="hidden xl:inline-flex" />
+          <div className="ml-auto flex items-center gap-1 sm:gap-2">
             <LanguageToggle className="hidden sm:inline-flex" />
             {isSignedIn && <NotificationBell className="hidden sm:inline-flex" />}
             <div className="hidden sm:block">
-              <AccountMenu />
+              <AccountMenu showLabel />
             </div>
-            <CartButton />
+            <CartButton className="lg:hidden" />
+            <CartButton className="hidden lg:inline-flex" showLabel />
+
+            <Link
+              href={SEARCH_HREF}
+              aria-label={t.header.searchMenu}
+              className="hidden size-10 shrink-0 items-center justify-center rounded-control text-ink transition-colors hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 lg:inline-flex"
+            >
+              <Search size={20} strokeWidth={1.75} aria-hidden="true" />
+            </Link>
 
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
@@ -148,15 +127,7 @@ export function SiteHeader() {
                   <StoreStatusPill />
 
                   <nav aria-label={t.header.primaryNav} className="mt-5 grid">
-                    {NAV.map((item) => (
-                      <Link
-                        key={item.key}
-                        href={item.href}
-                        className="rounded-control px-3 py-3 text-base font-semibold text-ink transition-colors hover:bg-sand-50 hover:text-brand"
-                      >
-                        {labels[item.key]}
-                      </Link>
-                    ))}
+                    <HeaderNavLinks variant="sheet" />
                   </nav>
 
                   <div className="mt-6 flex items-center justify-between gap-3 border-t border-hairline pt-5">
@@ -171,6 +142,25 @@ export function SiteHeader() {
             </Sheet>
           </div>
         </Container>
+
+        {/* Second row: the links on desktop, the order mode on mobile. */}
+        <div className="border-t border-hairline bg-sand-50 lg:bg-surface">
+          <Container className="flex h-11 items-center gap-3">
+            <nav
+              aria-label={t.header.primaryNav}
+              className="hidden h-full flex-1 items-center gap-1 lg:flex"
+            >
+              <HeaderNavLinks variant="bar" />
+            </nav>
+
+            <StoreStatusPill className="hidden lg:inline-flex" />
+
+            <div className="flex w-full items-center justify-between gap-3 lg:hidden">
+              <OrderModeSwitch />
+              <OutletPill className="min-w-0 border-0 bg-transparent px-0 py-0 text-xs" />
+            </div>
+          </Container>
+        </div>
       </header>
     </>
   );

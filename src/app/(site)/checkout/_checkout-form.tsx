@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { CreditCard, Wallet } from "lucide-react";
 import { CartSummary } from "@/components/site/cart-summary";
 import { OrderTypeToggle } from "@/components/site/order-type-toggle";
+import { PageHead } from "@/components/site/page-head";
 import { StoreClosedBanner } from "@/components/site/store-closed-banner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -144,17 +145,16 @@ export function CheckoutForm() {
   };
 
   return (
-    <Container className="py-6 pb-16 sm:py-10">
-      <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
-        {t.checkout.title}
-      </h1>
+    <>
+      <PageHead title={t.checkout.title}>
+        <StoreClosedBanner className="mt-5" />
+      </PageHead>
 
-      <StoreClosedBanner className="mt-5" />
-
-      <form
-        onSubmit={handleSubmit}
-        className="mt-6 grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start"
-      >
+      <Container className="py-6 pb-16 sm:py-10">
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start"
+        >
         <div className="grid gap-6">
           <OrderTypeToggle />
 
@@ -356,8 +356,9 @@ export function CheckoutForm() {
                   : t.checkout.continueToPayment}
             </Button>
           </Card>
-        </div>
-      </form>
-    </Container>
+          </div>
+        </form>
+      </Container>
+    </>
   );
 }

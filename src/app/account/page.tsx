@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Clock, Receipt } from "lucide-react";
+import { Clock, Receipt } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Price } from "@/components/ui/price";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/features/auth";
-import { useUnreadCount } from "@/features/notifications";
 import { useMyOrders } from "@/features/orders";
 import { useT } from "@/i18n";
 import { formatDate, formatTime } from "@/lib/format";
@@ -20,7 +19,6 @@ export default function AccountPage() {
   const t = useT();
   const { user } = useSession();
   const { data: orders, isLoading } = useMyOrders();
-  const { data: unread = 0 } = useUnreadCount();
 
   if (!user) return null;
 
@@ -32,20 +30,9 @@ export default function AccountPage() {
       <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
         {t.account.greeting(user.name)}
       </h1>
-      <p className="mt-2 text-sm text-ink-muted">{t.account.signedInAs(user.email)}</p>
-
-      {unread > 0 && (
-        <Link
-          href="/account/notifications"
-          className="mt-5 inline-flex items-center gap-2 rounded-control border border-brand/30 bg-brand/5 px-3 py-2 text-sm font-semibold text-brand transition-colors hover:bg-brand/10"
-        >
-          <Bell size={16} aria-hidden="true" />
-          {t.accountPage.unreadNotifications(unread)}
-        </Link>
-      )}
 
       {/* What is happening right now. */}
-      <section className="mt-8">
+      <section className="mt-6">
         <h2 className="text-sm font-semibold text-ink">{t.accountPage.activeOrder}</h2>
 
         {isLoading && <Skeleton className="mt-3 h-28 w-full rounded-card" />}

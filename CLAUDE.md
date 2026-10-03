@@ -82,13 +82,14 @@ public/images/         downloaded stock images + CREDITS.md
 
 # Design direction — "simple & clean, but with fast-food energy; must NOT look AI/vibe-coded"
 Reference the clarity of mcdonalds.com and bk.com (big food photography, bold condensed headings, dense but tidy menu grids, sticky category nav, strong CTAs) but keep our own identity.
-Tokens:
-- Background: warm off-white #FBF7F0 ; Surface: #FFFFFF ; Ink: #1A1714 ; Muted ink: #6B645C ; Border: #E8E1D6
-- Primary: tomato red #D7261E (hover #B81E17) ; Accent: mustard #F4B400 ; Veg green #1E8E3E ; Non-veg #8B2E16 ; Success #1E8E3E ; Warning #C77700 ; Danger #C62828
+Tokens (client-approved revision, matches the supplied quick-service reference screens):
+- Background: warm cream #F6F0E5 ; Surface: #FFFFFF ; Ink: #241B16 ; Muted ink: #6E6056 ; Border: #E6DCCB
+- Primary: flame red #D62300 (hover #AE1C00) ; Dark fills: mahogany #50231A (switches, active tabs, dark bands) ; Accent: mustard #F0B323 ; Veg green #1E8E3E ; Non-veg #8B2E16 ; Success #1E8E3E ; Warning #C77700 ; Danger #C62828
+- Mahogany, not ink, fills switches, active tabs and dark bands, so a filled control never reads as a block of body text. White on mustard and white on any orange both fail AA — those surfaces carry ink text.
 - Admin uses the same tokens but calmer: mostly neutral surfaces, red only for primary actions and alerts.
 Typography (next/font/google):
-- Display/headings: "Archivo" (use condensed width 75 + weight 800 for big headings, uppercase only for short labels)
-- Body/UI + Hindi: "Mukta" (supports Latin + Devanagari so both languages look consistent)
+- Display/headings: "Baloo 2" weight 800 — chunky and rounded, uppercase only for short labels. It carries Devanagari as well as Latin, so headings need no separate Hindi face.
+- Body/UI: "Mukta" (Latin + Devanagari)
 Rules to avoid the generic AI look:
 - NO purple/blue gradients, NO glassmorphism, NO glowing blobs, NO emoji used as icons, NO "Welcome to our website" copy, NO three identical feature cards with icons as the main hero content.
 - Radius: 6px inputs/buttons, 10px cards, full-pill ONLY for chips/tags. Shadows minimal (1 subtle level); use borders for separation.

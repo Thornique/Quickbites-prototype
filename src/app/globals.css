@@ -12,15 +12,22 @@
 
 @theme {
   /* ---- Brand palette -------------------------------------------------- */
-  --color-cream: #fbf7f0; /* page background, warm off-white */
+  --color-cream: #f6f0e5; /* page background, warm cream */
   --color-surface: #ffffff; /* cards, sheets, inputs */
-  --color-ink: #1a1714; /* primary text */
-  --color-ink-muted: #6b645c; /* secondary text */
-  --color-hairline: #e8e1d6; /* borders & separators */
+  --color-ink: #241b16; /* primary text — warm near-black */
+  --color-ink-muted: #6e6056; /* secondary text */
+  --color-hairline: #e6dccb; /* borders & separators */
 
-  --color-brand: #d7261e; /* tomato red */
-  --color-brand-hover: #b81e17;
-  --color-mustard: #f4b400; /* accent bands, deal highlights */
+  --color-brand: #d62300; /* flame red — buttons, prices, links */
+  --color-brand-hover: #ae1c00;
+  --color-mustard: #f0b323; /* accent bands, deal highlights */
+
+  /*
+    Mahogany. The dark fills a quick-service brand uses for its switches,
+    active tabs and dark bands — warmer than the body-text ink, so a filled
+    tab never looks like a block of text.
+  */
+  --color-cocoa: #50231a;
 
   --color-veg: #1e8e3e;
   --color-nonveg: #8b2e16;
@@ -34,14 +41,14 @@
     their own 10-18% tints they measured 2.85-4.21:1, below the 4.5:1 the
     brief requires, so small text uses these darker tones instead.
   */
-  --color-mustard-dark: #8a5c00;
-  --color-veg-dark: #15712f;
-  --color-warning-dark: #8f5600;
+  --color-mustard-dark: #855000;
+  --color-veg-dark: #146b2c;
+  --color-warning-dark: #855000;
 
   /* Warm neutrals derived from the cream base, used for hovers and fills */
-  --color-sand-50: #f7f2ea;
-  --color-sand-100: #f2eadf;
-  --color-sand-200: #ebe2d4;
+  --color-sand-50: #f2eadc;
+  --color-sand-100: #ece2d0;
+  --color-sand-200: #e3d7c1;
 
   /* ---- Radius --------------------------------------------------------- */
   --radius: 0.625rem; /* 10px — cards */
@@ -68,7 +75,7 @@
 */
 @theme inline {
   /* ---- Typography — resolved at the element, see note above ----------- */
-  --font-display: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
   --font-sans: var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
 
   --color-background: var(--color-cream);
@@ -131,12 +138,9 @@
     line-height: 1.55;
   }
 
-  /*
-    Archivo is loaded with the `wdth` axis. Big headings use the condensed
-    width (75) at weight 800 for fast-food punch; body text stays Mukta.
-  */
+  /* Headings run in the display face at its heaviest; body text stays Mukta. */
   .font-display {
-    font-family: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+    font-family: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
   }
 
   /* Prices, totals and table figures must not jitter between values. */
@@ -161,34 +165,52 @@
   .measure {
     max-width: 70ch;
   }
+
+  /*
+    Scrollbars are hidden everywhere — the page, the menu's category strip, the
+    home rails, every dialog and sheet. Only the painting of the bar goes:
+    wheel, touch, keyboard, scroll-snap and scrollIntoView all behave exactly
+    as before, and focus still scrolls a focused control into view.
+
+    The trade-off is that a scrollable region no longer announces itself
+    visually, so anything that scrolls needs its own affordance — which is why
+    the rails carry arrow buttons and the category strip clips a tab at the
+    edge.
+  */
+  html {
+    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none; /* legacy Edge */
+  }
+
+  *,
+  *::before,
+  *::after {
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Edge */
+  }
 }
 
 @layer utilities {
   /*
-    Condensed display type — short headings and labels only.
-    Mukta sits in the fallback chain because Archivo has no Devanagari
-    glyphs; without it, mixed EN/HI headings drop to a random system font.
+    Display type — short headings and labels only. The face carries both
+    scripts, so there is no separate Hindi rule: an English and a Hindi
+    heading are the same typeface at the same weight.
   */
   .text-display {
-    font-family:
-      var(--font-archivo), var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
-    font-variation-settings: "wdth" 75;
+    font-family: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;
     font-weight: 800;
-    letter-spacing: -0.01em;
-    line-height: 1.02;
+    letter-spacing: -0.005em;
+    line-height: 1.08;
   }
 
-  /*
-    Hindi headings use Mukta at weight 800 — it carries Devanagari and still
-    reads bold. The condensed width axis does not exist there, so drop it and
-    relax the leading, which Devanagari needs for its matras.
-  */
+  /* Devanagari matras need the extra leading at heading sizes. */
   :lang(hi) .text-display,
   [lang="hi"] .text-display {
-    font-family: var(--font-mukta), ui-sans-serif, system-ui, sans-serif;
-    font-variation-settings: normal;
     letter-spacing: 0;
-    line-height: 1.25;
+    line-height: 1.3;
   }
 
   /* Clamp helpers for menu card descriptions. */

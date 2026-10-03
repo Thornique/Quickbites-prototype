@@ -83,3 +83,13 @@ export function formatSlotLabel(slot: string): string {
   const base = new Date(2000, 0, 1, hours, minutes);
   return formatDateFns(base, "h:mm a");
 }
+
+/**
+ * Admins type phone numbers as display text ("+91 98765 43210"), but a tel:
+ * href needs them without spaces. Falls back to the static store number when
+ * the content record has nothing useful in it.
+ */
+export function telHref(phone: string | undefined, fallback: string): string {
+  const cleaned = (phone ?? "").replace(/[^\d+]/g, "");
+  return cleaned.length >= 6 ? cleaned : fallback;
+}

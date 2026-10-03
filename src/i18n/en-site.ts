@@ -22,6 +22,9 @@ export const enSite = {
   header: {
     skipToContent: "Skip to content",
     primaryNav: "Main navigation",
+    outletAddress: "Bombay Bazar, Khandwa, MP",
+    outletAria: "Bombay Bazar, Khandwa, MP — our outlet. See contact details",
+    searchMenu: "Search the menu",
   },
 
   footer: {
@@ -33,6 +36,7 @@ export const enSite = {
     callUs: "Call us",
     whatsapp: "WhatsApp",
     getDirections: "Get directions",
+    legal: "Legal",
     privacy: "Privacy policy",
     terms: "Terms",
     rights: "© Quick Bites, Khandwa",
@@ -65,10 +69,12 @@ export const enSite = {
   },
 
   categories: {
-    eyebrow: "What are you after?",
     title: "Browse the menu",
     description: "Eight sections, 40 items, most of them vegetarian.",
     itemCount: (count: number) => (count === 1 ? "1 item" : `${count} items`),
+    seeAll: "See all",
+    scrollLeft: "Scroll categories left",
+    scrollRight: "Scroll categories right",
   },
 
   bestsellers: {
@@ -452,8 +458,6 @@ export const enSite = {
     activeOrder: "Order in progress",
     recentOrders: "Recent orders",
     seeAll: "See all orders",
-    unreadNotifications: (count: number) =>
-      count === 1 ? "1 unread notification" : `${count} unread notifications`,
     noActivity: "Nothing in progress",
     noActivityBody: "Browse the menu and place an order to see it tracked here.",
   },

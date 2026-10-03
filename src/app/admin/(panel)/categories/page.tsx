@@ -228,7 +228,7 @@ function CategoriesModule() {
 
       {isLoading && <Skeleton className="h-64 w-full rounded-card" />}
 
-      <ul className="grid gap-2">
+      <ul className="grid gap-2 [&>li]:min-w-0">
         {rows.map((category, index) => (
           <li key={category.id}>
             <Card className="flex items-center gap-3 p-3">
@@ -241,7 +241,7 @@ function CategoriesModule() {
 
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-ink">{pick(category.name)}</p>
-                <p className="nums text-xs text-ink-muted">
+                <p className="nums truncate text-xs text-ink-muted">
                   {t.adm.categories.itemCount(itemCount(category.id))} · {category.slug}
                 </p>
               </div>

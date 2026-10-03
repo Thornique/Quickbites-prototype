@@ -198,7 +198,7 @@ function BannersTab() {
         </Button>
       </div>
 
-      <ul className="grid gap-2">
+      <ul className="grid gap-2 [&>li]:min-w-0">
         {rows.map((banner) => (
           <li key={banner.id}>
             <Card className="flex items-center gap-3 p-3">
@@ -211,7 +211,7 @@ function BannersTab() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-ink">{pick(banner.headline)}</p>
                 <p className="truncate text-xs text-ink-muted">{pick(banner.subhead)}</p>
-                <p className="nums text-xs text-ink-muted">{banner.ctaHref}</p>
+                <p className="nums truncate text-xs text-ink-muted">{banner.ctaHref}</p>
               </div>
               {!banner.isActive && <Badge variant="muted">{t.adm.common.inactive}</Badge>}
               <div className="flex shrink-0 gap-1">

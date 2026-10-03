@@ -25,6 +25,9 @@ export const hiSite: SiteDictionary = {
   header: {
     skipToContent: "सीधे सामग्री पर जाएँ",
     primaryNav: "मुख्य नेविगेशन",
+    outletAddress: "बॉम्बे बाज़ार, खंडवा, म.प्र.",
+    outletAria: "बॉम्बे बाज़ार, खंडवा, म.प्र. — हमारा आउटलेट। संपर्क विवरण देखें",
+    searchMenu: "मेन्यू में खोजें",
   },
 
   footer: {
@@ -36,6 +39,7 @@ export const hiSite: SiteDictionary = {
     callUs: "कॉल कीजिए",
     whatsapp: "व्हाट्सऐप",
     getDirections: "रास्ता देखें",
+    legal: "कानूनी जानकारी",
     privacy: "प्राइवेसी नीति",
     terms: "नियम",
     rights: "© Quick Bites, खंडवा",
@@ -69,10 +73,12 @@ export const hiSite: SiteDictionary = {
   },
 
   categories: {
-    eyebrow: "क्या खाना है?",
     title: "मेन्यू देखिए",
     description: "आठ हिस्से, 40 चीज़ें — ज़्यादातर शाकाहारी।",
     itemCount: (count: number) => (count === 1 ? "1 चीज़" : `${count} चीज़ें`),
+    seeAll: "सब देखें",
+    scrollLeft: "श्रेणियाँ बाएँ ले जाएँ",
+    scrollRight: "श्रेणियाँ दाएँ ले जाएँ",
   },
 
   bestsellers: {
@@ -455,8 +461,6 @@ export const hiSite: SiteDictionary = {
     activeOrder: "चालू ऑर्डर",
     recentOrders: "हाल के ऑर्डर",
     seeAll: "सारे ऑर्डर देखें",
-    unreadNotifications: (count: number) =>
-      count === 1 ? "1 बिना पढ़ी सूचना" : `${count} बिना पढ़ी सूचनाएँ`,
     noActivity: "अभी कुछ नहीं चल रहा",
     noActivityBody: "मेन्यू देखिए और ऑर्डर दीजिए, यहाँ ट्रैक दिखेगा।",
   },

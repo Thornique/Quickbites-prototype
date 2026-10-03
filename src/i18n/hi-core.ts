@@ -22,6 +22,8 @@ export const hiCore: CoreDictionary = {
     somethingWentWrong: "कुछ गड़बड़ हो गई।",
     show: "दिखाएँ",
     hide: "छिपाएँ",
+    prototype: "प्रोटोटाइप",
+    prototypeNote: "डेमो प्रोटोटाइप — केवल नमूना डेटा।",
   },
 
   nav: {
@@ -55,7 +57,6 @@ export const hiCore: CoreDictionary = {
     accountMenu: "खाता मेन्यू",
     openAdminPanel: "एडमिन पैनल खोलें",
     greeting: (name: string) => `नमस्ते, ${name}`,
-    signedInAs: (email: string) => `${email} से साइन इन हैं`,
   },
 
   auth: {

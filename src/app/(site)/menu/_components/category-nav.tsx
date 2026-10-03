@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { Container } from "@/components/ui/container";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/types";
@@ -10,7 +11,7 @@ import type { Category } from "@/types";
  * header plus this sticky tab strip. Kept here so the scroll offset and the
  * CSS scroll-margin can never drift apart.
  */
-export const SECTION_SCROLL_OFFSET = 144;
+export const SECTION_SCROLL_OFFSET = 160;
 
 /**
  * Slack when deciding which section is "current". A section scrolled to the
@@ -27,7 +28,13 @@ export interface CategoryNavProps {
   labelFor: (category: Category) => string;
 }
 
-/** Sticky horizontal tabs that follow the reader down the menu. */
+/**
+ * Sticky horizontal tabs that follow the reader down the menu.
+ *
+ * The strip runs the full width of the viewport and carries the rule and
+ * surface, the way a real navigation bar does; only the tabs inside are held
+ * to the page measure.
+ */
 export function CategoryNav({
   categories,
   activeSlug,
@@ -55,38 +62,42 @@ export function CategoryNav({
   return (
     <nav
       aria-label={t.menu.categoriesLabel}
-      className="sticky top-14 z-30 -mx-4 border-b border-hairline bg-cream/95 backdrop-blur-none sm:top-16 lg:top-20"
+      className="sticky top-25 z-30 border-y border-hairline bg-surface"
     >
-      <ul
-        ref={railRef}
-        className="flex [scrollbar-width:none] gap-1 overflow-x-auto px-4 py-2"
-      >
-        {categories.map((category) => {
-          const isActive = activeSlug === category.slug;
-          return (
-            <li key={category.id} className="shrink-0">
-              <button
-                type="button"
-                data-slug={category.slug}
-                onClick={() => onSelect(category.slug)}
-                aria-current={isActive ? "true" : undefined}
-                className={cn(
-                  "shrink-0 rounded-pill px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition-colors",
-                  "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
-                  isActive
-                    ? "bg-ink text-white"
-                    : "text-ink-muted hover:bg-sand-100 hover:text-ink",
-                )}
-              >
-                {labelFor(category)}
-                {counts[category.id] !== undefined && (
-                  <span className="nums ml-1.5 opacity-60">{counts[category.id]}</span>
-                )}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+      <Container className="px-0 sm:px-6 lg:px-8">
+        <ul
+          ref={railRef}
+          className="flex gap-1 overflow-x-auto px-4 py-2 sm:px-0"
+        >
+          {categories.map((category) => {
+            const isActive = activeSlug === category.slug;
+            return (
+              <li key={category.id} className="shrink-0">
+                <button
+                  type="button"
+                  data-slug={category.slug}
+                  onClick={() => onSelect(category.slug)}
+                  aria-current={isActive ? "true" : undefined}
+                  className={cn(
+                    "shrink-0 rounded-pill px-3.5 py-2 text-sm font-bold whitespace-nowrap transition-colors",
+                    "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+                    isActive
+                      ? "bg-cocoa text-white"
+                      : "text-ink-muted hover:bg-sand-100 hover:text-ink",
+                  )}
+                >
+                  {labelFor(category)}
+                  {counts[category.id] !== undefined && (
+                    <span className="nums ml-1.5 opacity-60">
+                      {counts[category.id]}
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </Container>
     </nav>
   );
 }

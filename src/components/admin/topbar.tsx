@@ -7,6 +7,7 @@ import { ExternalLink, LogOut, Menu as MenuIcon } from "lucide-react";
 import { toast } from "sonner";
 import { AdminSidebar } from "@/components/admin/sidebar";
 import { LanguageToggle } from "@/components/site/language-toggle";
+import { Wordmark } from "@/components/site/wordmark";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -91,7 +92,10 @@ function StoreSwitches() {
   ];
 
   return (
-    <div className="hidden items-center gap-4 md:flex">
+    // Shown from `lg`, the same breakpoint as the sidebar: at `md` the two
+    // labelled switches plus the bell, language toggle and avatar overflow the
+    // bar. Tablet admins reach the same two toggles in Settings.
+    <div className="hidden items-center gap-4 lg:flex">
       {rows.map((row) => (
         <div key={row.id} className="flex items-center gap-2">
           {mayEdit ? (
@@ -171,14 +175,15 @@ export function AdminTopbar({
           </SheetContent>
         </Sheet>
 
-        <Link
-          href="/admin"
-          className="text-display shrink-0 text-base text-brand uppercase"
-        >
-          Quick Bites
+        <Link href="/admin" className="shrink-0" aria-label={t.admin.panel}>
+          <Wordmark className="h-4 sm:h-5" />
         </Link>
         <Badge variant="muted" className="hidden sm:inline-flex">
           {t.admin.panel}
+        </Badge>
+        {/* Nobody should mistake the demo for the live till. */}
+        <Badge variant="warning" title={t.common.prototypeNote}>
+          {t.common.prototype}
         </Badge>
 
         <div className="ml-auto flex items-center gap-2 sm:gap-3">

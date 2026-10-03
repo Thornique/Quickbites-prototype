@@ -36,7 +36,7 @@ export function SuggestedAddOns({ className }: { className?: string }) {
     <section className={className}>
       <h2 className="text-sm font-semibold text-ink">{t.cartPage.suggestions}</h2>
 
-      <ul className="mt-3 flex [scrollbar-width:thin] gap-3 overflow-x-auto pb-2">
+      <ul className="mt-3 flex gap-3 overflow-x-auto pb-2">
         {isLoading &&
           Array.from({ length: 3 }).map((_, i) => (
             <li key={i} className="w-44 shrink-0">

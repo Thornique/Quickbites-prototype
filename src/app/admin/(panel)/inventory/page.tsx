@@ -202,7 +202,7 @@ function HistorySheet({
       {(movements ?? []).length === 0 ? (
         <p className="text-sm text-ink-muted">{t.adm.inventory.noHistory}</p>
       ) : (
-        <ol className="grid gap-2.5">
+        <ol className="grid gap-2.5 [&>li]:min-w-0">
           {(movements ?? []).map((movement) => (
             <li
               key={movement.id}

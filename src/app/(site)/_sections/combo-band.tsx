@@ -7,24 +7,25 @@ import { Container } from "@/components/ui/container";
 import { useT } from "@/i18n";
 
 /**
- * Mustard deal band. The one place the accent colour runs full width — it
- * breaks the cream/white rhythm so the combos read as a distinct offer.
+ * Ink combo band. It follows the mustard offers header, so it goes dark rather
+ * than yellow — two accent bands back to back would read as one long block —
+ * and keeps mustard for the kicker and the button.
  */
 export function ComboBand() {
   const t = useT();
 
   return (
-    <section className="bg-mustard">
+    <section className="bg-cocoa">
       <Container className="grid items-center gap-8 py-12 sm:py-14 lg:grid-cols-[1.1fr_1fr]">
         <div>
-          <p className="text-xs font-bold tracking-[0.12em] text-ink/60 uppercase">
+          <p className="text-xs font-bold tracking-[0.12em] text-mustard uppercase">
             {t.combos.eyebrow}
           </p>
-          <h2 className="text-display mt-2 text-[clamp(1.75rem,5vw,3rem)] text-ink uppercase">
+          <h2 className="text-display mt-2 text-[clamp(1.75rem,5vw,3rem)] text-white uppercase">
             {t.combos.title}
           </h2>
-          <p className="measure mt-3 text-base text-ink/75">{t.combos.description}</p>
-          <Button asChild size="lg" className="mt-6 bg-ink hover:bg-ink/85">
+          <p className="measure mt-3 text-base text-white/75">{t.combos.description}</p>
+          <Button asChild size="lg" className="mt-6 bg-mustard text-ink hover:bg-mustard/85">
             <Link href="/menu#combos-meals">{t.combos.cta}</Link>
           </Button>
         </div>

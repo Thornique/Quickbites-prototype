@@ -16,6 +16,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 6,
     calories: 340,
     popularity: 88,
+    image: "/images/menu/aloo-tikki-burger.jpg",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -37,6 +38,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 7,
     calories: 420,
     popularity: 74,
+    image: "/images/menu/veg-cheese-burger.jpg",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -59,6 +61,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 8,
     calories: 480,
     popularity: 92,
+    image: "/images/menu/paneer-tikka-burger.jpg",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -80,6 +83,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 7,
     calories: 390,
     popularity: 61,
+    image: "/images/menu/masala-veg-burger.jpg",
     groups: ["addons", "spice", "meal"],
     stock: [
       ["inv-burger-bun", 1],

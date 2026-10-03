@@ -22,6 +22,8 @@ export const enCore = {
     somethingWentWrong: "Something went wrong.",
     show: "Show",
     hide: "Hide",
+    prototype: "Prototype",
+    prototypeNote: "Demo prototype — sample data only.",
   },
 
   nav: {
@@ -55,7 +57,6 @@ export const enCore = {
     accountMenu: "Account menu",
     openAdminPanel: "Open admin panel",
     greeting: (name: string) => `Hello, ${name}`,
-    signedInAs: (email: string) => `Signed in as ${email}`,
   },
 
   auth: {

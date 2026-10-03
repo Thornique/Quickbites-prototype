@@ -17,7 +17,7 @@ const TAG_STYLES: Record<
   },
   new: {
     label: "New",
-    className: "bg-brand/10 text-brand",
+    className: "bg-brand/10 text-brand-hover",
     Icon: Sparkles,
   },
   spicy: {

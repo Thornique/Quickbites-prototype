@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SearchX } from "lucide-react";
 import { MenuCard } from "@/components/site/menu-card";
+import { PageHead } from "@/components/site/page-head";
 import { StoreClosedBanner } from "@/components/site/store-closed-banner";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
@@ -134,12 +135,7 @@ export function MenuClient() {
 
   return (
     <>
-      <Container className="py-6 sm:py-10">
-        <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
-          {t.menu.title}
-        </h1>
-        <p className="mt-1.5 text-sm text-ink-muted">{t.menu.paymentNote}</p>
-
+      <PageHead title={t.menu.title} subtitle={t.menu.paymentNote} className="border-b-0">
         <StoreClosedBanner className="mt-5" />
 
         <div className="mt-6">
@@ -152,20 +148,18 @@ export function MenuClient() {
             resultCount={filtered.length}
           />
         </div>
-      </Container>
+      </PageHead>
 
       {sections.length > 0 && (
-        <Container>
-          <CategoryNav
-            categories={sections.map((section) => section.category)}
-            activeSlug={activeSlug}
-            onSelect={(slug) => scrollToCategory(slug)}
-            counts={Object.fromEntries(
-              sections.map((section) => [section.category.id, section.items.length]),
-            )}
-            labelFor={categoryName}
-          />
-        </Container>
+        <CategoryNav
+          categories={sections.map((section) => section.category)}
+          activeSlug={activeSlug}
+          onSelect={(slug) => scrollToCategory(slug)}
+          counts={Object.fromEntries(
+            sections.map((section) => [section.category.id, section.items.length]),
+          )}
+          labelFor={categoryName}
+        />
       )}
 
       <Container className="pb-24 sm:pb-16">
@@ -197,11 +191,11 @@ export function MenuClient() {
           />
         )}
 
-        {sections.map((section) => (
+        {sections.map((section, sectionIndex) => (
           <section
             key={section.category.id}
             id={section.category.slug}
-            className="scroll-mt-36 pt-8"
+            className="scroll-mt-40 pt-8"
           >
             <h2 className="text-display text-2xl text-ink uppercase">
               {categoryName(section.category)}
@@ -216,13 +210,16 @@ export function MenuClient() {
             )}
 
             <ul className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
-              {section.items.map((item: MenuItem) => (
+              {section.items.map((item: MenuItem, itemIndex: number) => (
                 <li key={item.id}>
                   <MenuCard
                     item={item}
                     layout="responsive"
                     categoryName={categoryName(section.category)}
                     className="h-full"
+                    /* The first row is the largest paint on this page, so it
+                       loads eagerly instead of waiting for the observer. */
+                    priority={sectionIndex === 0 && itemIndex < 4}
                   />
                 </li>
               ))}

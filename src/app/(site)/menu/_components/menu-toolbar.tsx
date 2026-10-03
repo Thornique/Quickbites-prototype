@@ -104,6 +104,7 @@ export function MenuToolbar({
             className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-ink-muted"
           />
           <Input
+            id="menu-search"
             type="search"
             value={draft}
             onChange={(event) => setDraft(event.target.value)}

@@ -1,14 +1,15 @@
 import { Panel, Row } from "../_components/panel";
 
 const BRAND = [
-  { name: "cream", hex: "#FBF7F0", use: "Page background" },
+  { name: "cream", hex: "#F6F0E5", use: "Page background" },
   { name: "surface", hex: "#FFFFFF", use: "Cards, inputs" },
-  { name: "ink", hex: "#1A1714", use: "Primary text" },
-  { name: "ink-muted", hex: "#6B645C", use: "Secondary text" },
-  { name: "hairline", hex: "#E8E1D6", use: "Borders" },
-  { name: "brand", hex: "#D7261E", use: "Primary actions" },
-  { name: "brand-hover", hex: "#B81E17", use: "Primary hover" },
-  { name: "mustard", hex: "#F4B400", use: "Deal bands" },
+  { name: "ink", hex: "#241B16", use: "Primary text" },
+  { name: "ink-muted", hex: "#6E6056", use: "Secondary text" },
+  { name: "hairline", hex: "#E6DCCB", use: "Borders" },
+  { name: "brand", hex: "#D62300", use: "Primary actions" },
+  { name: "brand-hover", hex: "#AE1C00", use: "Primary hover" },
+  { name: "cocoa", hex: "#50231A", use: "Dark fills, switches" },
+  { name: "mustard", hex: "#F0B323", use: "Deal bands" },
 ];
 
 const STATUS = [
@@ -20,9 +21,9 @@ const STATUS = [
 ];
 
 const SAND = [
-  { name: "sand-50", hex: "#F7F2EA", use: "Row hover" },
-  { name: "sand-100", hex: "#F2EADF", use: "Chips, fills" },
-  { name: "sand-200", hex: "#EBE2D4", use: "Pressed fills" },
+  { name: "sand-50", hex: "#F2EADC", use: "Row hover" },
+  { name: "sand-100", hex: "#ECE2D0", use: "Chips, fills" },
+  { name: "sand-200", hex: "#E3D7C1", use: "Pressed fills" },
 ];
 
 function Swatch({ name, hex, use }: { name: string; hex: string; use: string }) {
@@ -39,8 +40,8 @@ function Swatch({ name, hex, use }: { name: string; hex: string; use: string }) 
 }
 
 const TYPE_SCALE = [
-  { cls: "text-display text-5xl", label: "Display 48 · Archivo cond. 800" },
-  { cls: "text-display text-3xl", label: "Display 30 · Archivo cond. 800" },
+  { cls: "text-display text-5xl", label: "Display 48 · Baloo 2 800" },
+  { cls: "text-display text-3xl", label: "Display 30 · Baloo 2 800" },
   { cls: "text-xl font-semibold", label: "Title 20 · Mukta 600" },
   { cls: "text-base", label: "Body 16 · Mukta 400" },
   { cls: "text-sm text-ink-muted", label: "Small 14 · Mukta 400 muted" },
@@ -56,7 +57,7 @@ export function TokensSection() {
       <Panel
         id="colour"
         title="Colour"
-        note="Warm cream and tomato red carry the brand; mustard is an accent band only. Admin screens use the same tokens with neutral surfaces."
+        note="Warm cream and flame red carry the brand; mahogany fills the switches and dark bands, mustard the deal bands only. Admin screens use the same tokens with neutral surfaces."
       >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           {BRAND.map((c) => (
@@ -82,7 +83,7 @@ export function TokensSection() {
       <Panel
         id="type"
         title="Typography"
-        note="Archivo at condensed width 75 / weight 800 for headings, Mukta for everything else so Latin and Devanagari share one voice."
+        note="Baloo 2 at weight 800 for headings and Mukta for everything else. Both carry Devanagari, so an English and a Hindi screen are set in the same two faces."
       >
         <div className="space-y-4">
           {TYPE_SCALE.map((t) => (
@@ -97,7 +98,7 @@ export function TokensSection() {
         </div>
 
         <h3 className="mt-10 mb-3 text-sm font-semibold text-ink">
-          Hindi rendering (Mukta, Devanagari)
+          Hindi rendering (Devanagari)
         </h3>
         <div
           lang="hi"

@@ -6,6 +6,7 @@ import { CartLineRow } from "@/components/site/cart-line-row";
 import { CartSummary } from "@/components/site/cart-summary";
 import { CouponField } from "@/components/site/coupon-field";
 import { OrderTypeToggle } from "@/components/site/order-type-toggle";
+import { PageHead } from "@/components/site/page-head";
 import { StoreClosedBanner } from "@/components/site/store-closed-banner";
 import { SuggestedAddOns } from "@/components/site/suggested-add-ons";
 import { Button } from "@/components/ui/button";
@@ -30,34 +31,31 @@ export default function CartPage() {
 
   if (isHydrated && lines.length === 0) {
     return (
-      <Container className="py-10">
-        <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
-          {t.cartPage.title}
-        </h1>
-        <EmptyState
-          className="mt-8"
-          icon={ShoppingBag}
-          title={t.cartPage.empty}
-          description={t.cartPage.emptyBody}
-          action={
-            <Button asChild>
-              <Link href="/menu">{t.cartPage.browseMenu}</Link>
-            </Button>
-          }
-        />
-      </Container>
+      <>
+        <PageHead title={t.cartPage.title} />
+        <Container className="py-10">
+          <EmptyState
+            icon={ShoppingBag}
+            title={t.cartPage.empty}
+            description={t.cartPage.emptyBody}
+            action={
+              <Button asChild>
+                <Link href="/menu">{t.cartPage.browseMenu}</Link>
+              </Button>
+            }
+          />
+        </Container>
+      </>
     );
   }
 
   return (
-    <Container className="py-6 pb-16 sm:py-10">
-      <h1 className="text-display text-3xl text-ink uppercase sm:text-4xl">
-        {t.cartPage.title}
-      </h1>
+    <>
+      <PageHead title={t.cartPage.title}>
+        <StoreClosedBanner className="mt-5" />
+      </PageHead>
 
-      <StoreClosedBanner className="mt-5" />
-
-      <div className="mt-6 grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
+      <Container className="grid gap-8 py-6 pb-16 sm:py-10 lg:grid-cols-[1fr_22rem] lg:items-start">
         <div>
           <OrderTypeToggle />
 
@@ -88,7 +86,7 @@ export default function CartPage() {
             </Button>
           </Card>
         </div>
-      </div>
-    </Container>
+      </Container>
+    </>
   );
 }

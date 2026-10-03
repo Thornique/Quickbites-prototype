@@ -1,18 +1,34 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { MessageCircle, Phone } from "lucide-react";
+import { useSiteContent } from "@/features/content";
 import { useT } from "@/i18n";
 import { STORE } from "@/lib/constants";
+import { telHref } from "@/lib/format";
 
 /**
- * Floating contact actions.
+ * Routes where the bottom-right corner belongs to the ordering controls — the
+ * Add buttons and quantity steppers on a menu card, the Track buttons in the
+ * account list. A floating button there covers the one control the screen
+ * exists for, so contact falls back to the header link and the footer, which
+ * every page carries anyway.
+ */
+const HIDDEN_ON = ["/menu", "/cart", "/checkout", "/order/", "/account"];
+
+/**
+ * Floating contact actions, on the pages where nothing competes for the corner.
  *
- * Sits above `--mobile-bar-height`, a variable the sticky mobile cart bar
- * (step 6) will set — reserving the space now means the cart bar can never
- * cover these buttons later.
+ * Sits above `--mobile-bar-height`, which the sticky mobile cart bar sets —
+ * reserving that space is what stops the cart bar covering these buttons.
  */
 export function ContactFab() {
   const t = useT();
+  const pathname = usePathname();
+  const { data: content } = useSiteContent();
+  const contact = content?.contact;
+
+  if (HIDDEN_ON.some((route) => pathname.startsWith(route))) return null;
 
   return (
     <div
@@ -21,15 +37,15 @@ export function ContactFab() {
     >
       {/* Calling is the mobile-first action, so it comes first on small screens. */}
       <a
-        href={`tel:${STORE.phoneHref}`}
-        aria-label={`${t.footer.callUs} ${STORE.phoneDisplay}`}
+        href={`tel:${telHref(contact?.phone, STORE.phoneHref)}`}
+        aria-label={`${t.footer.callUs} ${contact?.phone ?? STORE.phoneDisplay}`}
         className="inline-flex size-12 items-center justify-center rounded-full border border-hairline bg-surface text-ink shadow-pop transition-colors hover:border-brand hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:hidden"
       >
         <Phone size={22} strokeWidth={1.75} aria-hidden="true" />
       </a>
 
       <a
-        href={`https://wa.me/${STORE.whatsappHref}`}
+        href={`https://wa.me/${contact?.whatsapp ?? STORE.whatsappHref}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t.footer.whatsapp}

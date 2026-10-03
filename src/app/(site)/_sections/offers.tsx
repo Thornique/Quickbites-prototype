@@ -4,7 +4,6 @@ import { Copy, Ticket } from "lucide-react";
 import { toast } from "sonner";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
-import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoupons } from "@/features/coupons";
 import { usePick, useT } from "@/i18n";
@@ -40,32 +39,45 @@ export function Offers() {
   };
 
   return (
-    <section id="offers" className="scroll-mt-24 py-12 sm:py-16">
-      <Container>
-        <SectionHeading
-          eyebrow={t.offers.eyebrow}
-          title={t.offers.title}
-          description={t.offers.description}
-        />
+    <section id="offers" className="scroll-mt-24 pb-12 sm:pb-16">
+      {/*
+        Mustard band behind the title only, the way the chains head their deals
+        page. Ink on mustard rather than the white those sites use — white on
+        this yellow measures about 1.9:1 and the brief asks for AA.
+      */}
+      <div className="bg-mustard">
+        <Container className="py-8 text-center sm:py-10">
+          <p className="text-xs font-bold tracking-[0.12em] text-ink/70 uppercase">
+            {t.offers.eyebrow}
+          </p>
+          <h2 className="text-display mt-1.5 text-[clamp(1.75rem,5vw,3rem)] text-ink uppercase">
+            {t.offers.title}
+          </h2>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-ink/75 sm:text-base">
+            {t.offers.description}
+          </p>
+        </Container>
+      </div>
+
+      <Container className="pt-8 sm:pt-10">
 
         {isLoading && (
-          <div className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="h-36 w-full rounded-card" />
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 2 }).map((_, i) => (
+              <Skeleton key={i} className="h-40 w-full rounded-card" />
             ))}
           </div>
         )}
 
         {!isLoading && coupons?.length === 0 && (
           <EmptyState
-            className="mt-7"
             icon={Ticket}
             title={t.offers.noOffers}
             description={t.offers.noOffersBody}
           />
         )}
 
-        <ul className="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <ul className="grid gap-4 sm:grid-cols-2">
           {coupons?.map((coupon) => (
             <li key={coupon.id}>
               {/*
@@ -82,8 +94,8 @@ export function Offers() {
                   className="absolute top-1/2 -right-2 size-4 -translate-y-1/2 rounded-full border border-hairline bg-cream"
                 />
 
-                <div className="flex flex-1 flex-col p-5">
-                  <p className="text-display text-2xl text-brand uppercase">
+                <div className="flex flex-1 flex-col p-5 sm:p-6">
+                  <p className="text-display text-3xl text-brand uppercase sm:text-4xl">
                     {headlineOf(coupon)}
                   </p>
                   <p className="mt-1.5 text-sm text-ink-muted">
@@ -94,7 +106,7 @@ export function Offers() {
                   </p>
 
                   <div className="mt-4 flex items-center gap-2 border-t border-dashed border-hairline pt-4">
-                    <code className="nums rounded-control border border-dashed border-brand/40 bg-brand/5 px-2.5 py-1.5 text-sm font-bold tracking-wider text-brand">
+                    <code className="nums rounded-control bg-mustard/25 px-3 py-1.5 text-sm font-bold tracking-wider text-ink">
                       {coupon.code}
                     </code>
                     <button

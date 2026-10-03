@@ -52,8 +52,11 @@ export interface PageHeaderProps {
 }
 
 /**
- * Title block for every admin page. Smaller and calmer than the storefront's
- * display headings — a back office is read all day, not scanned once.
+ * Title block for every admin page.
+ *
+ * Same display face as the storefront, so the panel is recognisably the same
+ * brand, but set smaller and in sentence case — a back office is read all day,
+ * not scanned once, so it never gets the uppercase banner treatment.
  */
 export function PageHeader({
   title,
@@ -67,7 +70,7 @@ export function PageHeader({
       <AdminBreadcrumbs className="mb-2" />
       <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold tracking-tight text-ink sm:text-2xl">
+          <h1 className="font-display text-xl font-extrabold tracking-tight text-ink sm:text-2xl">
             {title}
           </h1>
           {description && (

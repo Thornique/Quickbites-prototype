@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { LanguageToggle } from "@/components/site/language-toggle";
+import { Wordmark } from "@/components/site/wordmark";
 import { Container } from "@/components/ui/container";
+import { STORE } from "@/lib/constants";
 
 /**
  * Centred card layout for /login and /signup. Deliberately quiet — no header
@@ -12,11 +14,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="flex min-h-dvh flex-col bg-cream">
       <header className="border-b border-hairline bg-surface">
         <Container className="flex h-16 items-center justify-between gap-4">
-          <Link
-            href="/"
-            className="text-display text-xl text-brand uppercase transition-colors hover:text-brand-hover"
-          >
-            Quick Bites
+          <Link href="/" aria-label={`${STORE.name} — home`}>
+            <Wordmark className="h-5 sm:h-6" />
           </Link>
           <LanguageToggle />
         </Container>
@@ -33,7 +32,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             className="inline-flex items-center gap-1.5 text-sm text-ink-muted transition-colors hover:text-ink"
           >
             <ArrowLeft size={16} aria-hidden="true" />
-            Quick Bites, Bombay Bazar, Khandwa
+            {`${STORE.name}, ${STORE.addressLine}, ${STORE.city}`}
           </Link>
         </Container>
       </footer>

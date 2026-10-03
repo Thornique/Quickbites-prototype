@@ -10,6 +10,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { useSiteContent } from "@/features/content";
 import { usePick, useT } from "@/i18n";
 import { OPENING_HOURS, STORE } from "@/lib/constants";
+import { telHref } from "@/lib/format";
 
 const MAP_SRC = `https://www.google.com/maps?q=${encodeURIComponent(
   STORE.addressFull,
@@ -68,7 +69,7 @@ export function ContactContent() {
             </h2>
             <div className="mt-3 grid gap-2">
               <a
-                href={`tel:${STORE.phoneHref}`}
+                href={`tel:${telHref(contact?.phone, STORE.phoneHref)}`}
                 className="inline-flex items-center gap-2.5 text-sm text-ink transition-colors hover:text-brand"
               >
                 <Phone size={18} strokeWidth={1.75} aria-hidden="true" />

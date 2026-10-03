@@ -12,7 +12,7 @@ export interface WordmarkProps {
  * "QUICK BITES" wordmark.
  *
  * Drawn as text inside an SVG rather than outlined paths, so it stays a single
- * source of truth with the Archivo webfont the rest of the site loads and
+ * source of truth with the display webfont the rest of the site loads and
  * remains readable by assistive tech.
  *
  * `textLength` pins each line to an exact width. Without it the lockup depends
@@ -28,10 +28,9 @@ export function Wordmark({
 
   const textProps = {
     fill,
-    fontFamily: "var(--font-archivo), sans-serif",
+    fontFamily: "var(--font-display-face), sans-serif",
     fontWeight: 800,
     lengthAdjust: "spacingAndGlyphs" as const,
-    style: { fontVariationSettings: '"wdth" 75' },
   };
 
   if (variant === "stacked") {
@@ -55,16 +54,16 @@ export function Wordmark({
 
   return (
     <svg
-      viewBox="0 0 160 26"
+      viewBox="0 0 182 26"
       role="img"
       aria-label="Quick Bites"
       className={cn("h-6 w-auto", className)}
     >
-      <text {...textProps} x="0" y="21" fontSize="26" textLength="146">
+      <text {...textProps} x="0" y="21" fontSize="26" textLength="166">
         QUICK BITES
       </text>
       {/* A bite taken out of the full stop — the only flourish in the mark. */}
-      <circle cx="154" cy="19" r="4.5" fill="var(--color-mustard)" />
+      <circle cx="176" cy="19" r="4.5" fill="var(--color-mustard)" />
     </svg>
   );
 }

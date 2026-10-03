@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { DemoAccounts } from "@/components/site/demo-accounts";
 import { LanguageToggle } from "@/components/site/language-toggle";
+import { Wordmark } from "@/components/site/wordmark";
 import { Button } from "@/components/ui/button";
 import { FormField, fieldAria } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -72,7 +73,7 @@ export function AdminLoginForm() {
     <div className="flex min-h-dvh flex-col bg-ink">
       <header className="border-b border-white/10">
         <div className="mx-auto flex h-16 w-full max-w-[26rem] items-center justify-between gap-4 px-4">
-          <span className="text-display text-xl text-white uppercase">Quick Bites</span>
+          <Wordmark className="h-5" tone="light" />
           <LanguageToggle tone="dark" />
         </div>
       </header>

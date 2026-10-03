@@ -34,7 +34,13 @@ function initialsOf(name: string, email: string): string {
  * menu (with a shortcut into the panel for admins), inside /admin it is the
  * admin's, and signing out of one leaves the other alone.
  */
-export function AccountMenu({ className }: { className?: string }) {
+export interface AccountMenuProps {
+  className?: string;
+  /** Shows a text label beside the avatar, as in the desktop header row. */
+  showLabel?: boolean;
+}
+
+export function AccountMenu({ className, showLabel = false }: AccountMenuProps) {
   const t = useT();
   const router = useRouter();
   const scope = useSessionScope();
@@ -50,6 +56,22 @@ export function AccountMenu({ className }: { className?: string }) {
   }
 
   if (!user) {
+    if (showLabel) {
+      return (
+        <Link
+          href={signInHref}
+          className={cn(
+            "inline-flex h-10 shrink-0 items-center gap-2 rounded-control px-2",
+            "text-sm font-bold tracking-wide text-ink uppercase transition-colors",
+            "hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+            className,
+          )}
+        >
+          <UserIcon size={20} strokeWidth={1.75} aria-hidden="true" />
+          {t.account.signIn}
+        </Link>
+      );
+    }
     return (
       <Button asChild variant="outline" size="sm" className={className}>
         <Link href={signInHref}>{t.account.signIn}</Link>
@@ -70,13 +92,27 @@ export function AccountMenu({ className }: { className?: string }) {
           type="button"
           aria-label={t.account.accountMenu}
           className={cn(
-            "inline-flex size-10 shrink-0 items-center justify-center rounded-full",
-            "bg-brand/10 text-sm font-semibold text-brand transition-colors",
-            "hover:bg-brand/15 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+            "inline-flex h-10 shrink-0 items-center rounded-full transition-colors",
+            "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+            showLabel &&
+              "gap-2 rounded-control pr-2 text-sm font-bold tracking-wide text-ink uppercase hover:text-brand",
             className,
           )}
         >
-          {initialsOf(user.name, user.email)}
+          <span
+            aria-hidden="true"
+            className={cn(
+              "inline-flex items-center justify-center rounded-full bg-brand/10 text-sm font-semibold text-brand transition-colors",
+              showLabel ? "size-9" : "size-10 hover:bg-brand/15",
+            )}
+          >
+            {initialsOf(user.name, user.email)}
+          </span>
+          {showLabel && (
+            <span aria-hidden="true" className="max-w-28 truncate">
+              {user.name.split(" ")[0]}
+            </span>
+          )}
         </button>
       </DropdownMenuTrigger>
 

@@ -53,7 +53,7 @@ export function HeroCarousel() {
 
   if (isLoading) {
     return (
-      <Skeleton className="aspect-[4/5] w-full rounded-none sm:aspect-[16/9] lg:aspect-[21/9]" />
+      <Skeleton className="aspect-[4/5] w-full rounded-none sm:aspect-[16/9] lg:aspect-[32/9]" />
     );
   }
   if (!banners || banners.length === 0) return null;
@@ -79,7 +79,7 @@ export function HeroCarousel() {
         touchStartX.current = null;
       }}
     >
-      <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[16/9] lg:aspect-[21/9]">
+      <div className="relative aspect-[4/5] w-full overflow-hidden sm:aspect-[16/9] lg:aspect-[32/9]">
         {banners.map((banner, i) => (
           <div
             key={banner.id}
@@ -108,13 +108,13 @@ export function HeroCarousel() {
         <div className="absolute inset-0 flex items-end pb-16 sm:items-center sm:pb-0">
           <Container>
             <div className="max-w-xl">
-              <h1 className="text-display text-[clamp(2rem,7vw,4.25rem)] text-white uppercase">
+              <h1 className="text-display text-[clamp(2rem,5.5vw,3.5rem)] text-white uppercase">
                 {pick(active.headline)}
               </h1>
-              <p className="mt-3 max-w-md text-base text-white/85 sm:text-lg">
+              <p className="mt-2.5 max-w-md text-base text-white/85 sm:text-lg lg:mt-3">
                 {pick(active.subhead)}
               </p>
-              <div className="mt-6 flex flex-wrap gap-3">
+              <div className="mt-5 flex flex-wrap gap-3 lg:mt-6">
                 <Button asChild size="lg">
                   <Link href={active.ctaHref}>{t.hero.orderTakeaway}</Link>
                 </Button>
@@ -151,19 +151,32 @@ export function HeroCarousel() {
             </button>
 
             <div className="absolute inset-x-0 bottom-4 flex items-center justify-center gap-2">
-              {banners.map((banner, i) => (
-                <button
-                  key={banner.id}
-                  type="button"
-                  onClick={() => go(i)}
-                  aria-label={t.hero.goToSlide(i + 1)}
-                  aria-current={i === index ? "true" : undefined}
-                  className={cn(
-                    "h-1.5 rounded-pill transition-all duration-200 focus-visible:ring-2 focus-visible:ring-white",
-                    i === index ? "w-7 bg-white" : "w-3 bg-white/45 hover:bg-white/70",
-                  )}
-                />
-              ))}
+              {/*
+                The bar stays 6px tall, but the button around it is a 24px
+                touch target — the size a thumb (and WCAG) expects.
+              */}
+              <div className="flex items-center">
+                {banners.map((banner, i) => (
+                  <button
+                    key={banner.id}
+                    type="button"
+                    onClick={() => go(i)}
+                    aria-label={t.hero.goToSlide(i + 1)}
+                    aria-current={i === index ? "true" : undefined}
+                    className="group/dot flex h-6 items-center rounded-pill px-1.5 focus-visible:ring-2 focus-visible:ring-white"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        "h-1.5 rounded-pill transition-all duration-200",
+                        i === index
+                          ? "w-7 bg-white"
+                          : "w-3 bg-white/45 group-hover/dot:bg-white/70",
+                      )}
+                    />
+                  </button>
+                ))}
+              </div>
               <button
                 type="button"
                 onClick={() => setIsPaused((p) => !p)}
