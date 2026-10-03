@@ -177,7 +177,7 @@ export async function deleteMenuItem(id: string): Promise<void> {
 
 /** Copies an item, giving it a fresh slug and id. */
 export async function duplicateMenuItem(id: string): Promise<MenuItem> {
-  await ready(false);
+  await ready();
   const source = readCollection<MenuItem>("menuItems").find((i) => i.id === id);
   if (!source) throw notFound("Menu item");
 

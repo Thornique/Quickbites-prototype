@@ -143,7 +143,7 @@ export async function deleteAdmin(id: string): Promise<void> {
  * super admin, and demoting the last one is impossible.
  */
 export async function assertSingleSuperAdmin(): Promise<void> {
-  await ready(false);
+  await ready();
   const users = readCollection<User>("users");
   const supers = users.filter((u) => u.role === "SUPER_ADMIN");
   if (supers.length !== 1) {
@@ -152,7 +152,7 @@ export async function assertSingleSuperAdmin(): Promise<void> {
 }
 
 export async function getSuperAdmin(): Promise<User> {
-  await ready(false);
+  await ready();
   const owner = superAdminOf(readCollection<User>("users"));
   if (!owner) throw notFound("Super admin");
   return owner;

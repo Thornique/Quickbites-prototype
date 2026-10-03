@@ -1,3 +1,4 @@
+import bundleAnalyzer from "@next/bundle-analyzer";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -24,6 +25,21 @@ const nextConfig: NextConfig = {
   /** Prototype has no backend, so there is nothing to proxy or rewrite. */
   poweredByHeader: false,
   reactStrictMode: true,
+
+  /** gzip the HTML and JSON the standalone server sends on Render. */
+  compress: true,
+
+  /*
+    Barrel files re-export everything, so importing one icon can pull the whole
+    package into a page bundle. Next rewrites these imports to their deep paths
+    at build time, which keeps lucide tree-shaken as the icon count grows.
+  */
+  experimental: {
+    optimizePackageImports: ["lucide-react", "recharts", "date-fns"],
+  },
 };
 
-export default nextConfig;
+/** `ANALYZE=true npm run build` writes the treemaps to .next/analyze. */
+export default bundleAnalyzer({ enabled: process.env.ANALYZE === "true" })(
+  nextConfig,
+);

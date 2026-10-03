@@ -131,7 +131,7 @@ export async function list(
   userId: string,
   options: ListOptions = {},
 ): Promise<AppNotification[]> {
-  await ready(false);
+  await ready();
   return listSync(userId, options);
 }
 
@@ -152,7 +152,7 @@ export function unreadCount(userId: string): number {
 }
 
 export async function markRead(id: string): Promise<void> {
-  await ready(false);
+  await ready();
   const rows = readAll();
   const at = Date.now();
   writeCollection(
@@ -164,7 +164,7 @@ export async function markRead(id: string): Promise<void> {
 }
 
 export async function markAllRead(userId: string): Promise<void> {
-  await ready(false);
+  await ready();
   const rows = readAll();
   const at = Date.now();
   writeCollection(
@@ -178,7 +178,7 @@ export async function markAllRead(userId: string): Promise<void> {
 
 /** Clears everything for one user — used by the dev reset path. */
 export async function clearFor(userId: string): Promise<void> {
-  await ready(false);
+  await ready();
   writeCollection(
     "notifications",
     readAll().filter((n) => n.recipientUserId !== userId),

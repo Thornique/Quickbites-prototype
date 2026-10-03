@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     locale: "en_IN",
     images: [
       {
-        url: "/images/hero/burger-combo.jpg",
+        url: "/images/hero/burger-combo.webp",
         width: 1600,
         height: 900,
         alt: "A Quick Bites burger and fries combo",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${STORE.name} — Takeaway in Khandwa`,
     description: DESCRIPTION,
-    images: ["/images/hero/burger-combo.jpg"],
+    images: ["/images/hero/burger-combo.webp"],
   },
 };
 

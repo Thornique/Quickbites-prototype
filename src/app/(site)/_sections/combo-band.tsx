@@ -33,7 +33,7 @@ export function ComboBand() {
         <div className="grid grid-cols-2 gap-3">
           <div className="relative aspect-[4/3] overflow-hidden rounded-card">
             <Image
-              src="/images/hero/burger-combo.jpg"
+              src="/images/hero/burger-combo.webp"
               alt=""
               fill
               sizes="(max-width: 1024px) 45vw, 260px"
@@ -42,7 +42,7 @@ export function ComboBand() {
           </div>
           <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-card">
             <Image
-              src="/images/menu/classic-fries.jpg"
+              src="/images/menu/classic-fries.webp"
               alt=""
               fill
               sizes="(max-width: 1024px) 45vw, 260px"

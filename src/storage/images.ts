@@ -1,6 +1,15 @@
-import { del, get, keys, set } from "idb-keyval";
 import { AppError } from "@/lib/errors";
 import { IDB_IMAGE_PREFIX } from "./keys";
+
+/*
+  idb-keyval is pulled in on demand rather than imported at the top.
+  `isIdbImage` is a string check that menu cards call on every render, which was
+  enough to drag the library into the shared layout chunk and therefore onto
+  every customer page — to read a store that, in the seeded demo, is empty.
+  Nothing touches IndexedDB until an admin actually uploads a photo or a page
+  actually meets an `idb:` reference.
+*/
+const idb = () => import("idb-keyval");
 
 /**
  * Admin-uploaded images live in IndexedDB, not localStorage: a handful of
@@ -34,6 +43,7 @@ export async function storeUploadedImage(file: File, id: string): Promise<string
 
   const key = toIdbKey(id);
   try {
+    const { set } = await idb();
     await set(key, blob);
   } catch {
     throw new AppError(
@@ -47,12 +57,15 @@ export async function storeUploadedImage(file: File, id: string): Promise<string
 /** Resolve a stored key to an object URL. Callers must revoke it when done. */
 export async function getUploadedImageUrl(key: string): Promise<string | null> {
   if (!isIdbImage(key)) return key;
+  const { get } = await idb();
   const blob = await get<Blob>(key);
   return blob ? URL.createObjectURL(blob) : null;
 }
 
 export async function deleteUploadedImage(key: string): Promise<void> {
-  if (isIdbImage(key)) await del(key);
+  if (!isIdbImage(key)) return;
+  const { del } = await idb();
+  await del(key);
 }
 
 /** Total bytes held in the image store, shown on the dev data screen. */
@@ -60,6 +73,7 @@ export async function getUploadedImageFootprint(): Promise<{
   count: number;
   bytes: number;
 }> {
+  const { get, keys } = await idb();
   const all = await keys();
   const imageKeys = all.filter(
     (k): k is string => typeof k === "string" && isIdbImage(k),

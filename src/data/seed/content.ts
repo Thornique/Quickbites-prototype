@@ -13,7 +13,7 @@ const CREATED_AT = "2026-08-01T04:30:00.000Z";
 export const SEED_BANNERS: Banner[] = [
   {
     id: "banner-1",
-    image: "/images/hero/burger-combo.jpg",
+    image: "/images/hero/burger-combo.webp",
     headline: { en: "Hot in 12 minutes", hi: "12 मिनट में गरम" },
     subhead: {
       en: "Order takeaway and pick it up at Bombay Bazar, Khandwa.",
@@ -27,7 +27,7 @@ export const SEED_BANNERS: Banner[] = [
   },
   {
     id: "banner-2",
-    image: "/images/hero/pizza-night.jpg",
+    image: "/images/hero/pizza-night.webp",
     headline: { en: "Pizza, baked to order", hi: "पिज़्ज़ा, ऑर्डर पर बेक" },
     subhead: {
       en: "Hand-stretched bases and a proper cheese pull. From ₹129.",
@@ -41,7 +41,7 @@ export const SEED_BANNERS: Banner[] = [
   },
   {
     id: "banner-3",
-    image: "/images/hero/shakes.jpg",
+    image: "/images/hero/shakes.webp",
     headline: { en: "Beat the Khandwa heat", hi: "खंडवा की गर्मी को मात दें" },
     subhead: {
       en: "Thick shakes and cold coffee, blended fresh. From ₹59.",
@@ -61,63 +61,63 @@ const GALLERY_ROWS: Array<[string, string, string, GalleryImage["category"]]> = 
     eight as a social feed, and four interiors in a row read as repetition
     rather than a feed.
   */
-  ["/images/menu/farmhouse-pizza.jpg", "Farmhouse pizza", "फार्महाउस पिज़्ज़ा", "FOOD"],
+  ["/images/menu/farmhouse-pizza.webp", "Farmhouse pizza", "फार्महाउस पिज़्ज़ा", "FOOD"],
   [
-    "/images/gallery/cafe-interior.jpg",
+    "/images/gallery/cafe-interior.webp",
     "Inside the cafe",
     "कैफ़े का अंदरूनी हिस्सा",
     "CAFE",
   ],
-  ["/images/gallery/donuts.jpg", "Fresh doughnuts", "ताज़े डोनट", "FOOD"],
-  ["/images/gallery/coffee-moment.jpg", "Coffee for two", "दो के लिए कॉफ़ी", "CAFE"],
+  ["/images/gallery/donuts.webp", "Fresh doughnuts", "ताज़े डोनट", "FOOD"],
+  ["/images/gallery/coffee-moment.webp", "Coffee for two", "दो के लिए कॉफ़ी", "CAFE"],
   [
-    "/images/menu/chocolate-shake.jpg",
+    "/images/menu/chocolate-shake.webp",
     "Thick chocolate shake",
     "थिक चॉकलेट शेक",
     "FOOD",
   ],
   [
-    "/images/gallery/cafe-counter.jpg",
+    "/images/gallery/cafe-counter.webp",
     "Our order counter",
     "हमारा ऑर्डर काउंटर",
     "CAFE",
   ],
-  ["/images/menu/peri-peri-fries.jpg", "Peri peri fries", "पेरी पेरी फ्राइज़", "FOOD"],
+  ["/images/menu/peri-peri-fries.webp", "Peri peri fries", "पेरी पेरी फ्राइज़", "FOOD"],
   [
-    "/images/gallery/cafe-dining.jpg",
+    "/images/gallery/cafe-dining.webp",
     "Evening at Quick Bites",
     "क्विक बाइट्स में शाम",
     "EVENTS",
   ],
   [
-    "/images/menu/margherita-pizza.jpg",
+    "/images/menu/margherita-pizza.webp",
     "Margherita, straight from the oven",
     "मार्गेरिटा, ओवन से सीधा",
     "FOOD",
   ],
   [
-    "/images/gallery/cafe-seating.jpg",
+    "/images/gallery/cafe-seating.webp",
     "Seating by the window",
     "खिड़की के पास बैठने की जगह",
     "CAFE",
   ],
-  ["/images/gallery/dessert-cups.jpg", "Dessert cups", "डेज़र्ट कप", "FOOD"],
-  ["/images/menu/cold-coffee.jpg", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD"],
+  ["/images/gallery/dessert-cups.webp", "Dessert cups", "डेज़र्ट कप", "FOOD"],
+  ["/images/menu/cold-coffee.webp", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD"],
   [
-    "/images/gallery/burger-board.jpg",
+    "/images/gallery/burger-board.webp",
     "Burgers on the board",
     "बोर्ड पर बर्गर",
     "FOOD",
   ],
   [
-    "/images/menu/cappuccino.jpg",
+    "/images/menu/cappuccino.webp",
     "Cappuccino with cocoa dust",
     "कोको वाली कैपेचीनो",
     "FOOD",
   ],
-  ["/images/menu/brownie-sundae.jpg", "Brownie sundae", "ब्राउनी संडे", "FOOD"],
+  ["/images/menu/brownie-sundae.webp", "Brownie sundae", "ब्राउनी संडे", "FOOD"],
   [
-    "/images/menu/veg-grilled-sandwich.jpg",
+    "/images/menu/veg-grilled-sandwich.webp",
     "Grilled veg sandwich",
     "ग्रिल्ड वेज सैंडविच",
     "FOOD",
@@ -238,7 +238,7 @@ export const SEED_SITE_CONTENT: SiteContent = {
         { en: "10% off above ₹5,000", hi: "₹5,000 से ऊपर 10% छूट" },
       ],
       priceNote: { en: "Menu price, 10% off above ₹5,000", hi: "मेन्यू दाम, ₹5,000 से ऊपर 10% छूट" },
-      image: "/images/hero/burger-combo.jpg",
+      image: "/images/hero/burger-combo.webp",
     },
     {
       id: "svc-catering",
@@ -254,7 +254,7 @@ export const SEED_SITE_CONTENT: SiteContent = {
         { en: "Veg-only kitchen on request", hi: "कहने पर पूरी वेज रसोई" },
       ],
       priceNote: { en: "From ₹199 per guest", hi: "₹199 प्रति मेहमान से" },
-      image: "/images/gallery/cafe-dining.jpg",
+      image: "/images/gallery/cafe-dining.webp",
     },
     {
       id: "svc-corporate",
@@ -270,7 +270,7 @@ export const SEED_SITE_CONTENT: SiteContent = {
         { en: "One monthly invoice", hi: "महीने का एक बिल" },
       ],
       priceNote: { en: "₹120 per box, billed monthly", hi: "₹120 प्रति बॉक्स, महीने का बिल" },
-      image: "/images/gallery/cafe-counter.jpg",
+      image: "/images/gallery/cafe-counter.webp",
     },
   ],
   pricing: {

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: STORE.name,
     title: `Book a table · ${STORE.name}`,
     description: DESCRIPTION,
-    images: [{ url: "/images/gallery/cafe-seating.jpg", width: 800, height: 600 }],
+    images: [{ url: "/images/gallery/cafe-seating.webp", width: 800, height: 600 }],
   },
 };
 

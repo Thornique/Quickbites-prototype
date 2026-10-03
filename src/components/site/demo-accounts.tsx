@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, FlaskConical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { DEMO_ACCOUNTS } from "@/data/seed";
+import { DEMO_ACCOUNTS } from "@/data/seed/users";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 

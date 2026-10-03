@@ -28,7 +28,8 @@ browser. Nothing else to configure — there is no `.env`, no database, no keys.
 
 | Script | What it does |
 | --- | --- |
-| `npm run dev` | Development server on port 3000 |
+| `npm run dev` | Development server on port 3000, via Turbopack |
+| `npm run dev:webpack` | Same, on the webpack compiler — fallback if Turbopack misbehaves |
 | `npm run build` | Production build |
 | `npm run build:render` | Production build, then copies `public/` and `.next/static/` into `.next/standalone/` so the standalone server can serve them (used by Render) |
 | `npm start` | Not used — the build is `output: "standalone"`, so run `node .next/standalone/server.js` |
@@ -36,6 +37,8 @@ browser. Nothing else to configure — there is no `.env`, no database, no keys.
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run format` | Prettier write |
 | `npm run format:check` | Prettier check |
+| `node scripts/optimize-images.mjs --replace` | Re-encode `public/images` as WebP, capped at 1600px. Run by hand after adding photography; the output is committed |
+| `ANALYZE=true npm run build` | Build and write bundle treemaps to `.next/analyze` |
 
 To run a production build locally:
 
@@ -107,7 +110,18 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Radix UI · zusta
 react-hook-form + zod · TanStack Table · Recharts · sonner · date-fns · lucide-react ·
 idb-keyval (admin image uploads only)
 
-Fonts: **Baloo 2** (display) and **Mukta** (body), both carrying Latin and Devanagari.
+Fonts: **Baloo 2** (display) and **Mukta** (body), both carrying Latin and Devanagari. They are
+**self-hosted** from `src/fonts` rather than fetched by `next/font/google`, whose download timed
+out on every dev start and every build. Each family is split into a Latin file and a Devanagari
+file and chained in a font stack, so Latin text uses the small Latin file and Hindi — plus ₹,
+which Google subsets into Devanagari — falls through to the other. Nothing touches the network
+for fonts at dev or build time.
+
+Photography is **WebP**, capped at 1600px wide (`scripts/optimize-images.mjs`).
+
+Recharts, the IndexedDB image store and the gallery lightbox are loaded with `next/dynamic`, so
+none of them appear in a customer page's first load. `ANALYZE=true npm run build` is how that was
+checked and how to re-check it.
 
 ## Known prototype limitations
 

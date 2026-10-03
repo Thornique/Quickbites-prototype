@@ -19,18 +19,16 @@ export interface StoredSession {
 }
 
 /**
- * Artificial latency so loading skeletons are actually visible during the
- * demo. Kept short enough that the app never feels broken.
+ * Every read/write path awaits this so the store is seeded before use.
+ *
+ * This used to add 150–350ms of fake latency to make the loading skeletons
+ * visible. Reading localStorage takes microseconds, so that delay was the only
+ * thing standing between a click and the result — it is gone. Skeletons still
+ * render on the first paint before the store is seeded; after that the data is
+ * simply there.
  */
-export function delay(min = 150, max = 350): Promise<void> {
-  const ms = Math.floor(Math.random() * (max - min + 1)) + min;
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-/** Every read/write path awaits this so the store is seeded before use. */
-export async function ready(withDelay = true): Promise<void> {
+export async function ready(): Promise<void> {
   await ensureSeeded();
-  if (withDelay) await delay();
 }
 
 export function getStoredSession(scope: SessionScope = "customer"): StoredSession | null {

@@ -228,7 +228,7 @@ export function flagsFor(order: Order, now = new Date()): OrderFlags {
  * promise is set by the admin on acceptance — this is only "usually about N".
  */
 export async function getProvisionalEstimate(lines: CartLine[]): Promise<number> {
-  await ready(false);
+  await ready();
   const config = settings();
   return estimatePrepMinutes({
     prepMinutes: lines.map((line) => line.prepMinutes),
@@ -816,7 +816,7 @@ export async function buildReorderLines(orderId: string): Promise<{
  * reading who accepted an order should not need staff-management rights.
  */
 export async function getAdminNames(): Promise<Record<string, string>> {
-  await ready(false);
+  await ready();
   requirePermission("ORDERS");
 
   const names: Record<string, string> = {};
@@ -908,7 +908,7 @@ export function canCustomerCancel(order: Order): boolean {
 
 /** Bookable scheduled-takeaway slots for one date. */
 export async function getAvailableSlots(date: Date): Promise<ScheduleSlot[]> {
-  await ready(false);
+  await ready();
   return buildSlotsForDate(date, settings(), readOrders());
 }
 
@@ -916,7 +916,7 @@ export async function getAvailableSlots(date: Date): Promise<ScheduleSlot[]> {
 export async function getSchedulableDays(): Promise<
   Array<{ date: string; slots: ScheduleSlot[] }>
 > {
-  await ready(false);
+  await ready();
   return buildSchedulableDays(settings());
 }
 

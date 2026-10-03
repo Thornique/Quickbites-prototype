@@ -69,7 +69,7 @@ export function AboutContent() {
 
           <div className="relative aspect-[4/3] overflow-hidden rounded-card border border-hairline">
             <Image
-              src="/images/gallery/cafe-counter.jpg"
+              src="/images/gallery/cafe-counter.webp"
               alt={pick(about.story.heading)}
               fill
               priority
@@ -117,7 +117,7 @@ export function AboutContent() {
         <div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
           <div className="relative aspect-[4/3] overflow-hidden rounded-card border border-hairline lg:order-last">
             <Image
-              src="/images/gallery/cafe-interior.jpg"
+              src="/images/gallery/cafe-interior.webp"
               alt={pick(about.hygiene.heading)}
               fill
               sizes="(min-width: 1024px) 48vw, 100vw"

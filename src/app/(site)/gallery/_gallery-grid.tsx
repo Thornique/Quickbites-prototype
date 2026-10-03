@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import { ImageOff } from "lucide-react";
 import { Container } from "@/components/ui/container";
@@ -11,7 +12,13 @@ import { useGallery } from "@/features/content";
 import { usePick, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import type { GalleryCategory } from "@/types";
-import { Lightbox } from "./_lightbox";
+/*
+  The lightbox is a full-screen dialog that only exists after somebody clicks a
+  photo, so it has no business in the gallery's first load.
+*/
+const Lightbox = dynamic(() => import("./_lightbox").then((m) => m.Lightbox), {
+  ssr: false,
+});
 
 type Filter = GalleryCategory | "ALL";
 

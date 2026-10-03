@@ -91,7 +91,7 @@ export async function updateEnquiry(
 
 /** Count of unread enquiries, for the admin sidebar badge. */
 export async function countNewEnquiries(): Promise<number> {
-  await ready(false);
+  await ready();
   return readCollection<Enquiry>("enquiries").filter((e) => e.status === "NEW").length;
 }
 

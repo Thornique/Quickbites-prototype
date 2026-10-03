@@ -16,7 +16,7 @@ export const DRINK_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 150,
     popularity: 93,
-    image: "/images/menu/cappuccino.jpg",
+    image: "/images/menu/cappuccino.webp",
     groups: ["size", "coffee"],
     largeDelta: 30,
     stock: [
@@ -101,7 +101,7 @@ export const DRINK_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 520,
     popularity: 94,
-    image: "/images/menu/chocolate-shake.jpg",
+    image: "/images/menu/chocolate-shake.webp",
     groups: ["size"],
     largeDelta: 40,
     stock: [
@@ -124,7 +124,7 @@ export const DRINK_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 310,
     popularity: 97,
-    image: "/images/menu/cold-coffee.jpg",
+    image: "/images/menu/cold-coffee.webp",
     groups: ["size"],
     largeDelta: 40,
     stock: [
@@ -231,7 +231,7 @@ export const DRINK_ROWS: MenuRow[] = [
     prepMinutes: 6,
     calories: 620,
     popularity: 90,
-    image: "/images/menu/brownie-sundae.jpg",
+    image: "/images/menu/brownie-sundae.webp",
     groups: [],
     stock: [
       ["inv-ice-cream", 0.08],

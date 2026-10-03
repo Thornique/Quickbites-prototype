@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     siteName: STORE.name,
     title: `Gallery · ${STORE.name}`,
     description: DESCRIPTION,
-    images: [{ url: "/images/gallery/burger-board.jpg", width: 800, height: 600 }],
+    images: [{ url: "/images/gallery/burger-board.webp", width: 800, height: 600 }],
   },
 };
 

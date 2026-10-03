@@ -16,7 +16,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 6,
     calories: 340,
     popularity: 88,
-    image: "/images/menu/aloo-tikki-burger.jpg",
+    image: "/images/menu/aloo-tikki-burger.webp",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -38,7 +38,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 7,
     calories: 420,
     popularity: 74,
-    image: "/images/menu/veg-cheese-burger.jpg",
+    image: "/images/menu/veg-cheese-burger.webp",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -61,7 +61,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 8,
     calories: 480,
     popularity: 92,
-    image: "/images/menu/paneer-tikka-burger.jpg",
+    image: "/images/menu/paneer-tikka-burger.webp",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -83,7 +83,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 7,
     calories: 390,
     popularity: 61,
-    image: "/images/menu/masala-veg-burger.jpg",
+    image: "/images/menu/masala-veg-burger.webp",
     groups: ["addons", "spice", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -105,7 +105,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 9,
     calories: 560,
     popularity: 95,
-    image: "/images/menu/chicken-cheese-burger.jpg",
+    image: "/images/menu/chicken-cheese-burger.webp",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -128,7 +128,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 9,
     calories: 540,
     popularity: 79,
-    image: "/images/menu/crispy-chicken-burger.jpg",
+    image: "/images/menu/crispy-chicken-burger.webp",
     groups: ["addons", "meal"],
     stock: [
       ["inv-burger-bun", 1],
@@ -152,7 +152,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 6,
     calories: 310,
     popularity: 90,
-    image: "/images/menu/veg-grilled-sandwich.jpg",
+    image: "/images/menu/veg-grilled-sandwich.webp",
     groups: ["addons"],
     stock: [
       ["inv-pav-bread", 4],
@@ -174,7 +174,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 8,
     calories: 450,
     popularity: 70,
-    image: "/images/menu/club-sandwich.jpg",
+    image: "/images/menu/club-sandwich.webp",
     groups: ["addons"],
     stock: [
       ["inv-pav-bread", 6],
@@ -239,7 +239,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 9,
     calories: 520,
     popularity: 72,
-    image: "/images/menu/chicken-tikka-sandwich.jpg",
+    image: "/images/menu/chicken-tikka-sandwich.webp",
     groups: ["addons", "spice"],
     stock: [
       ["inv-pav-bread", 4],
@@ -284,7 +284,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 12,
     calories: 680,
     popularity: 81,
-    image: "/images/menu/margherita-pizza.jpg",
+    image: "/images/menu/margherita-pizza.webp",
     groups: ["crust", "toppings"],
     stock: [
       ["inv-pizza-base", 1],
@@ -307,7 +307,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 14,
     calories: 820,
     popularity: 94,
-    image: "/images/menu/farmhouse-pizza.jpg",
+    image: "/images/menu/farmhouse-pizza.webp",
     groups: ["crust", "toppings"],
     stock: [
       ["inv-pizza-base", 1],
@@ -397,7 +397,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 380,
     popularity: 96,
-    image: "/images/menu/classic-fries.jpg",
+    image: "/images/menu/classic-fries.webp",
     groups: ["size"],
     largeDelta: 40,
     stock: [
@@ -418,7 +418,7 @@ export const FOOD_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 410,
     popularity: 91,
-    image: "/images/menu/peri-peri-fries.jpg",
+    image: "/images/menu/peri-peri-fries.webp",
     groups: ["size", "spice"],
     largeDelta: 40,
     stock: [

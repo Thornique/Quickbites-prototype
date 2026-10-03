@@ -1,9 +1,17 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CustomiseSheet } from "@/components/site/customise-sheet";
+/*
+  The option sheet is the heaviest thing on the menu route and most visits never
+  open it — plenty of items add straight to the cart. It arrives on first use.
+*/
+const CustomiseSheet = dynamic(
+  () => import("@/components/site/customise-sheet").then((m) => m.CustomiseSheet),
+  { ssr: false },
+);
 import { useOpenState } from "@/features/settings";
 import { usePick, useT } from "@/i18n";
 import { buildCartLine } from "@/services/cart-pricing";

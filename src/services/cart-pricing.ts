@@ -100,7 +100,7 @@ export async function priceCart({
   couponCode,
   orderType = "TAKEAWAY",
 }: PriceCartInput): Promise<PricedCart> {
-  await ready(false);
+  await ready();
   const config = settings();
   const pricedLines = lines.map(priceLine);
 
@@ -147,7 +147,7 @@ export function countActiveOrders(): number {
 
 /** "Ready by" estimate for the current cart. */
 export async function estimateReadyTime(lines: CartLine[], from?: Date): Promise<Date> {
-  await ready(false);
+  await ready();
   return estimateReadyAtForLines(lines, countActiveOrders(), settings(), from);
 }
 
@@ -159,7 +159,7 @@ export async function validateCartAvailability(lines: CartLine[]): Promise<{
   ok: boolean;
   unavailable: Array<{ lineKey: string; name: string }>;
 }> {
-  await ready(false);
+  await ready();
   const menu = new Map(readCollection<MenuItem>("menuItems").map((i) => [i.id, i]));
   const unavailable: Array<{ lineKey: string; name: string }> = [];
 

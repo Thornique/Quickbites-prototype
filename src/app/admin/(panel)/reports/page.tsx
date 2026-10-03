@@ -1,22 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import dynamic from "next/dynamic";
 import { Download, Printer } from "lucide-react";
 import { toast } from "sonner";
-import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import {
-  AXIS_PROPS,
-  CHART_COLORS,
-  ChartCard,
-  TOOLTIP_STYLE,
-} from "@/components/admin/chart-card";
+import { ChartCard } from "@/components/admin/chart-card";
+
+/* Recharts is the biggest thing on this route and the tables matter more. */
+const HourlyOrdersChart = dynamic(
+  () => import("./_hourly-chart").then((m) => m.HourlyOrdersChart),
+  { ssr: false },
+);
 import {
   DateRangePicker,
   resolvePreset,
@@ -211,14 +205,7 @@ function ReportsModule() {
             />
           }
         >
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={hourRows} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
-              <XAxis dataKey="hour" {...AXIS_PROPS} interval={1} />
-              <YAxis {...AXIS_PROPS} width={36} allowDecimals={false} />
-              <Tooltip {...TOOLTIP_STYLE} />
-              <Bar dataKey="orders" fill={CHART_COLORS.brand} radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+          <HourlyOrdersChart rows={hourRows} />
         </ChartCard>
 
         {/* 3. Best sellers. */}

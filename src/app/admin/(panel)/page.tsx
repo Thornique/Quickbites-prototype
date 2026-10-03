@@ -20,7 +20,7 @@ import {
   PaymentSplitChart,
   RevenueChart,
   TopItemsChart,
-} from "./_dashboard/charts";
+} from "./_dashboard/charts-lazy";
 import { KpiGrid } from "./_dashboard/kpi-grid";
 import { LiveBoard } from "./_dashboard/live-board";
 import { ActivityPanel, LowStockPanel } from "./_dashboard/side-panels";

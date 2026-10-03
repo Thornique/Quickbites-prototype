@@ -13,7 +13,7 @@ import {
 } from "./common";
 
 export async function getSettings(): Promise<StoreSettings> {
-  await ready(false);
+  await ready();
   const settings = readSingleton<StoreSettings>("storeSettings");
   if (!settings) throw notFound("Store settings");
   return settings;
@@ -115,7 +115,7 @@ export async function getCurrentPrepEstimate(): Promise<number> {
 
 /** Destructive — super admin only, behind a typed confirmation in the UI. */
 export async function resetDemo(): Promise<void> {
-  await ready(false);
+  await ready();
   const admin = requireSuperAdmin();
   await resetDemoData();
   logActivity(admin, "DEMO_RESET", "Reset all demo data");

@@ -73,6 +73,18 @@
   NOTE: --accent stays a warm neutral because shadcn uses it for menu/list
   hover fills; the mustard brand accent is `--color-mustard`.
 */
+/*
+  Each face is self-hosted as a Latin file plus a Devanagari file (see
+  app/layout.tsx). Chaining them here means every rule below can keep asking
+  for one family: the browser takes Latin glyphs from the small Latin file and
+  falls through to the Devanagari file for Hindi — and for ₹, which Google
+  subsets into Devanagari rather than Latin.
+*/
+:root {
+  --font-display-face: var(--font-display-latin), var(--font-display-deva);
+  --font-mukta: var(--font-mukta-latin), var(--font-mukta-deva);
+}
+
 @theme inline {
   /* ---- Typography — resolved at the element, see note above ----------- */
   --font-display: var(--font-display-face), ui-sans-serif, system-ui, sans-serif;

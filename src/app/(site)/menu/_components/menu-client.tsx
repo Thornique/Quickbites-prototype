@@ -217,9 +217,12 @@ export function MenuClient() {
                     layout="responsive"
                     categoryName={categoryName(section.category)}
                     className="h-full"
-                    /* The first row is the largest paint on this page, so it
-                       loads eagerly instead of waiting for the observer. */
-                    priority={sectionIndex === 0 && itemIndex < 4}
+                    /* This grid is the largest paint on the page — there is no
+                       hero above it — so the opening cards load eagerly rather
+                       than waiting for the observer. Two, not a full row:
+                       customers are mostly on phones, where one card is
+                       visible and the other three would be wasted data. */
+                    priority={sectionIndex === 0 && itemIndex < 2}
                   />
                 </li>
               ))}

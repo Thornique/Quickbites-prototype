@@ -135,7 +135,7 @@ export async function signOut(scope: SessionScope = "customer"): Promise<void> {
 export async function getSession(
   scope: SessionScope = "customer",
 ): Promise<SessionUser | null> {
-  await ready(false);
+  await ready();
   const user = getCurrentUser(scope);
   return user ? toSessionUser(user) : null;
 }

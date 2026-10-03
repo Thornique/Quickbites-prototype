@@ -59,6 +59,22 @@ export function ChartCard({
   );
 }
 
+/**
+ * Placeholder shown while a lazily-loaded figure is still arriving. It matches
+ * ChartCard's own loading state and reserves the same height, so the dashboard
+ * does not shift when the chart lands.
+ */
+export function ChartSkeleton({ height = 220 }: { height?: number }) {
+  return (
+    <Card className="p-4">
+      <Skeleton className="h-4 w-32" />
+      <div className="mt-3" style={{ height }}>
+        <Skeleton className="h-full w-full" />
+      </div>
+    </Card>
+  );
+}
+
 /** Shared recharts styling, so every figure reads as part of one dashboard. */
 export const CHART_COLORS = {
   brand: "#d7261e",

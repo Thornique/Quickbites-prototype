@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     siteName: STORE.name,
     title: `Menu · ${STORE.name}`,
     description: DESCRIPTION,
-    images: [{ url: "/images/menu/farmhouse-pizza.jpg", width: 800, height: 600 }],
+    images: [{ url: "/images/menu/farmhouse-pizza.webp", width: 800, height: 600 }],
   },
 };
 

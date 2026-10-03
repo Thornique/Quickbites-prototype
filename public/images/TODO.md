@@ -10,8 +10,9 @@ A menu item with an **empty `images` array** renders the branded placeholder (ca
 on a warm sand panel) rather than a photo. No placeholder image files exist — there is nothing
 to delete. To swap one in later:
 
-1. Drop a 4:3 JPEG into `public/images/menu/<slug>.jpg` (800×600, quality ~80).
-2. Set that item's `images` to `["/images/menu/<slug>.jpg"]` in the admin Menu module, or in
+1. Drop a 4:3 JPEG into `public/images/menu/<slug>.jpg` (800×600), then run
+   `node scripts/optimize-images.mjs --replace` to turn it into `<slug>.webp`.
+2. Set that item's `images` to `["/images/menu/<slug>.webp"]` in the admin Menu module, or in
    `src/data/seed/` if it should become part of the seed.
 3. Add a row to `CREDITS.md`.
 

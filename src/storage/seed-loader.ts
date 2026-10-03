@@ -1,4 +1,3 @@
-import { buildSeedData } from "@/data/seed";
 import {
   clearAllCollections,
   getStoredSchemaVersion,
@@ -26,6 +25,13 @@ function needsSeeding(): boolean {
 }
 
 async function writeSeed(): Promise<void> {
+  /*
+    Imported here rather than at the top of the file so the seed never reaches
+    a page bundle. It is ~3,300 lines that build sixty days of orders, and it
+    runs once per browser — on the very first load, after a schema bump, or on
+    "Reset demo data". Every visit after that fetches nothing.
+  */
+  const { buildSeedData } = await import("@/data/seed");
   const data = await buildSeedData();
 
   clearAllCollections();

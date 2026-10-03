@@ -34,7 +34,7 @@ function toClock(minutes: number): string {
 export async function listSlotsForDate(
   date: string,
 ): Promise<Array<{ time: string; remaining: number; isFull: boolean }>> {
-  await ready(false);
+  await ready();
   const config = settings();
 
   if (config.holidays.includes(date)) return [];
@@ -176,7 +176,7 @@ export async function updateBookingStatus(
 }
 
 export async function countPendingBookings(): Promise<number> {
-  await ready(false);
+  await ready();
   return readCollection<TableBooking>("bookings").filter((b) => b.status === "PENDING")
     .length;
 }

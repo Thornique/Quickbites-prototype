@@ -7,7 +7,9 @@ attribution required. We credit anyway. Nothing is hotlinked — every file is s
 `/public/images`.
 
 Each photo was centre-cropped to the aspect ratio its slot needs (menu cards 4:3, hero 16:9,
-gallery natural) and re-encoded as progressive JPEG at quality 80.
+gallery natural), then re-encoded as WebP at quality 78 and capped at 1600px wide by
+`scripts/optimize-images.mjs`. The downloaded JPEGs are not kept — rerun that script after
+adding any new photography.
 
 > **Unsplash photographer names are still blank.** Unsplash now requires an API key for both
 > its search endpoint and its photo pages, so the names could not be read automatically. Open
@@ -18,44 +20,44 @@ gallery natural) and re-encoded as progressive JPEG at quality 80.
 
 | File | Source | Photographer |
 | --- | --- | --- |
-| `menu/chicken-cheese-burger.jpg` | https://unsplash.com/photos/1568901346375-23c9450c58cd | _to fill_ |
-| `menu/crispy-chicken-burger.jpg` | https://unsplash.com/photos/1586190848861-99aa4a171e90 | _to fill_ |
-| `menu/aloo-tikki-burger.jpg` | https://www.pexels.com/photo/close-up-photograph-of-a-burger-with-cheese-5639459/ | Shameel mukkath |
-| `menu/veg-cheese-burger.jpg` | https://www.pexels.com/photo/gourmet-veggie-burger-with-cheese-and-lettuce-28636771/ | Animesh Paul |
-| `menu/paneer-tikka-burger.jpg` | https://www.pexels.com/photo/delicious-paneer-burger-with-fresh-veggies-31109615/ | Deep Dasgupta |
-| `menu/masala-veg-burger.jpg` | https://www.pexels.com/photo/delicious-vege-burger-19709551/ | Manav Chahal |
-| `menu/margherita-pizza.jpg` | https://unsplash.com/photos/1574071318508-1cdbab80d002 | _to fill_ |
-| `menu/farmhouse-pizza.jpg` | https://unsplash.com/photos/1565299624946-b28f40a0ae38 | _to fill_ |
-| `menu/peri-peri-fries.jpg` | https://unsplash.com/photos/1630384060421-cb20d0e0649d | _to fill_ |
-| `menu/classic-fries.jpg` | https://unsplash.com/photos/1573080496219-bb080dd4f877 | _to fill_ |
-| `menu/cappuccino.jpg` | https://unsplash.com/photos/1509042239860-f550ce710b93 | _to fill_ |
-| `menu/cold-coffee.jpg` | https://unsplash.com/photos/1461023058943-07fcbe16d735 | _to fill_ |
-| `menu/chocolate-shake.jpg` | https://unsplash.com/photos/1572490122747-3968b75cc699 | _to fill_ |
-| `menu/brownie-sundae.jpg` | https://unsplash.com/photos/1563805042-7684c019e1cb | _to fill_ |
-| `menu/veg-grilled-sandwich.jpg` | https://unsplash.com/photos/1528735602780-2552fd46c7af | _to fill_ |
-| `menu/club-sandwich.jpg` | https://unsplash.com/photos/1539252554453-80ab65ce3586 | _to fill_ |
-| `menu/chicken-tikka-sandwich.jpg` | https://unsplash.com/photos/1550507992-eb63ffee0847 | _to fill_ |
+| `menu/chicken-cheese-burger.webp` | https://unsplash.com/photos/1568901346375-23c9450c58cd | _to fill_ |
+| `menu/crispy-chicken-burger.webp` | https://unsplash.com/photos/1586190848861-99aa4a171e90 | _to fill_ |
+| `menu/aloo-tikki-burger.webp` | https://www.pexels.com/photo/close-up-photograph-of-a-burger-with-cheese-5639459/ | Shameel mukkath |
+| `menu/veg-cheese-burger.webp` | https://www.pexels.com/photo/gourmet-veggie-burger-with-cheese-and-lettuce-28636771/ | Animesh Paul |
+| `menu/paneer-tikka-burger.webp` | https://www.pexels.com/photo/delicious-paneer-burger-with-fresh-veggies-31109615/ | Deep Dasgupta |
+| `menu/masala-veg-burger.webp` | https://www.pexels.com/photo/delicious-vege-burger-19709551/ | Manav Chahal |
+| `menu/margherita-pizza.webp` | https://unsplash.com/photos/1574071318508-1cdbab80d002 | _to fill_ |
+| `menu/farmhouse-pizza.webp` | https://unsplash.com/photos/1565299624946-b28f40a0ae38 | _to fill_ |
+| `menu/peri-peri-fries.webp` | https://unsplash.com/photos/1630384060421-cb20d0e0649d | _to fill_ |
+| `menu/classic-fries.webp` | https://unsplash.com/photos/1573080496219-bb080dd4f877 | _to fill_ |
+| `menu/cappuccino.webp` | https://unsplash.com/photos/1509042239860-f550ce710b93 | _to fill_ |
+| `menu/cold-coffee.webp` | https://unsplash.com/photos/1461023058943-07fcbe16d735 | _to fill_ |
+| `menu/chocolate-shake.webp` | https://unsplash.com/photos/1572490122747-3968b75cc699 | _to fill_ |
+| `menu/brownie-sundae.webp` | https://unsplash.com/photos/1563805042-7684c019e1cb | _to fill_ |
+| `menu/veg-grilled-sandwich.webp` | https://unsplash.com/photos/1528735602780-2552fd46c7af | _to fill_ |
+| `menu/club-sandwich.webp` | https://unsplash.com/photos/1539252554453-80ab65ce3586 | _to fill_ |
+| `menu/chicken-tikka-sandwich.webp` | https://unsplash.com/photos/1550507992-eb63ffee0847 | _to fill_ |
 
 ## Hero
 
 | File | Source | Photographer |
 | --- | --- | --- |
-| `hero/pizza-night.jpg` | https://unsplash.com/photos/1513104890138-7c749659a591 | _to fill_ |
-| `hero/burger-combo.jpg` | https://unsplash.com/photos/1571091718767-18b5b1457add | _to fill_ |
-| `hero/shakes.jpg` | https://unsplash.com/photos/1553787499-6f9133860278 | _to fill_ |
+| `hero/pizza-night.webp` | https://unsplash.com/photos/1513104890138-7c749659a591 | _to fill_ |
+| `hero/burger-combo.webp` | https://unsplash.com/photos/1571091718767-18b5b1457add | _to fill_ |
+| `hero/shakes.webp` | https://unsplash.com/photos/1553787499-6f9133860278 | _to fill_ |
 
 ## Gallery & about
 
 | File | Source | Photographer |
 | --- | --- | --- |
-| `gallery/cafe-interior.jpg` | https://unsplash.com/photos/1554118811-1e0d58224f24 | _to fill_ |
-| `gallery/cafe-counter.jpg` | https://unsplash.com/photos/1521017432531-fbd92d768814 | _to fill_ |
-| `gallery/cafe-seating.jpg` | https://unsplash.com/photos/1559925393-8be0ec4767c8 | _to fill_ |
-| `gallery/cafe-dining.jpg` | https://unsplash.com/photos/1552566626-52f8b828add9 | _to fill_ |
-| `gallery/donuts.jpg` | https://unsplash.com/photos/1551024601-bec78aea704b | _to fill_ |
-| `gallery/dessert-cups.jpg` | https://unsplash.com/photos/1488477181946-6428a0291777 | _to fill_ |
-| `gallery/coffee-moment.jpg` | https://unsplash.com/photos/1495474472287-4d71bcdd2085 | _to fill_ |
-| `gallery/burger-board.jpg` | https://unsplash.com/photos/1550547660-d9450f859349 | _to fill_ |
+| `gallery/cafe-interior.webp` | https://unsplash.com/photos/1554118811-1e0d58224f24 | _to fill_ |
+| `gallery/cafe-counter.webp` | https://unsplash.com/photos/1521017432531-fbd92d768814 | _to fill_ |
+| `gallery/cafe-seating.webp` | https://unsplash.com/photos/1559925393-8be0ec4767c8 | _to fill_ |
+| `gallery/cafe-dining.webp` | https://unsplash.com/photos/1552566626-52f8b828add9 | _to fill_ |
+| `gallery/donuts.webp` | https://unsplash.com/photos/1551024601-bec78aea704b | _to fill_ |
+| `gallery/dessert-cups.webp` | https://unsplash.com/photos/1488477181946-6428a0291777 | _to fill_ |
+| `gallery/coffee-moment.webp` | https://unsplash.com/photos/1495474472287-4d71bcdd2085 | _to fill_ |
+| `gallery/burger-board.webp` | https://unsplash.com/photos/1550547660-d9450f859349 | _to fill_ |
 
 ## Rejected during review
 

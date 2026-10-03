@@ -76,12 +76,11 @@ export function Bestsellers() {
               </li>
             ))}
 
-          {items?.map((item, i) => (
+          {items?.map((item) => (
             <li key={item.id} className="w-[70vw] shrink-0 snap-start sm:w-64">
               <MenuCard
                 item={item}
                 categoryName={categoryName(item.categoryId)}
-                priority={i < 2}
                 className="h-full"
               />
             </li>
