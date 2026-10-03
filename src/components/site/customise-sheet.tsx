@@ -124,9 +124,14 @@ export function CustomiseSheet({
         side="bottom"
         className={cn(
           "flex max-h-[88dvh] flex-col gap-0 p-0",
-          // Centre it as a dialog once there is room for one.
-          "sm:inset-x-auto sm:inset-y-auto sm:top-1/2 sm:left-1/2 sm:max-h-[85dvh] sm:w-[28rem]",
-          "sm:-translate-x-1/2 sm:-translate-y-1/2 sm:rounded-card",
+          // Centre it as a dialog once there is room for one. The side="bottom"
+          // placement in SheetContent is an attribute selector, so these have to
+          // repeat the data-side variant to outrank it rather than just use sm:.
+          "sm:data-[side=bottom]:inset-x-auto sm:data-[side=bottom]:inset-y-auto",
+          "sm:data-[side=bottom]:top-1/2 sm:data-[side=bottom]:left-1/2",
+          "sm:data-[side=bottom]:w-[28rem] sm:data-[side=bottom]:max-h-[85dvh]",
+          "sm:data-[side=bottom]:-translate-x-1/2 sm:data-[side=bottom]:-translate-y-1/2",
+          "sm:data-[side=bottom]:rounded-card sm:data-[side=bottom]:border",
         )}
       >
         <SheetHeader className="border-b border-hairline p-5 text-left">
