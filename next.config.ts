@@ -1,4 +1,5 @@
-import bundleAnalyzer from "@next/bundle-analyzer";
+import { createRequire } from "node:module";
+import { join } from "node:path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -39,7 +40,23 @@ const nextConfig: NextConfig = {
   },
 };
 
-/** `ANALYZE=true npm run build` writes the treemaps to .next/analyze. */
-export default bundleAnalyzer({ enabled: process.env.ANALYZE === "true" })(
-  nextConfig,
-);
+/**
+ * `ANALYZE=true npm run build` writes the treemaps to .next/analyze.
+ *
+ * @next/bundle-analyzer is a devDependency, so it is absent whenever the host
+ * installs production deps only (Render sets NODE_ENV=production). A top-level
+ * import would then crash the build while loading this file, so the package is
+ * required lazily and only when the treemaps were actually asked for.
+ */
+type ConfigWrapper = (config: NextConfig) => NextConfig;
+type BundleAnalyzer = (options: { enabled: boolean }) => ConfigWrapper;
+
+function withBundleAnalyzer(config: NextConfig): NextConfig {
+  if (process.env.ANALYZE !== "true") return config;
+
+  const require = createRequire(join(process.cwd(), "next.config.ts"));
+  const bundleAnalyzer = require("@next/bundle-analyzer") as BundleAnalyzer;
+  return bundleAnalyzer({ enabled: true })(config);
+}
+
+export default withBundleAnalyzer(nextConfig);

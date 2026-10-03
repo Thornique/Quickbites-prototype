@@ -14,7 +14,9 @@ services:
     plan: free
     region: singapore
     branch: master
-    buildCommand: npm ci && npm run build:render
+    # --include=dev is required: NODE_ENV=production below makes npm skip
+    # devDependencies, but typescript, tailwind and sharp are build-time tools.
+    buildCommand: npm ci --include=dev && npm run build:render
     startCommand: node .next/standalone/server.js
     healthCheckPath: /
     envVars:
