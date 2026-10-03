@@ -1,0 +1,26 @@
+# Render Blueprint for the Quick Bites prototype.
+#
+# This is demo hosting only. The real product goes on a VPS later, so nothing
+# here is tuned for production traffic.
+#
+# The app is a Next.js standalone build with no backend, no database and no
+# secrets, so a single free web service is all it needs. Render provides PORT;
+# HOSTNAME must be 0.0.0.0 or the server only listens on localhost inside the
+# container and every request times out.
+services:
+  - type: web
+    name: quickbites-prototype
+    runtime: node
+    plan: free
+    region: singapore
+    branch: master
+    buildCommand: npm ci && npm run build:render
+    startCommand: node .next/standalone/server.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.1"
+      - key: NODE_ENV
+        value: production
+      - key: HOSTNAME
+        value: 0.0.0.0
