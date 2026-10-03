@@ -21,8 +21,8 @@ export const enNotify: NotificationDictionary = {
   ORDER_CONFIRMED: (p) => ({
     title: `Order ${token(p)} confirmed`,
     body: p.time
-      ? `We've started cooking. Ready by about ${p.time}.`
-      : "We've started cooking.",
+      ? `Confirmed and being prepared. Ready by about ${p.time}.`
+      : "Confirmed and being prepared.",
   }),
   PAYMENT_REJECTED: (p) => ({
     title: `Payment not confirmed for ${token(p)}`,

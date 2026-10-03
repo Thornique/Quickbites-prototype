@@ -1,5 +1,5 @@
 /** Bumping this re-seeds every collection on next load. */
-export const SCHEMA_VERSION = 12;
+export const SCHEMA_VERSION = 13;
 
 const NAMESPACE = "qb";
 

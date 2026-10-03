@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/features/orders";
@@ -14,18 +14,31 @@ import { useOrderClock } from "./_use-order-clock";
 /**
  * The kitchen board.
  *
- * Five columns in the order work flows, scrolling sideways as a whole on a
+ * Four columns in the order work flows, scrolling sideways as a whole on a
  * narrow screen rather than stacking — the shape of the board is how the
  * counter knows where a token is without reading labels.
  *
- * Scheduled orders are deliberately kept off the board until they are due to
- * start; otherwise tomorrow's eleven o'clock booking sits in "Needs
+ * There is no "Accepted" column: accepting an order starts it, so nothing ever
+ * rested there. Scheduled orders are deliberately kept off the board until they
+ * are due to start; otherwise tomorrow's eleven o'clock booking sits in "Needs
  * verification" all evening getting in the way.
  */
 export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => void }) {
   const t = useT();
   const now = useOrderClock();
-  const { data: orders, isLoading } = useOrders({ status: "ALL" });
+  const { data: orders, isLoading, refetch } = useOrders({ status: "ALL" });
+
+  /*
+    Re-read on every tick, not just on a write.
+
+    A scheduled slot starting is a change the clock makes, not a person, and
+    the service only notices it when the orders are read. Without this the
+    7:30 order would sit on the Scheduled tab until somebody happened to
+    touch something else.
+  */
+  useEffect(() => {
+    refetch();
+  }, [now, refetch]);
 
   const columns = useMemo(() => {
     const today = toDateKey(new Date(now));
@@ -47,28 +60,31 @@ export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => 
         continue;
       }
 
-      // A future scheduled order lives on the Scheduled tab until it is due.
-      if (order.isScheduled && order.status === "PLACED") {
+      // A future scheduled order lives on the Scheduled tab until it is due,
+      // whether it has been accepted yet or not.
+      if (
+        order.isScheduled &&
+        (order.status === "PLACED" || order.status === "ACCEPTED")
+      ) {
         const flags = flagsFor(order, new Date(now));
         if (!flags.isDueToStart) continue;
       }
+
+      // ACCEPTED has no column; anything due to start is moved to PREPARING
+      // by the service before it is read, so this only guards stale data.
+      if (order.status === "ACCEPTED") continue;
 
       buckets[order.status].push(order);
     }
 
     // Oldest first in the working columns — first in, first cooked.
-    for (const status of ["PLACED", "ACCEPTED", "PREPARING", "READY"] as const) {
+    for (const status of ["PLACED", "PREPARING", "READY"] as const) {
       buckets[status].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
     }
     buckets.HANDED_OVER.sort((a, b) => Date.parse(b.updatedAt ?? b.createdAt) - Date.parse(a.updatedAt ?? a.createdAt));
 
     return [
       { key: "PLACED" as const, label: t.adm.orders.columns.verify, rows: buckets.PLACED },
-      {
-        key: "ACCEPTED" as const,
-        label: t.adm.orders.columns.accepted,
-        rows: buckets.ACCEPTED,
-      },
       {
         key: "PREPARING" as const,
         label: t.adm.orders.columns.preparing,
@@ -85,8 +101,8 @@ export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => 
 
   if (isLoading) {
     return (
-      <div className="grid gap-3 lg:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="grid gap-3 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
           <Skeleton key={i} className="h-72 w-full rounded-card" />
         ))}
       </div>
@@ -94,7 +110,7 @@ export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => 
   }
 
   /*
-    Five columns side by side from lg, and stacked below it.
+    Four columns side by side from lg, and stacked below it.
 
     An earlier version scrolled the whole board sideways on a phone, which both
     made the page itself scroll horizontally and meant hunting for a token with
@@ -102,7 +118,7 @@ export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => 
   */
   return (
     <div>
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {columns.map((column) => (
           <section
             key={column.key}

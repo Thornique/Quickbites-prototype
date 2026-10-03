@@ -25,7 +25,6 @@ export function LiveBoard() {
       value: counts?.PLACED ?? 0,
       tone: "warning" as const,
     },
-    { label: t.adm.orders.columns.accepted, value: counts?.ACCEPTED ?? 0 },
     { label: t.adm.orders.columns.preparing, value: counts?.PREPARING ?? 0 },
     {
       label: t.adm.orders.columns.ready,
@@ -54,7 +53,7 @@ export function LiveBoard() {
       {isLoading ? (
         <Skeleton className="mt-3 h-20 w-full" />
       ) : (
-        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
+        <ul className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
           {stages.map((stage) => (
             <li key={stage.label}>
               <Link

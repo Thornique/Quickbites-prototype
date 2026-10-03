@@ -6,8 +6,15 @@ import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { Order, OrderStatus } from "@/types";
 
-/** The journey a customer is shown, in the order it actually happens. */
-const SEQUENCE: OrderStatus[] = ["PLACED", "ACCEPTED", "PREPARING", "READY", "HANDED_OVER"];
+/**
+ * The journey a customer is shown, in the order it actually happens.
+ *
+ * ACCEPTED is not a step here: the cafe accepting an order and starting it are
+ * the same moment, so showing both would be two ticks for one event. Payment
+ * verification is slotted in after "placed" instead — that is the step the
+ * customer is genuinely waiting on.
+ */
+const SEQUENCE: OrderStatus[] = ["PLACED", "PREPARING", "READY", "HANDED_OVER"];
 
 export function StatusTimeline({ order }: { order: Order }) {
   const t = useT();
@@ -20,8 +27,6 @@ export function StatusTimeline({ order }: { order: Order }) {
     switch (status) {
       case "PLACED":
         return t.track.steps.placed;
-      case "ACCEPTED":
-        return t.track.steps.accepted;
       case "PREPARING":
         return t.track.steps.preparing;
       case "READY":
@@ -33,7 +38,11 @@ export function StatusTimeline({ order }: { order: Order }) {
     }
   };
 
-  const currentIndex = SEQUENCE.indexOf(order.status);
+  // A scheduled order rests in ACCEPTED until its slot: for the customer that
+  // is still "placed and paid", not a step of its own.
+  const currentIndex = SEQUENCE.indexOf(
+    order.status === "ACCEPTED" ? "PLACED" : order.status,
+  );
   const verifiedAt = order.paymentHistory.find(
     (event) => event.action === "PAYMENT_VERIFIED" || event.action === "CASH_RECEIVED",
   )?.at;

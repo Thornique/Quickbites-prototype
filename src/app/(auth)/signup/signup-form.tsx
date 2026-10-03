@@ -74,10 +74,12 @@ export function SignupForm() {
 
   return (
     <div>
-      <h1 className="text-display text-3xl text-ink uppercase">{t.auth.signupTitle}</h1>
-      <p className="mt-2 text-sm text-ink-muted">{t.auth.signupSubtitle}</p>
+      <h1 className="text-display text-2xl text-ink uppercase sm:text-3xl">
+        {t.auth.signupTitle}
+      </h1>
+      <p className="mt-1.5 text-sm text-ink-muted">{t.auth.signupSubtitle}</p>
 
-      <form onSubmit={onSubmit} noValidate className="mt-7 grid gap-4">
+      <form onSubmit={onSubmit} noValidate className="mt-6 grid gap-4">
         <FormField id="name" label={t.auth.name} error={errors.name?.message}>
           <Input
             {...register("name")}
@@ -152,7 +154,7 @@ export function SignupForm() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-ink-muted">
+      <p className="mt-5 border-t border-hairline pt-5 text-center text-sm text-ink-muted">
         {t.auth.haveAccount}{" "}
         <Link
           href={`/login?next=${encodeURIComponent(next)}`}

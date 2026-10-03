@@ -138,16 +138,18 @@ tab react while you act as a customer.
 12. The new order is already there on the **dashboard** and in **Orders** — no refresh needed.
     It is marked **"Paid — verifying."**
 13. Open it. The money came in online, so somebody has to confirm it arrived: click
-    **Verify & accept**, and enter a ready time — say **15 minutes**.
+    **Verify & accept**, and enter a ready time — say **15 minutes**. The order goes straight
+    into **Preparing** — accepting an order is starting it, so there is no second button to
+    press and nothing waiting in a queue that nobody looks at.
 
 **Switch back to Tab 1 (customer).** Without touching anything, the page has already changed
-to a **live countdown** to the promised time.
+to **"Preparing"** with a **live countdown** to the promised time.
 
 **Back to Tab 2.** The kitchen is running late:
 
 14. Press **Extend +5**. Go and look at Tab 1 — the countdown has moved, and the customer can
     see that it was extended. Nothing was hidden from them.
-15. Move the order to **Preparing**, then **Ready**.
+15. Move the order to **Ready**.
 
 **Tab 1** now shows **"Your order is ready"** with the token to show at the counter.
 
@@ -157,12 +159,14 @@ wording follows the order type.)
 ### Minute 8–9 · The other order types
 
 16. **Dine-in with cash.** Place a second order, choose **Dine in**, pick a table number, and
-    choose **Cash**. The kitchen can start straight away — no prepayment. In admin, record the
-    cash: enter what the customer handed over and the **change is calculated for you**.
+    choose **Cash**. The kitchen can start straight away — no prepayment, so **Accept** sends it
+    into Preparing immediately. In admin, record the cash: enter what the customer handed over
+    and the **change is calculated for you**.
 17. **Order for later.** Start a third takeaway order and choose **a time slot** instead of
     "as soon as possible". Slots are in 15-minute steps, need at least 30 minutes' notice, and
     each slot holds a limited number of orders — a full slot is shown as full. Payment is
-    still upfront.
+    still upfront. Once accepted it waits on the **Scheduled** tab rather than cluttering the
+    board, and **starts itself** when the slot comes round.
 
 ### Minute 9–10 · Running the business
 

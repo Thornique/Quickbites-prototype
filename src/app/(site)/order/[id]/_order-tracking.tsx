@@ -43,16 +43,24 @@ import { StatusTimeline } from "./_status-timeline";
 export function OrderTracking({ id }: { id: string }) {
   const t = useT();
   const pick = usePick();
-  const { data: order, isLoading, error } = useOrder(id);
+  const { data: order, isLoading, error, refetch } = useOrder(id);
   const { data: settings } = useSettings();
   const [, setTick] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
 
-  // Keep the countdown honest without re-reading storage every second.
+  /*
+    Keep the countdown honest without re-reading storage every second — and
+    re-read on the same beat, because a scheduled slot reaching its start time
+    is a change nobody wrote. The service notices it on a read, so with no
+    admin tab open this is what moves the order into "Preparing".
+  */
   useEffect(() => {
-    const timer = window.setInterval(() => setTick((n) => n + 1), 20_000);
+    const timer = window.setInterval(() => {
+      setTick((n) => n + 1);
+      refetch();
+    }, 20_000);
     return () => window.clearInterval(timer);
-  }, []);
+  }, [refetch]);
 
   if (isLoading) {
     return (

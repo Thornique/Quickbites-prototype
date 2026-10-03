@@ -154,7 +154,6 @@ const admin = {
     scheduledView: "Scheduled",
     columns: {
       verify: "Needs verification",
-      accepted: "Accepted",
       preparing: "Preparing",
       ready: "Ready",
       handedOver: "Handed over today",
@@ -177,7 +176,6 @@ const admin = {
     verifyAndAccept: "Verify & accept",
     accept: "Accept",
     rejectPayment: "Reject payment",
-    startPreparing: "Start preparing",
     markReady: "Mark ready",
     addFive: "+5 min",
     addTen: "+10 min",
@@ -234,7 +232,6 @@ const admin = {
     blockedCashPrep: "Take the cash before the kitchen starts this one.",
     markedReady: "Marked ready",
     handedOver: "Handed over",
-    startedPreparing: "In the kitchen",
 
     detailTitle: (token: string) => `Order ${token}`,
     timeline: "Status timeline",

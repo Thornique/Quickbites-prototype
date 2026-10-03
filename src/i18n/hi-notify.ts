@@ -12,8 +12,8 @@ export const hiNotify: NotificationDictionary = {
   ORDER_CONFIRMED: (p) => ({
     title: `ऑर्डर ${token(p)} पक्का हो गया`,
     body: p.time
-      ? `हमने बनाना शुरू कर दिया है। लगभग ${p.time} तक तैयार।`
-      : "हमने बनाना शुरू कर दिया है।",
+      ? `पक्का हो गया और बनना शुरू। लगभग ${p.time} तक तैयार।`
+      : "पक्का हो गया और बनना शुरू।",
   }),
   PAYMENT_REJECTED: (p) => ({
     title: `${token(p)} का भुगतान नहीं मिला`,

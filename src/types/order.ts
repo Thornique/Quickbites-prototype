@@ -3,6 +3,12 @@ import type { IsoDateTime, LocalizedText, Timestamped } from "./common";
 export const ORDER_TYPES = ["TAKEAWAY", "DINE_IN"] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
 
+/**
+ * ACCEPTED is no longer a column anyone works from: accepting an order sends
+ * it straight to PREPARING. It remains a status because a *scheduled* order
+ * holds it between acceptance and its slot, and because every order records
+ * it in statusHistory as the moment the ready time was promised.
+ */
 export const ORDER_STATUSES = [
   "PLACED",
   "ACCEPTED",
@@ -16,7 +22,6 @@ export type OrderStatus = (typeof ORDER_STATUSES)[number];
 /** The kitchen board columns, in the order work actually flows. */
 export const ACTIVE_ORDER_STATUSES = [
   "PLACED",
-  "ACCEPTED",
   "PREPARING",
   "READY",
 ] as const satisfies readonly OrderStatus[];

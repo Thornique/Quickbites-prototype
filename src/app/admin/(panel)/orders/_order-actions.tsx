@@ -68,6 +68,8 @@ export function OrderActions({
   };
 
   const isOnlineUnverified = order.paymentStatus === "PAID_UNVERIFIED";
+  // Accepting is what starts the kitchen now, so the prep gate guards the
+  // Accept button rather than a separate "start preparing" step.
   const prepGate = settings
     ? canStartKitchen(order, settings)
     : { ok: true as boolean, reason: undefined as string | undefined };
@@ -78,26 +80,20 @@ export function OrderActions({
   const primary = (() => {
     switch (order.status) {
       case "PLACED":
-        return isOnlineUnverified
-          ? {
-              label: t.adm.orders.verifyAndAccept,
-              onClick: () => setDialog("accept"),
-              disabled: false,
-              reason: undefined,
-            }
-          : {
-              label: t.adm.orders.accept,
-              onClick: () => setDialog("accept"),
-              disabled: false,
-              reason: undefined,
-            };
-      case "ACCEPTED":
         return {
-          label: t.adm.orders.startPreparing,
-          onClick: () => void run(() => advanceOrder(order.id, "PREPARING"), t.adm.orders.startedPreparing),
-          disabled: !prepGate.ok,
-          reason: prepGate.reason,
+          label: isOnlineUnverified
+            ? t.adm.orders.verifyAndAccept
+            : t.adm.orders.accept,
+          onClick: () => setDialog("accept"),
+          // Verifying the payment is part of the same click, so only a cash
+          // order the settings hold back can be blocked here.
+          disabled: !isOnlineUnverified && !prepGate.ok,
+          reason: isOnlineUnverified ? undefined : prepGate.reason,
         };
+      // A scheduled order waiting for its slot. The kitchen starts it
+      // automatically at the slot, so there is nothing to press here.
+      case "ACCEPTED":
+        return null;
       case "PREPARING":
         return {
           label: t.adm.orders.markReady,
@@ -195,11 +191,6 @@ export function OrderActions({
               </>
             )}
 
-            {order.status === "ACCEPTED" && order.estimatedReadyAt && (
-              <DropdownMenuItem onSelect={() => setDialog("extend5")}>
-                {t.adm.orders.addFive}
-              </DropdownMenuItem>
-            )}
 
             {isCashUnpaid && order.status !== "READY" && !isClosed && (
               <DropdownMenuItem onSelect={() => setDialog("cash")}>

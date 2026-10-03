@@ -157,7 +157,6 @@ export const hiAdmin: AdminDictionary = {
       scheduledView: "शेड्यूल",
       columns: {
         verify: "जाँच बाकी",
-        accepted: "स्वीकार",
         preparing: "बन रहे हैं",
         ready: "तैयार",
         handedOver: "आज दे दिए",
@@ -180,7 +179,6 @@ export const hiAdmin: AdminDictionary = {
       verifyAndAccept: "जाँचें और स्वीकारें",
       accept: "स्वीकारें",
       rejectPayment: "भुगतान अस्वीकार",
-      startPreparing: "बनाना शुरू करें",
       markReady: "तैयार कहें",
       addFive: "+5 मिनट",
       addTen: "+10 मिनट",
@@ -237,7 +235,6 @@ export const hiAdmin: AdminDictionary = {
       blockedCashPrep: "रसोई शुरू करने से पहले नकद ले लीजिए।",
       markedReady: "तैयार कह दिया",
       handedOver: "दे दिया गया",
-      startedPreparing: "रसोई में",
 
       detailTitle: (token: string) => `ऑर्डर ${token}`,
       timeline: "स्टेटस टाइमलाइन",

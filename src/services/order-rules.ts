@@ -182,10 +182,7 @@ export function deriveFlags(
 
   const promisedPassed =
     !!order.estimatedReadyAt && now.getTime() > Date.parse(order.estimatedReadyAt);
-  const isOverdue =
-    open &&
-    promisedPassed &&
-    (order.status === "ACCEPTED" || order.status === "PREPARING");
+  const isOverdue = open && promisedPassed && order.status === "PREPARING";
 
   const startAt = scheduledStartAt(order, settings.basePrepBufferMinutes);
   const isDueToStart =
@@ -269,10 +266,64 @@ export function applyAutoCancellations(
   return { orders: next, changed };
 }
 
-/** Status transitions the board is allowed to make. */
+/**
+ * Moves scheduled orders into the kitchen when their slot comes round.
+ *
+ * Evaluated on every read, for the same reason as applyAutoCancellations:
+ * there is no server to run a timer. A scheduled order sits on the Scheduled
+ * tab until it is due, and nobody at the counter should have to remember to
+ * press start at half past seven.
+ *
+ * Only payment-verified orders move — isDueToStart already requires it, which
+ * is what keeps an unpaid slot from quietly entering the kitchen.
+ */
+export function applyScheduledStarts(
+  orders: Order[],
+  settings: Pick<
+    StoreSettings,
+    "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes" | "verificationAlertMinutes"
+  >,
+  now = new Date(),
+): { orders: Order[]; started: Order[] } {
+  const started: Order[] = [];
+
+  const next = orders.map((order) => {
+    if (!order.isScheduled) return order;
+    if (!deriveFlags(order, settings, now).isDueToStart) return order;
+
+    const at = now.getTime();
+    // Attributed to whoever set the ready time; nobody pressed anything now.
+    const byUserId = order.readyTimeSetBy;
+    const history = [...order.statusHistory];
+    if (!history.some((event) => event.status === "ACCEPTED")) {
+      history.push({ status: "ACCEPTED", at, byUserId });
+    }
+    history.push({ status: "PREPARING", at, byUserId });
+
+    const updated: Order = {
+      ...order,
+      status: "PREPARING",
+      statusHistory: history,
+      updatedAt: new Date(at).toISOString(),
+    };
+    started.push(updated);
+    return updated;
+  });
+
+  return { orders: next, started };
+}
+
+/**
+ * Status transitions the board is allowed to make.
+ *
+ * ACCEPTED is no longer a resting state for an immediate order: accepting one
+ * sends it straight to the kitchen. It survives as the state a *scheduled*
+ * order holds between being accepted and its slot coming round, and as a
+ * milestone in statusHistory that reports measure the promise from.
+ */
 export const NEXT_STATUS: Record<Order["status"], Order["status"][]> = {
-  PLACED: ["ACCEPTED", "CANCELLED"],
-  ACCEPTED: ["PREPARING", "READY", "CANCELLED"],
+  PLACED: ["ACCEPTED", "PREPARING", "CANCELLED"],
+  ACCEPTED: ["PREPARING", "CANCELLED"],
   PREPARING: ["READY", "CANCELLED"],
   READY: ["HANDED_OVER", "CANCELLED"],
   HANDED_OVER: [],

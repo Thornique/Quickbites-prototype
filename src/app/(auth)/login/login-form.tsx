@@ -67,10 +67,12 @@ export function LoginForm() {
 
   return (
     <div>
-      <h1 className="text-display text-3xl text-ink uppercase">{t.auth.loginTitle}</h1>
-      <p className="mt-2 text-sm text-ink-muted">{t.auth.loginSubtitle}</p>
+      <h1 className="text-display text-2xl text-ink uppercase sm:text-3xl">
+        {t.auth.loginTitle}
+      </h1>
+      <p className="mt-1.5 text-sm text-ink-muted">{t.auth.loginSubtitle}</p>
 
-      <form onSubmit={onSubmit} noValidate className="mt-7 grid gap-4">
+      <form onSubmit={onSubmit} noValidate className="mt-6 grid gap-4">
         <FormField id="email" label={t.auth.email} error={errors.email?.message}>
           <Input
             {...register("email")}
@@ -107,7 +109,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="mt-5 text-center text-sm text-ink-muted">
+      <p className="mt-5 border-t border-hairline pt-5 text-center text-sm text-ink-muted">
         {t.auth.noAccount}{" "}
         <Link
           href={`/signup?next=${encodeURIComponent(next)}`}
@@ -118,7 +120,7 @@ export function LoginForm() {
       </p>
 
       <DemoAccounts
-        className="mt-7"
+        className="mt-5"
         show={["customer", "admin", "superAdmin"]}
         onFill={(email, password) => {
           setValue("email", email, { shouldValidate: true });

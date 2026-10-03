@@ -21,7 +21,7 @@ import type {
   StoreSettings,
   User,
 } from "@/types";
-import { ACTIVE_ORDER_STATUSES, isOnlineMethod } from "@/types";
+import { isOnlineMethod } from "@/types";
 import {
   buildCartLine,
   countActiveOrders,
@@ -41,6 +41,7 @@ import { deductForOrder, projectShortfall, restockForOrder } from "./inventory";
 import {
   NEXT_STATUS,
   applyAutoCancellations,
+  applyScheduledStarts,
   canHandOver,
   canStartKitchen,
   deriveFlags,
@@ -86,17 +87,38 @@ function settings(): StoreSettings {
  */
 function readOrders(): Order[] {
   const rows = readCollection<Order>("orders");
-  const { orders, changed } = applyAutoCancellations(rows, settings());
+  const config = settings();
+  const { orders: afterCancels, changed } = applyAutoCancellations(rows, config);
 
   if (changed) {
-    writeCollection("orders", orders, "update");
+    writeCollection("orders", afterCancels, "update");
     // Tell the people affected about the ones that just timed out.
     const before = new Map(rows.map((o) => [o.id, o.status]));
-    for (const order of orders) {
+    for (const order of afterCancels) {
       if (before.get(order.id) !== "CANCELLED" && order.status === "CANCELLED") {
         notifyAutoCancelled(order);
       }
     }
+  }
+
+  // Scheduled slots start themselves — see applyScheduledStarts. The write is
+  // what pushes the change into the customer's tab, so it happens before the
+  // stock and the notifications, which follow from it.
+  const { orders, started } = applyScheduledStarts(afterCancels, config);
+  if (started.length > 0) {
+    const toDeduct = started.filter((order) => !order.stockDeducted);
+    const deducting = new Set(toDeduct.map((order) => order.id));
+    writeCollection(
+      "orders",
+      orders.map((order) =>
+        deducting.has(order.id) ? { ...order, stockDeducted: true } : order,
+      ),
+      "update",
+    );
+    for (const order of toDeduct) {
+      deductForOrder(order, order.readyTimeSetBy ?? getCurrentUser()?.id ?? "system");
+    }
+    for (const order of started) notifyStatusChange(order);
   }
 
   // Time-based alerts have no user action to hang off, so they are raised
@@ -156,8 +178,13 @@ function withPayment(order: Order, event: PaymentEvent, extra: Partial<Order>): 
   };
 }
 
+/**
+ * Still open work, which is not the same list as the board's columns: a
+ * scheduled order resting in ACCEPTED has no column, but it is very much
+ * still the cafe's problem.
+ */
 export function isActiveStatus(status: OrderStatus): boolean {
-  return (ACTIVE_ORDER_STATUSES as readonly OrderStatus[]).includes(status);
+  return status !== "HANDED_OVER" && status !== "CANCELLED";
 }
 
 export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order[] {
@@ -551,10 +578,18 @@ export interface AcceptOptions {
 }
 
 /**
- * Accepts an order and promises a ready time.
+ * Accepts an order, promises a ready time, and starts cooking it.
+ *
+ * There is no separate "start preparing" step: at this counter accepting an
+ * order *is* starting it, and a board column nobody ever paused in was only a
+ * second button to press. The ACCEPTED milestone is still written to
+ * statusHistory alongside PREPARING, with the same admin and timestamp, so the
+ * prep-time report still measures from the moment the promise was made.
  *
  * `readyInMinutes` is required: the admin, not the algorithm, decides what the
- * customer is told. Scheduled orders ignore it — their ready time is the slot.
+ * customer is told. Scheduled orders ignore it — their ready time is the slot,
+ * and they rest in ACCEPTED on the Scheduled tab until applyScheduledStarts
+ * hands them to the kitchen at the slot itself.
  */
 export async function accept(
   id: string,
@@ -590,21 +625,32 @@ export async function accept(
     ? order.scheduledFor!
     : new Date(at + readyInMinutes * 60_000).toISOString();
 
-  const accepted = persist(
-    withStatus(order, "ACCEPTED", admin, options.overrideReason, {
-      estimatedReadyAt,
-      readyTimeSetBy: admin.id,
-      readyTimeHistory: order.isScheduled
-        ? order.readyTimeHistory
-        : [
-            ...order.readyTimeHistory,
-            { minutes: readyInMinutes, at, byUserId: admin.id },
-          ],
-      stockDeducted: true,
-    }),
-  );
+  // A scheduled order waits for its slot; everything else goes straight in.
+  const toKitchen = !order.isScheduled;
 
-  deductForOrder(accepted, admin.id);
+  const accepted = persist({
+    ...order,
+    estimatedReadyAt,
+    readyTimeSetBy: admin.id,
+    readyTimeHistory: order.isScheduled
+      ? order.readyTimeHistory
+      : [...order.readyTimeHistory, { minutes: readyInMinutes, at, byUserId: admin.id }],
+    status: toKitchen ? "PREPARING" : "ACCEPTED",
+    statusHistory: [
+      ...order.statusHistory,
+      { status: "ACCEPTED" as const, at, byUserId: admin.id, reason: options.overrideReason },
+      ...(toKitchen
+        ? [{ status: "PREPARING" as const, at, byUserId: admin.id }]
+        : []),
+    ],
+    stockDeducted: toKitchen ? true : order.stockDeducted,
+    updatedAt: new Date(at).toISOString(),
+  });
+
+  // Stock leaves the shelf when the kitchen takes the order, not before.
+  if (toKitchen) deductForOrder(accepted, admin.id);
+
+  // One message, not two: ORDER_CONFIRMED already says it is being prepared.
   notifyOrderAccepted(accepted);
   logActivity(
     admin,
@@ -684,7 +730,12 @@ export async function advanceOrder(id: string, status: OrderStatus): Promise<Ord
     if (!gate.ok) throw paymentNotVerified(gate.reason!);
   }
 
-  const next = persist(withStatus(order, status, admin));
+  // Stock follows the order into the kitchen, wherever it entered from.
+  const deducting = status === "PREPARING" && !order.stockDeducted;
+  const next = persist(
+    withStatus(order, status, admin, undefined, deducting ? { stockDeducted: true } : {}),
+  );
+  if (deducting) deductForOrder(next, admin.id);
   notifyStatusChange(next);
   logActivity(admin, `ORDER_${status}`, `Marked ${id} as ${status.toLowerCase()}`, id);
   return next;
