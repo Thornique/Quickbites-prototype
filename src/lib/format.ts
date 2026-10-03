@@ -1,6 +1,7 @@
 import { format as formatDateFns } from "date-fns";
+import { hi as hiLocale } from "date-fns/locale/hi";
 import { formatInTimeZone } from "date-fns-tz";
-import { CURRENCY, TIME_ZONE } from "@/lib/constants";
+import { CURRENCY, TIME_ZONE, type Locale } from "@/lib/constants";
 
 type DateInput = Date | string | number;
 
@@ -46,6 +47,24 @@ export function formatDateTime(value: DateInput): string {
 /** Short weekday + time, for order boards: "Thu 7:42 PM". */
 export function formatDayTime(value: DateInput): string {
   return formatInTimeZone(toDate(value), TIME_ZONE, "EEE h:mm a");
+}
+
+/**
+ * "Friday, 3 October" in Asia/Kolkata — the dashboard greeting line.
+ *
+ * The only date in the app that is spoken inside a sentence, so it is also the
+ * only one that takes the UI language: an English weekday in the middle of a
+ * Hindi greeting reads as a half-translated screen.
+ */
+export function formatLongDate(value: DateInput, locale: Locale = "en"): string {
+  return formatInTimeZone(toDate(value), TIME_ZONE, "EEEE, d MMMM", {
+    locale: locale === "hi" ? hiLocale : undefined,
+  });
+}
+
+/** Hour of day 0-23 in Asia/Kolkata, so a greeting matches the cafe's clock. */
+export function hourOfDay(value: DateInput): number {
+  return Number(formatInTimeZone(toDate(value), TIME_ZONE, "H"));
 }
 
 /** ISO date key (yyyy-MM-dd) in Asia/Kolkata — safe for grouping reports. */

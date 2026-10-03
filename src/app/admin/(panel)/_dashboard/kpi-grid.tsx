@@ -2,22 +2,15 @@
 
 import { useMemo } from "react";
 import {
-  AlarmClock,
   BadgeIndianRupee,
   CalendarClock,
   ClipboardList,
-  Clock,
-  CreditCard,
   Flame,
-  MessageSquare,
   Receipt,
-  Wallet,
 } from "lucide-react";
 import { resolvePreset } from "@/components/admin/date-range-picker";
 import { StatCard } from "@/components/admin/stat-card";
 import { useSession } from "@/features/auth";
-import { useBookings } from "@/features/bookings";
-import { useEnquiries } from "@/features/enquiries";
 import { useOperationalCounts } from "@/features/orders";
 import { useDashboardKpis, useRevenueByDay } from "@/features/reports";
 import { useT } from "@/i18n";
@@ -29,9 +22,13 @@ import { can } from "@/lib/permissions";
  * them rather than fetched in one call.
  *
  * It matters: the seeded manager runs orders but holds no REPORTS permission,
- * and a dashboard that answered "₹0 revenue, 0 orders to verify" because of a
- * permission check would be lying to them. Each admin sees the figures they are
- * allowed to see, and nothing where a zero could be mistaken for the truth.
+ * and a dashboard that answered "₹0 revenue" because of a permission check
+ * would be lying to them. Each admin sees the figures they are allowed to see,
+ * and nothing where a zero could be mistaken for the truth.
+ *
+ * These are the standing measures only. Anything an admin must act on lives in
+ * the attention panel above, where it can carry a verb and a link — a tile that
+ * reads "Overdue 1" states a problem without offering a way to fix it.
  */
 
 /** Money — REPORTS only. */
@@ -70,7 +67,7 @@ function MoneyKpis() {
   );
 }
 
-/** Work waiting on the counter — ORDERS only. */
+/** What the counter is carrying right now — ORDERS only. */
 function OrderKpis() {
   const t = useT();
   const { data: counts, isLoading } = useOperationalCounts();
@@ -83,31 +80,10 @@ function OrderKpis() {
       href: "/admin/orders",
     },
     {
-      label: t.adm.dashboard.awaitingVerification,
-      value: counts?.awaitingVerification ?? 0,
-      icon: CreditCard,
-      href: "/admin/orders",
-      tone: (counts?.awaitingVerification ?? 0) > 0 ? ("warning" as const) : undefined,
-    },
-    {
-      label: t.adm.dashboard.cashToCollect,
-      value: counts?.cashPending ?? 0,
-      icon: Wallet,
-      href: "/admin/orders",
-      tone: (counts?.cashPending ?? 0) > 0 ? ("warning" as const) : undefined,
-    },
-    {
       label: t.adm.dashboard.scheduledToday,
       value: counts?.scheduledToday ?? 0,
       icon: CalendarClock,
       href: "/admin/orders?view=scheduled",
-    },
-    {
-      label: t.adm.dashboard.overdue,
-      value: counts?.overdue ?? 0,
-      icon: AlarmClock,
-      href: "/admin/orders",
-      tone: (counts?.overdue ?? 0) > 0 ? ("danger" as const) : undefined,
     },
   ];
 
@@ -120,49 +96,15 @@ function OrderKpis() {
   );
 }
 
-function BookingsKpi() {
-  const t = useT();
-  const { data: bookings, isLoading } = useBookings({ status: "PENDING" });
-  const count = (bookings ?? []).length;
-
-  return (
-    <StatCard
-      label={t.adm.dashboard.pendingBookings}
-      value={count}
-      icon={Clock}
-      href="/admin/bookings"
-      tone={count > 0 ? "warning" : undefined}
-      isLoading={isLoading}
-    />
-  );
-}
-
-function EnquiriesKpi() {
-  const t = useT();
-  const { data: enquiries, isLoading } = useEnquiries("NEW");
-  const count = (enquiries ?? []).length;
-
-  return (
-    <StatCard
-      label={t.adm.dashboard.newEnquiries}
-      value={count}
-      icon={MessageSquare}
-      href="/admin/enquiries"
-      tone={count > 0 ? "warning" : undefined}
-      isLoading={isLoading}
-    />
-  );
-}
-
 export function KpiGrid() {
   const { user } = useSession();
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    // Two across even on the smallest phone: ten full-width tiles stacked into
+    // a scroll was the single worst thing about this screen.
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5">
       {can(user, "REPORTS") && <MoneyKpis />}
       {can(user, "ORDERS") && <OrderKpis />}
-      {can(user, "BOOKINGS") && <BookingsKpi />}
-      {can(user, "ENQUIRIES") && <EnquiriesKpi />}
     </div>
   );
 }

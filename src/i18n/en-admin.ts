@@ -95,6 +95,33 @@ const admin = {
     pendingBookings: "Bookings to confirm",
     newEnquiries: "New enquiries",
     vsYesterday: "vs yesterday",
+    greetingMorning: (name: string) => `Good morning, ${name}`,
+    greetingAfternoon: (name: string) => `Good afternoon, ${name}`,
+    greetingEvening: (name: string) => `Good evening, ${name}`,
+    greetingDate: (date: string) => `${date} at Bombay Bazar, Khandwa.`,
+    attention: "Needs your attention",
+    attentionCount: (count: number) =>
+      count === 1 ? "1 thing waiting" : `${count} things waiting`,
+    allClear: "Nothing is waiting on you",
+    allClearBody: "Every payment is verified, every order is on time.",
+    actVerify: (count: number) =>
+      count === 1 ? "Verify 1 payment" : `Verify ${count} payments`,
+    actVerifyHint: "Takeaway orders stay on hold until the payment is checked.",
+    actOverdue: (count: number) =>
+      count === 1 ? "1 order is past its time" : `${count} orders are past their time`,
+    actOverdueHint: "The customer was promised sooner. Mark ready or add minutes.",
+    actCash: (count: number) =>
+      count === 1 ? "Collect cash on 1 order" : `Collect cash on ${count} orders`,
+    actCashHint: "Dine-in orders still to be paid at the counter.",
+    actBookings: (count: number) =>
+      count === 1 ? "Confirm 1 table booking" : `Confirm ${count} table bookings`,
+    actBookingsHint: "Guests are waiting for a yes or no.",
+    actEnquiries: (count: number) =>
+      count === 1 ? "Reply to 1 enquiry" : `Reply to ${count} enquiries`,
+    actEnquiriesHint: "Messages sent from the contact form.",
+    actRestock: (count: number) =>
+      count === 1 ? "Restock 1 item" : `Restock ${count} items`,
+    actRestockHint: "At or below the reorder level in the kitchen.",
     board: "Live board",
     boardHint: "Counts by stage. Open the board to act on them.",
     openBoard: "Open the board",

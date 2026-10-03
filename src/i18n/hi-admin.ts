@@ -98,6 +98,33 @@ export const hiAdmin: AdminDictionary = {
       pendingBookings: "पक्की करनी बुकिंग",
       newEnquiries: "नई पूछताछ",
       vsYesterday: "कल की तुलना में",
+      greetingMorning: (name: string) => `सुप्रभात, ${name}`,
+      greetingAfternoon: (name: string) => `नमस्कार, ${name}`,
+      greetingEvening: (name: string) => `शुभ संध्या, ${name}`,
+      greetingDate: (date: string) => `${date} — बॉम्बे बाज़ार, खंडवा।`,
+      attention: "आपके ध्यान की ज़रूरत",
+      attentionCount: (count: number) =>
+        count === 1 ? "1 काम बाकी" : `${count} काम बाकी`,
+      allClear: "अभी कुछ भी बाकी नहीं",
+      allClearBody: "हर भुगतान जँच चुका है, हर ऑर्डर समय पर है।",
+      actVerify: (count: number) =>
+        count === 1 ? "1 भुगतान जाँचें" : `${count} भुगतान जाँचें`,
+      actVerifyHint: "भुगतान जाँचे बिना टेकअवे ऑर्डर आगे नहीं बढ़ते।",
+      actOverdue: (count: number) =>
+        count === 1 ? "1 ऑर्डर में देर हो गई" : `${count} ऑर्डर में देर हो गई`,
+      actOverdueHint: "ग्राहक को जल्दी का वादा था। तैयार करें या मिनट बढ़ाएँ।",
+      actCash: (count: number) =>
+        count === 1 ? "1 ऑर्डर का नकद लें" : `${count} ऑर्डर का नकद लें`,
+      actCashHint: "डाइन-इन ऑर्डर जिनका भुगतान काउंटर पर बाकी है।",
+      actBookings: (count: number) =>
+        count === 1 ? "1 टेबल बुकिंग पक्की करें" : `${count} टेबल बुकिंग पक्की करें`,
+      actBookingsHint: "मेहमान हाँ या ना का इंतज़ार कर रहे हैं।",
+      actEnquiries: (count: number) =>
+        count === 1 ? "1 पूछताछ का जवाब दें" : `${count} पूछताछ का जवाब दें`,
+      actEnquiriesHint: "संपर्क फ़ॉर्म से आए संदेश।",
+      actRestock: (count: number) =>
+        count === 1 ? "1 चीज़ फिर से मँगाएँ" : `${count} चीज़ें फिर से मँगाएँ`,
+      actRestockHint: "रसोई में फिर से मँगाने के स्तर पर या नीचे।",
       board: "लाइव बोर्ड",
       boardHint: "हर चरण की गिनती। काम करने के लिए बोर्ड खोलिए।",
       openBoard: "बोर्ड खोलें",

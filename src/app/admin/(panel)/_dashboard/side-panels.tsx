@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { History, PackageOpen } from "lucide-react";
+import { CheckCircle2, History, PackageOpen } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,6 +11,33 @@ import { useRecentActivity } from "@/features/reports";
 import { useT } from "@/i18n";
 import { formatDayTime } from "@/lib/format";
 import { stockStatus } from "@/services/inventory";
+
+/**
+ * Shared empty state for the two side panels: an icon and one calm sentence,
+ * centred in the space the list would have filled. A bare line of grey text
+ * floating under a heading reads as a panel that failed to load.
+ */
+function PanelEmpty({
+  icon: Icon,
+  message,
+  isGood = false,
+}: {
+  icon: typeof History;
+  message: string;
+  isGood?: boolean;
+}) {
+  return (
+    <div className="mt-3 flex flex-col items-center justify-center gap-2 rounded-control border border-dashed border-hairline px-4 py-8 text-center">
+      <Icon
+        size={20}
+        strokeWidth={1.75}
+        aria-hidden="true"
+        className={cn("shrink-0", isGood ? "text-veg" : "text-ink-muted/60")}
+      />
+      <p className="text-sm text-ink-muted">{message}</p>
+    </div>
+  );
+}
 
 /** Anything at or below its reorder level, worst first. */
 export function LowStockPanel() {
@@ -37,7 +65,7 @@ export function LowStockPanel() {
       {isLoading && <Skeleton className="mt-3 h-24 w-full" />}
 
       {!isLoading && rows.length === 0 && (
-        <p className="mt-3 text-sm text-ink-muted">{t.adm.dashboard.lowStockNone}</p>
+        <PanelEmpty icon={CheckCircle2} message={t.adm.dashboard.lowStockNone} isGood />
       )}
 
       {rows.length > 0 && (
@@ -95,7 +123,7 @@ export function ActivityPanel() {
       {isLoading && <Skeleton className="mt-3 h-24 w-full" />}
 
       {!isLoading && (entries ?? []).length === 0 && (
-        <p className="mt-3 text-sm text-ink-muted">{t.adm.dashboard.activityNone}</p>
+        <PanelEmpty icon={History} message={t.adm.dashboard.activityNone} />
       )}
 
       <ol className="mt-3 grid gap-2.5">
