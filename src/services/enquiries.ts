@@ -1,10 +1,13 @@
 import { invalid, notFound } from "@/lib/errors";
+import { OUTLETS } from "@/lib/outlets";
 import { readCollection, writeCollection } from "@/storage";
-import type { Enquiry, EnquiryStatus, EnquirySubject } from "@/types";
+import type { Enquiry, EnquiryStatus, EnquirySubject, OutletId } from "@/types";
 import { notifyAdmins } from "./notifications";
 import { logActivity, newId, nowIso, ready, requirePermission } from "./common";
+import { adminReadScope, assertOutletAccess } from "./outlets";
 
 export interface CreateEnquiryInput {
+  outletId: OutletId;
   name: string;
   phone: string;
   email: string;
@@ -19,6 +22,7 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<Enquiry>
 
   const enquiry: Enquiry = {
     id: newId("enq"),
+    outletId: input.outletId,
     name: input.name.trim(),
     phone: input.phone.trim(),
     email: input.email.trim().toLowerCase(),
@@ -31,6 +35,7 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<Enquiry>
   const rows = readCollection<Enquiry>("enquiries");
   writeCollection("enquiries", [enquiry, ...rows], "create", enquiry.id);
   notifyAdmins("ENQUIRIES", {
+    outletId: enquiry.outletId,
     type: "NEW_ENQUIRY",
     params: { name: enquiry.name },
     link: "/admin/enquiries",
@@ -39,10 +44,15 @@ export async function createEnquiry(input: CreateEnquiryInput): Promise<Enquiry>
   return enquiry;
 }
 
-export async function listEnquiries(status?: EnquiryStatus): Promise<Enquiry[]> {
+export async function listEnquiries(
+  status?: EnquiryStatus,
+  outletId?: OutletId,
+): Promise<Enquiry[]> {
   await ready();
   requirePermission("ENQUIRIES");
+  const scope = adminReadScope(outletId);
   return readCollection<Enquiry>("enquiries")
+    .filter((e) => !scope || e.outletId === scope)
     .filter((e) => !status || e.status === status)
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
@@ -52,6 +62,7 @@ export async function getEnquiry(id: string): Promise<Enquiry> {
   requirePermission("ENQUIRIES");
   const enquiry = readCollection<Enquiry>("enquiries").find((e) => e.id === id);
   if (!enquiry) throw notFound("Enquiry");
+  assertOutletAccess(enquiry.outletId);
   return enquiry;
 }
 
@@ -64,6 +75,7 @@ export async function updateEnquiry(
   const rows = readCollection<Enquiry>("enquiries");
   const existing = rows.find((e) => e.id === id);
   if (!existing) throw notFound("Enquiry");
+  assertOutletAccess(existing.outletId);
 
   const next: Enquiry = {
     ...existing,
@@ -90,15 +102,18 @@ export async function updateEnquiry(
 }
 
 /** Count of unread enquiries, for the admin sidebar badge. */
-export async function countNewEnquiries(): Promise<number> {
+export async function countNewEnquiries(outletId?: OutletId): Promise<number> {
   await ready();
-  return readCollection<Enquiry>("enquiries").filter((e) => e.status === "NEW").length;
+  const scope = adminReadScope(outletId);
+  return readCollection<Enquiry>("enquiries").filter(
+    (e) => (!scope || e.outletId === scope) && e.status === "NEW",
+  ).length;
 }
 
 /** Pre-filled wa.me link for the quick WhatsApp action. */
 export function whatsappLinkFor(enquiry: Enquiry): string {
   const text = encodeURIComponent(
-    `Hello ${enquiry.name}, this is Quick Bites, Khandwa — about your enquiry.`,
+    `Hello ${enquiry.name}, this is ${OUTLETS[enquiry.outletId].name.en}, Khandwa — about your enquiry.`,
   );
   const number = enquiry.phone.replace(/\D/g, "");
   return `https://wa.me/91${number}?text=${text}`;

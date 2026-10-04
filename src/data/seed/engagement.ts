@@ -1,4 +1,4 @@
-import type { Enquiry, Review, TableBooking } from "@/types";
+import type { Enquiry, OutletId, Review, TableBooking } from "@/types";
 import { createRandom } from "./random";
 
 function daysFrom(now: Date, offset: number, hour = 11, minute = 20): string {
@@ -110,8 +110,10 @@ export function buildSeedEnquiries(now: Date): Enquiry[] {
     ],
   ];
 
+  /* Every third enquiry is about the coffee shop, so both inboxes have work. */
   return rows.map(([name, phone, email, subject, message, status, offset], i) => ({
     id: `enq-${String(i + 1).padStart(3, "0")}`,
+    outletId: (i % 3 === 2 ? "coffee" : "restaurant") as OutletId,
     name,
     phone,
     email,
@@ -157,8 +159,10 @@ export function buildSeedBookings(now: Date): TableBooking[] {
     ["Rahul Chouhan", "9826332211", 4, "20:30", "NO_SHOW", -2, ""],
   ];
 
+  /* The coffee shop takes table bookings too — a quieter room, smaller parties. */
   return rows.map(([name, phone, partySize, time, status, offset, request], i) => ({
     id: `bkg-${String(i + 1).padStart(3, "0")}`,
+    outletId: (i % 4 === 1 ? "coffee" : "restaurant") as OutletId,
     customerId: i === 0 ? "user-demo" : undefined,
     name,
     phone,
@@ -176,6 +180,13 @@ export function buildSeedBookings(now: Date): TableBooking[] {
     createdAt: daysFrom(now, offset - 2, 9 + (i % 10), (i * 11) % 60),
   }));
 }
+
+/**
+ * Which of the reviews below are about the coffee shop. Picked by hand rather
+ * than by a modulo: the ones mentioning cold coffee and filter coffee are the
+ * ones that make sense on that page.
+ */
+const COFFEE_REVIEWS = new Set([4, 8, 11, 13]);
 
 export function buildSeedReviews(now: Date): Review[] {
   const random = createRandom(777);
@@ -291,6 +302,7 @@ export function buildSeedReviews(now: Date): Review[] {
     const createdAt = daysFrom(now, -random.int(1, 55), 12 + (i % 9), (i * 13) % 60);
     return {
       id: `rev-${String(i + 1).padStart(3, "0")}`,
+      outletId: (COFFEE_REVIEWS.has(i) ? "coffee" : "restaurant") as OutletId,
       customerId,
       customerName,
       rating,

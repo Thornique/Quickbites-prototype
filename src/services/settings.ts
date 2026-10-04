@@ -1,52 +1,72 @@
-import { notFound } from "@/lib/errors";
 import { estimatePrepMinutes } from "@/lib/prep-time";
-import { readSingleton, resetDemoData, writeSingleton } from "@/storage";
-import type { StoreSettings, Weekday } from "@/types";
+import { readCollection, resetDemoData, writeCollection } from "@/storage";
+import type { OutletId, StoreSettings, Weekday } from "@/types";
 import { WEEKDAYS } from "@/types";
 import { countActiveOrders } from "./cart-pricing";
 import {
+  allSettings,
   logActivity,
   nowIso,
   ready,
   requirePermission,
   requireSuperAdmin,
+  settingsFor,
 } from "./common";
+import { assertOutletAccess } from "./outlets";
 
-export async function getSettings(): Promise<StoreSettings> {
+/** One outlet's settings. Each outlet keeps its own hours, tax and rules. */
+export async function getSettings(outletId: OutletId): Promise<StoreSettings> {
   await ready();
-  const settings = readSingleton<StoreSettings>("storeSettings");
-  if (!settings) throw notFound("Store settings");
-  return settings;
+  return settingsFor(outletId);
+}
+
+/** Both outlets at once, for the super admin's combined views. */
+export async function listSettings(): Promise<StoreSettings[]> {
+  await ready();
+  return allSettings();
 }
 
 export async function updateSettings(
-  patch: Partial<Omit<StoreSettings, "id" | "createdAt">>,
+  outletId: OutletId,
+  patch: Partial<Omit<StoreSettings, "id" | "outletId" | "createdAt">>,
 ): Promise<StoreSettings> {
   await ready();
   const admin = requirePermission("SETTINGS");
-  const current = readSingleton<StoreSettings>("storeSettings");
-  if (!current) throw notFound("Store settings");
+  assertOutletAccess(outletId);
 
+  const current = settingsFor(outletId);
   const next: StoreSettings = {
     ...current,
     ...patch,
-    id: "store-settings",
+    id: current.id,
+    outletId,
     updatedAt: nowIso(),
   };
-  writeSingleton("storeSettings", next);
-  logActivity(admin, "SETTINGS_UPDATED", "Updated store settings");
+  writeCollection(
+    "storeSettings",
+    readCollection<StoreSettings>("storeSettings").map((s) =>
+      s.outletId === outletId ? next : s,
+    ),
+    "update",
+    next.id,
+  );
+  logActivity(admin, "SETTINGS_UPDATED", `Updated ${outletId} settings`);
   return next;
 }
 
 /** Topbar quick toggles. */
-export async function setStoreOpen(isOpen: boolean): Promise<StoreSettings> {
-  return updateSettings({ isOpen });
+export async function setStoreOpen(
+  outletId: OutletId,
+  isOpen: boolean,
+): Promise<StoreSettings> {
+  return updateSettings(outletId, { isOpen });
 }
 
 export async function setAcceptingOrders(
+  outletId: OutletId,
   acceptingOrders: boolean,
 ): Promise<StoreSettings> {
-  return updateSettings({ acceptingOrders });
+  return updateSettings(outletId, { acceptingOrders });
 }
 
 export interface OpenState {
@@ -64,8 +84,8 @@ function toMinutes(time: string): number {
 }
 
 /**
- * Whether the store is open right now. The manual switch can close an
- * otherwise-open store, but never force it open outside its hours.
+ * Whether the outlet is open right now. The manual switch can close an
+ * otherwise-open outlet, but never force it open outside its hours.
  */
 export function computeOpenState(settings: StoreSettings, now = new Date()): OpenState {
   const weekday = WEEKDAYS[now.getDay()] as Weekday;
@@ -95,19 +115,22 @@ export function computeOpenState(settings: StoreSettings, now = new Date()): Ope
   return { ...base, isOpen: true };
 }
 
-export async function getOpenState(now = new Date()): Promise<OpenState> {
-  return computeOpenState(await getSettings(), now);
+export async function getOpenState(
+  outletId: OutletId,
+  now = new Date(),
+): Promise<OpenState> {
+  return computeOpenState(await getSettings(outletId), now);
 }
 
 /**
  * Live "ready in about N minutes" shown on the home strip and in Settings,
  * using a typical 8-minute item so the number is representative.
  */
-export async function getCurrentPrepEstimate(): Promise<number> {
-  const settings = await getSettings();
+export async function getCurrentPrepEstimate(outletId: OutletId): Promise<number> {
+  const settings = await getSettings(outletId);
   return estimatePrepMinutes({
     prepMinutes: [8],
-    activeOrders: countActiveOrders(),
+    activeOrders: countActiveOrders(outletId),
     basePrepBufferMinutes: settings.basePrepBufferMinutes,
     perActiveOrderMinutes: settings.perActiveOrderMinutes,
   });

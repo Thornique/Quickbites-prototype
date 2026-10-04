@@ -48,7 +48,8 @@ export interface SeedData {
   gallery: GalleryImage[];
   banners: Banner[];
   siteContent: SiteContent;
-  storeSettings: StoreSettings;
+  /** One record per outlet. */
+  storeSettings: StoreSettings[];
   notifications: AppNotification[];
   activityLog: ActivityLogEntry[];
   counters: Array<{ id: string; value: number }>;
@@ -76,13 +77,14 @@ export async function buildSeedData(now = new Date()): Promise<SeedData> {
   /*
     Daily token counters must continue from the seeded orders too, otherwise
     the first order placed today would be handed token A01 — which a seeded
-    order is already holding at the counter.
+    order is already holding at the counter. Counted per outlet, because the
+    two token series are independent.
   */
   const tokenCounters = new Map<string, number>();
   for (const order of orders) {
-    // Must match nextTokenNumber(), which keys by Asia/Kolkata, not UTC.
-    const dateKey = toDateKey(order.createdAt);
-    tokenCounters.set(dateKey, (tokenCounters.get(dateKey) ?? 0) + 1);
+    // Must match tokenCounterId(), which keys by Asia/Kolkata, not UTC.
+    const key = `token:${order.outletId}:${toDateKey(order.createdAt)}`;
+    tokenCounters.set(key, (tokenCounters.get(key) ?? 0) + 1);
   }
 
   return {
@@ -109,10 +111,7 @@ export async function buildSeedData(now = new Date()): Promise<SeedData> {
     activityLog: [],
     counters: [
       { id: "orderNumber", value: lastNumber },
-      ...[...tokenCounters.entries()].map(([dateKey, value]) => ({
-        id: `token:${dateKey}`,
-        value,
-      })),
+      ...[...tokenCounters.entries()].map(([id, value]) => ({ id, value })),
     ],
   };
 }

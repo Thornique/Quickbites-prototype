@@ -1,9 +1,10 @@
 import type { IsoDateTime, Timestamped } from "./common";
+import type { OutletScoped } from "./outlet";
 
 export const INVENTORY_UNITS = ["pcs", "kg", "g", "litre", "ml", "pack"] as const;
 export type InventoryUnit = (typeof INVENTORY_UNITS)[number];
 
-export interface InventoryItem extends Timestamped {
+export interface InventoryItem extends Timestamped, OutletScoped {
   id: string;
   name: string;
   unit: InventoryUnit;
@@ -26,7 +27,7 @@ export const STOCK_MOVEMENT_TYPES = [
 ] as const;
 export type StockMovementType = (typeof STOCK_MOVEMENT_TYPES)[number];
 
-export interface StockMovement {
+export interface StockMovement extends OutletScoped {
   id: string;
   inventoryItemId: string;
   type: StockMovementType;

@@ -1,6 +1,6 @@
 import { conflict, invalid, notFound } from "@/lib/errors";
 import { readCollection, writeCollection } from "@/storage";
-import type { MenuItem, MenuItemTag } from "@/types";
+import type { MenuItem, MenuItemTag, OutletId } from "@/types";
 import {
   logActivity,
   newId,
@@ -9,8 +9,11 @@ import {
   requirePermission,
   slugify,
 } from "./common";
+import { assertOutletAccess, requireOutlet } from "./outlets";
 
 export interface MenuFilters {
+  /** Omitted means every outlet, which only admin "all outlets" views ask for. */
+  outletId?: OutletId;
   categoryId?: string;
   /** Matches English and Hindi names and descriptions. */
   search?: string;
@@ -39,6 +42,7 @@ function matchesSearch(item: MenuItem, term: string): boolean {
 export function filterMenu(items: MenuItem[], filters: MenuFilters = {}): MenuItem[] {
   let rows = [...items];
 
+  if (filters.outletId) rows = rows.filter((i) => i.outletId === filters.outletId);
   if (filters.categoryId)
     rows = rows.filter((i) => i.categoryId === filters.categoryId);
   if (filters.vegOnly) rows = rows.filter((i) => i.isVeg);
@@ -75,9 +79,14 @@ export async function listMenuItems(filters: MenuFilters = {}): Promise<MenuItem
   return filterMenu(readCollection<MenuItem>("menuItems"), filters);
 }
 
-export async function getMenuItemBySlug(slug: string): Promise<MenuItem> {
+export async function getMenuItemBySlug(
+  outletId: OutletId,
+  slug: string,
+): Promise<MenuItem> {
   await ready();
-  const item = readCollection<MenuItem>("menuItems").find((i) => i.slug === slug);
+  const item = readCollection<MenuItem>("menuItems").find(
+    (i) => i.slug === slug && i.outletId === outletId,
+  );
   if (!item) throw notFound("Menu item");
   return item;
 }
@@ -90,28 +99,38 @@ export async function getMenuItemById(id: string): Promise<MenuItem> {
 }
 
 /** Top items by popularity, for the home rail. Available items only. */
-export async function listBestsellers(limit = 8): Promise<MenuItem[]> {
+export async function listBestsellers(
+  outletId: OutletId,
+  limit = 8,
+): Promise<MenuItem[]> {
   await ready();
   return readCollection<MenuItem>("menuItems")
-    .filter((i) => i.isAvailable)
+    .filter((i) => i.outletId === outletId && i.isAvailable)
     .sort((a, b) => b.popularity - a.popularity)
     .slice(0, limit);
 }
 
 export async function createMenuItem(
-  input: Omit<MenuItem, "id" | "createdAt">,
+  input: Omit<MenuItem, "id" | "createdAt" | "outletId"> & { outletId?: OutletId },
 ): Promise<MenuItem> {
   await ready();
   const admin = requirePermission("MENU");
+  const outletId = requireOutlet(input.outletId);
   const items = readCollection<MenuItem>("menuItems");
 
   const slug = slugify(input.slug || input.name.en);
   if (!slug) throw invalid("A menu item needs a name.", "name");
-  if (items.some((i) => i.slug === slug)) {
+  if (items.some((i) => i.slug === slug && i.outletId === outletId)) {
     throw conflict(`Another item already uses the web address "${slug}".`);
   }
 
-  const item: MenuItem = { ...input, slug, id: newId("item"), createdAt: nowIso() };
+  const item: MenuItem = {
+    ...input,
+    outletId,
+    slug,
+    id: newId("item"),
+    createdAt: nowIso(),
+  };
   writeCollection("menuItems", [...items, item], "create", item.id);
   logActivity(admin, "MENU_ITEM_CREATED", `Added menu item "${item.name.en}"`, item.id);
   return item;
@@ -119,16 +138,21 @@ export async function createMenuItem(
 
 export async function updateMenuItem(
   id: string,
-  patch: Partial<Omit<MenuItem, "id" | "createdAt">>,
+  patch: Partial<Omit<MenuItem, "id" | "createdAt" | "outletId">>,
 ): Promise<MenuItem> {
   await ready();
   const admin = requirePermission("MENU");
   const items = readCollection<MenuItem>("menuItems");
   const existing = items.find((i) => i.id === id);
   if (!existing) throw notFound("Menu item");
+  assertOutletAccess(existing.outletId);
 
   const slug = patch.slug ? slugify(patch.slug) : existing.slug;
-  if (items.some((i) => i.slug === slug && i.id !== id)) {
+  if (
+    items.some(
+      (i) => i.slug === slug && i.id !== id && i.outletId === existing.outletId,
+    )
+  ) {
     throw conflict(`Another item already uses the web address "${slug}".`);
   }
 
@@ -160,6 +184,7 @@ export async function deleteMenuItem(id: string): Promise<void> {
   const items = readCollection<MenuItem>("menuItems");
   const existing = items.find((i) => i.id === id);
   if (!existing) throw notFound("Menu item");
+  assertOutletAccess(existing.outletId);
 
   writeCollection(
     "menuItems",
@@ -184,6 +209,7 @@ export async function duplicateMenuItem(id: string): Promise<MenuItem> {
   const { id: _id, createdAt: _createdAt, ...rest } = source;
   return createMenuItem({
     ...rest,
+    outletId: source.outletId,
     slug: `${source.slug}-copy`,
     name: { en: `${source.name.en} (copy)`, hi: `${source.name.hi} (कॉपी)` },
     isAvailable: false,

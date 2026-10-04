@@ -1,48 +1,75 @@
-import type { MenuItem, OptionGroup } from "@/types";
+import type { MenuItem, OptionGroup, OutletId } from "@/types";
+import { SEED_CATEGORIES } from "./categories";
+import { COFFEE_ROWS } from "./menu-coffee";
 import { DRINK_ROWS } from "./menu-drinks";
 import { FOOD_ROWS } from "./menu-food";
 import type { GroupKind, MenuRow } from "./menu-row";
 import {
   addOnsGroup,
-  coffeeGroup,
   crustGroup,
+  cupSizeGroup,
+  extraShotGroup,
   makeItMealGroup,
+  milkTypeGroup,
   sizeGroup,
   spiceGroup,
+  sugarGroup,
   toppingsGroup,
 } from "./option-groups";
 
 const CREATED_AT = "2026-08-01T04:30:00.000Z";
 
-function buildGroups(row: MenuRow): OptionGroup[] {
+/** A category only ever belongs to one outlet, so it decides the item's. */
+const OUTLET_BY_CATEGORY = new Map<string, OutletId>(
+  SEED_CATEGORIES.map((category) => [category.id, category.outletId]),
+);
+
+/**
+ * Unique key for an item across both outlets. Both menus may carry a
+ * "cold-coffee", so ids and option ids are qualified by the outlet — two
+ * items sharing an option id would merge in a cart.
+ */
+function keyOf(row: MenuRow, outletId: OutletId): string {
+  return `${outletId}-${row.slug}`;
+}
+
+function buildGroups(row: MenuRow, key: string): OptionGroup[] {
   const groups: OptionGroup[] = [];
   for (const kind of row.groups ?? []) {
-    groups.push(...groupFor(kind, row));
+    groups.push(groupFor(kind, row, key));
   }
   return groups;
 }
 
-function groupFor(kind: GroupKind, row: MenuRow): OptionGroup[] {
+function groupFor(kind: GroupKind, row: MenuRow, key: string): OptionGroup {
   switch (kind) {
     case "size":
-      return [sizeGroup(row.slug, row.largeDelta ?? 40)];
+      return sizeGroup(key, row.largeDelta ?? 40);
     case "addons":
-      return [addOnsGroup(row.slug)];
+      return addOnsGroup(key);
     case "meal":
-      return [makeItMealGroup(row.slug)];
+      return makeItMealGroup(key);
     case "spice":
-      return [spiceGroup(row.slug)];
+      return spiceGroup(key);
     case "crust":
-      return [crustGroup(row.slug)];
+      return crustGroup(key);
     case "toppings":
-      return [toppingsGroup(row.slug)];
-    case "coffee":
-      return coffeeGroup(row.slug);
+      return toppingsGroup(key);
+    case "cupSize":
+      return cupSizeGroup(key, row.largeDelta ?? 35);
+    case "milkType":
+      return milkTypeGroup(key);
+    case "shot":
+      return extraShotGroup(key);
+    case "sugar":
+      return sugarGroup(key);
   }
 }
 
 function toMenuItem(row: MenuRow, index: number): MenuItem {
-  const optionGroups = buildGroups(row);
+  const outletId = OUTLET_BY_CATEGORY.get(row.categoryId) ?? "restaurant";
+  const key = keyOf(row, outletId);
+  const optionGroups = buildGroups(row, key);
   /*
     "Customisable" is a fact about the item, not something to hand-maintain in
     40 rows — derive it from whether the item actually has option groups.
@@ -51,8 +78,9 @@ function toMenuItem(row: MenuRow, index: number): MenuItem {
     optionGroups.length > 0 ? [...row.tags, "customisable" as const] : row.tags;
 
   return {
-    id: `item-${row.slug}`,
+    id: `item-${key}`,
     slug: row.slug,
+    outletId,
     categoryId: row.categoryId,
     name: { en: row.en, hi: row.hi },
     description: { en: row.descEn, hi: row.descHi },
@@ -75,6 +103,8 @@ function toMenuItem(row: MenuRow, index: number): MenuItem {
   };
 }
 
-export const SEED_MENU_ITEMS: MenuItem[] = [...FOOD_ROWS, ...DRINK_ROWS].map(
-  toMenuItem,
-);
+export const SEED_MENU_ITEMS: MenuItem[] = [
+  ...FOOD_ROWS,
+  ...DRINK_ROWS,
+  ...COFFEE_ROWS,
+].map(toMenuItem);

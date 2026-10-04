@@ -1,10 +1,11 @@
 import type { IsoDate, LocalizedText, Timestamped } from "./common";
 import type { EnquirySubject } from "./engagement";
+import type { OutletId, OutletScoped } from "./outlet";
 
 export const GALLERY_CATEGORIES = ["FOOD", "CAFE", "EVENTS"] as const;
 export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
 
-export interface GalleryImage extends Timestamped {
+export interface GalleryImage extends Timestamped, OutletScoped {
   id: string;
   /** Path under /public/images, or an `idb:` key for an admin upload. */
   src: string;
@@ -14,7 +15,7 @@ export interface GalleryImage extends Timestamped {
   isActive: boolean;
 }
 
-export interface Banner extends Timestamped {
+export interface Banner extends Timestamped, OutletScoped {
   id: string;
   image: string;
   headline: LocalizedText;
@@ -66,12 +67,28 @@ export interface SeoMeta {
  * Editable site copy. Everything the admin can reword without a deploy lives
  * here rather than being hard-coded into the pages.
  */
+/**
+ * The copy that differs between the two outlets. Everything else in
+ * SiteContent — the story, the services, the party packs, the legal pages —
+ * is one business talking, and is shared.
+ */
+export interface OutletContent {
+  /** The scrolling line above the home sections. */
+  offersStrip: LocalizedText;
+  addressLine: LocalizedText;
+  /** "10 AM - 11 PM, all days" as the admin wants it worded. */
+  hoursNote: LocalizedText;
+  /** Parking / how-to-find-us note under the home map. */
+  locationNote: LocalizedText;
+  phone: string;
+  whatsapp: string;
+}
+
 export interface SiteContent extends Timestamped {
   id: "site-content";
-  offersStrip: LocalizedText;
+  outlets: Record<OutletId, OutletContent>;
   home: {
     howItWorks: ContentBlock[];
-    locationNote: LocalizedText;
   };
   about: {
     story: ContentBlock;
@@ -80,9 +97,7 @@ export interface SiteContent extends Timestamped {
     fssaiNumber: string;
   };
   contact: {
-    addressLine: LocalizedText;
-    phone: string;
-    whatsapp: string;
+    /** One inbox for both outlets. Addresses and phones are per outlet. */
     email: string;
   };
   services: ServiceOffer[];

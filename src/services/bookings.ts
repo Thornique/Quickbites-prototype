@@ -1,7 +1,7 @@
 import { conflict, invalid, notFound } from "@/lib/errors";
 import { formatSlotLabel } from "@/lib/format";
-import { readCollection, readSingleton, writeCollection } from "@/storage";
-import type { BookingStatus, StoreSettings, TableBooking, Weekday } from "@/types";
+import { readCollection, writeCollection } from "@/storage";
+import type { BookingStatus, OutletId, TableBooking, Weekday } from "@/types";
 import { WEEKDAYS } from "@/types";
 import { notify, notifyAdmins } from "./notifications";
 import {
@@ -11,13 +11,9 @@ import {
   nowIso,
   ready,
   requirePermission,
+  settingsFor,
 } from "./common";
-
-function settings(): StoreSettings {
-  const stored = readSingleton<StoreSettings>("storeSettings");
-  if (!stored) throw notFound("Store settings");
-  return stored;
-}
+import { adminReadScope, assertOutletAccess } from "./outlets";
 
 function toMinutes(time: string): number {
   const [h, m] = time.split(":").map(Number);
@@ -32,10 +28,11 @@ function toClock(minutes: number): string {
 
 /** Bookable slots for a date, respecting opening hours and holidays. */
 export async function listSlotsForDate(
+  outletId: OutletId,
   date: string,
 ): Promise<Array<{ time: string; remaining: number; isFull: boolean }>> {
   await ready();
-  const config = settings();
+  const config = settingsFor(outletId);
 
   if (config.holidays.includes(date)) return [];
 
@@ -44,7 +41,11 @@ export async function listSlotsForDate(
   if (hours.isClosed) return [];
 
   const bookings = readCollection<TableBooking>("bookings").filter(
-    (b) => b.date === date && b.status !== "CANCELLED" && b.status !== "NO_SHOW",
+    (b) =>
+      b.outletId === outletId &&
+      b.date === date &&
+      b.status !== "CANCELLED" &&
+      b.status !== "NO_SHOW",
   );
 
   const slots: Array<{ time: string; remaining: number; isFull: boolean }> = [];
@@ -64,6 +65,7 @@ export async function listSlotsForDate(
 }
 
 export interface CreateBookingInput {
+  outletId: OutletId;
   name: string;
   phone: string;
   date: string;
@@ -74,13 +76,13 @@ export interface CreateBookingInput {
 
 export async function createBooking(input: CreateBookingInput): Promise<TableBooking> {
   await ready();
-  const config = settings();
+  const config = settingsFor(input.outletId);
 
   if (input.partySize < 1 || input.partySize > 12) {
     throw invalid("Party size must be between 1 and 12.", "partySize");
   }
 
-  const slots = await listSlotsForDate(input.date);
+  const slots = await listSlotsForDate(input.outletId, input.date);
   const slot = slots.find((s) => s.time === input.time);
   if (!slot) throw invalid("That time is not available on the chosen date.", "time");
   if (slot.remaining < input.partySize) {
@@ -107,6 +109,7 @@ export async function createBooking(input: CreateBookingInput): Promise<TableBoo
   const rows = readCollection<TableBooking>("bookings");
   writeCollection("bookings", [booking, ...rows], "create", booking.id);
   notifyAdmins("BOOKINGS", {
+    outletId: booking.outletId,
     type: "NEW_BOOKING",
     params: { name: booking.name, time: formatSlotLabel(booking.time) },
     link: "/admin/bookings",
@@ -117,13 +120,16 @@ export async function createBooking(input: CreateBookingInput): Promise<TableBoo
 
 export async function listBookings(
   filters: {
+    outletId?: OutletId;
     status?: BookingStatus;
     date?: string;
   } = {},
 ): Promise<TableBooking[]> {
   await ready();
   requirePermission("BOOKINGS");
+  const scope = adminReadScope(filters.outletId);
   return readCollection<TableBooking>("bookings")
+    .filter((b) => !scope || b.outletId === scope)
     .filter((b) => (filters.status ? b.status === filters.status : true))
     .filter((b) => (filters.date ? b.date === filters.date : true))
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
@@ -149,6 +155,7 @@ export async function updateBookingStatus(
   const rows = readCollection<TableBooking>("bookings");
   const existing = rows.find((b) => b.id === id);
   if (!existing) throw notFound("Booking");
+  assertOutletAccess(existing.outletId);
 
   const next: TableBooking = {
     ...existing,
@@ -165,6 +172,7 @@ export async function updateBookingStatus(
   if (next.customerId && (status === "CONFIRMED" || status === "CANCELLED")) {
     notify({
       userId: next.customerId,
+      outletId: next.outletId,
       type: status === "CONFIRMED" ? "BOOKING_CONFIRMED" : "BOOKING_CANCELLED",
       params: { time: formatSlotLabel(next.time), name: next.name },
       link: "/account",
@@ -175,8 +183,10 @@ export async function updateBookingStatus(
   return next;
 }
 
-export async function countPendingBookings(): Promise<number> {
+export async function countPendingBookings(outletId?: OutletId): Promise<number> {
   await ready();
-  return readCollection<TableBooking>("bookings").filter((b) => b.status === "PENDING")
-    .length;
+  const scope = adminReadScope(outletId);
+  return readCollection<TableBooking>("bookings").filter(
+    (b) => (!scope || b.outletId === scope) && b.status === "PENDING",
+  ).length;
 }

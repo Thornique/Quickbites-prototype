@@ -1,6 +1,7 @@
 import { formatTime } from "@/lib/format";
-import { readCollection, readSingleton } from "@/storage";
-import type { Order, StoreSettings } from "@/types";
+import { readCollection } from "@/storage";
+import type { InventoryItem, Order, OutletId } from "@/types";
+import { settingsFor } from "./common";
 import { notify, notifyAdmins } from "./notifications";
 import { deriveFlags, isOpenStatus } from "./order-rules";
 
@@ -28,6 +29,7 @@ function base(order: Order) {
 
 export function notifyOrderPlaced(order: Order): void {
   notifyAdmins("ORDERS", {
+    outletId: order.outletId,
     type: "NEW_ORDER",
     params: { ...base(order), amount: order.total },
     link: adminLink,
@@ -37,6 +39,7 @@ export function notifyOrderPlaced(order: Order): void {
 
   if (order.paymentStatus === "PAID_UNVERIFIED") {
     notifyAdmins("ORDERS", {
+      outletId: order.outletId,
       type: "PAYMENT_AWAITING",
       params: { ...base(order), amount: order.total },
       link: adminLink,
@@ -45,6 +48,7 @@ export function notifyOrderPlaced(order: Order): void {
   }
   if (order.paymentMethod === "CASH") {
     notifyAdmins("ORDERS", {
+      outletId: order.outletId,
       type: "CASH_TO_COLLECT",
       params: { ...base(order), amount: order.total },
       link: adminLink,
@@ -56,6 +60,7 @@ export function notifyOrderPlaced(order: Order): void {
 export function notifyOrderAccepted(order: Order): void {
   notify({
     userId: order.customerId,
+    outletId: order.outletId,
     type: "ORDER_CONFIRMED",
     params: { ...base(order), time: at(order) },
     link: customerLink(order),
@@ -66,6 +71,7 @@ export function notifyOrderAccepted(order: Order): void {
 export function notifyPaymentRejected(order: Order, minutesToPay: number): void {
   notify({
     userId: order.customerId,
+    outletId: order.outletId,
     type: "PAYMENT_REJECTED",
     params: { ...base(order), minutes: minutesToPay },
     link: customerLink(order),
@@ -76,6 +82,7 @@ export function notifyPaymentRejected(order: Order, minutesToPay: number): void 
 export function notifyReadyTimeExtended(order: Order, extraMinutes: number): void {
   notify({
     userId: order.customerId,
+    outletId: order.outletId,
     type: "READY_TIME_EXTENDED",
     params: { ...base(order), minutes: extraMinutes, time: at(order) },
     link: customerLink(order),
@@ -86,6 +93,7 @@ export function notifyStatusChange(order: Order): void {
   if (order.status === "PREPARING") {
     notify({
       userId: order.customerId,
+      outletId: order.outletId,
       type: "ORDER_PREPARING",
       params: base(order),
       link: customerLink(order),
@@ -95,6 +103,7 @@ export function notifyStatusChange(order: Order): void {
   if (order.status === "READY") {
     notify({
       userId: order.customerId,
+      outletId: order.outletId,
       type: "ORDER_READY",
       params: base(order),
       link: customerLink(order),
@@ -105,6 +114,7 @@ export function notifyStatusChange(order: Order): void {
   if (order.status === "HANDED_OVER") {
     notify({
       userId: order.customerId,
+      outletId: order.outletId,
       type: "ORDER_HANDED_OVER",
       params: base(order),
       link: `/account/orders`,
@@ -116,6 +126,7 @@ export function notifyStatusChange(order: Order): void {
 export function notifyOrderCancelled(order: Order, reason: string): void {
   notify({
     userId: order.customerId,
+    outletId: order.outletId,
     type: "ORDER_CANCELLED",
     params: { ...base(order), reason },
     link: customerLink(order),
@@ -127,6 +138,7 @@ export function notifyOrderCancelled(order: Order, reason: string): void {
 export function notifyAutoCancelled(order: Order): void {
   notifyOrderCancelled(order, "Payment was not completed in time.");
   notifyAdmins("ORDERS", {
+    outletId: order.outletId,
     type: "TAKEAWAY_AUTO_CANCELLED",
     params: base(order),
     link: adminLink,
@@ -136,12 +148,14 @@ export function notifyAutoCancelled(order: Order): void {
 
 export function notifySwitchedToOnline(order: Order): void {
   notifyAdmins("ORDERS", {
+    outletId: order.outletId,
     type: "SWITCHED_TO_ONLINE",
     params: { ...base(order), amount: order.total },
     link: adminLink,
     dedupeKey: `switched:${order.id}`,
   });
   notifyAdmins("ORDERS", {
+    outletId: order.outletId,
     type: "PAYMENT_AWAITING",
     params: { ...base(order), amount: order.total },
     link: adminLink,
@@ -159,13 +173,11 @@ export function notifySwitchedToOnline(order: Order): void {
  * for an hour produces exactly one notification rather than one per refresh.
  */
 export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
-  const settings = readSingleton<StoreSettings>("storeSettings");
-  if (!settings) return;
-
-  const staleAfterMs = settings.verificationAlertMinutes * 60_000;
-
   for (const order of orders) {
     if (!isOpenStatus(order)) continue;
+    // Each outlet sets its own tolerance for an unverified payment.
+    const settings = settingsFor(order.outletId);
+    const staleAfterMs = settings.verificationAlertMinutes * 60_000;
     const flags = deriveFlags(order, settings, now);
 
     // Payment waiting too long for someone to confirm it.
@@ -174,6 +186,7 @@ export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
       now.getTime() - Date.parse(order.createdAt) > staleAfterMs
     ) {
       notifyAdmins("ORDERS", {
+        outletId: order.outletId,
         type: "PAYMENT_STALE",
         params: { ...base(order), minutes: settings.verificationAlertMinutes },
         link: adminLink,
@@ -184,6 +197,7 @@ export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
 
     if (flags.isOverdue) {
       notifyAdmins("ORDERS", {
+        outletId: order.outletId,
         type: "ORDER_OVERDUE",
         params: { ...base(order), time: at(order) },
         link: adminLink,
@@ -194,6 +208,7 @@ export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
 
     if (flags.isDueToStart) {
       notifyAdmins("ORDERS", {
+        outletId: order.outletId,
         type: "SCHEDULED_DUE",
         params: { ...base(order), time: at(order) },
         link: adminLink,
@@ -208,6 +223,7 @@ export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
       if (minutesAway <= 30 && minutesAway > 0) {
         notify({
           userId: order.customerId,
+          outletId: order.outletId,
           type: "SCHEDULED_REMINDER",
           params: { ...base(order), time: formatTime(order.scheduledFor) },
           link: customerLink(order),
@@ -220,11 +236,14 @@ export function reconcileOrderAlerts(orders: Order[], now = new Date()): void {
 
 /** Low/out-of-stock alerts, raised after an inventory movement. */
 export function notifyStockLevels(
-  changed: Array<{ id: string; name: string; qty: number; lowStockThreshold: number }>,
+  changed: Array<
+    Pick<InventoryItem, "id" | "name" | "qty" | "lowStockThreshold" | "outletId">
+  >,
 ): void {
   for (const item of changed) {
     if (item.qty <= 0) {
       notifyAdmins("INVENTORY", {
+        outletId: item.outletId,
         type: "INVENTORY_OUT",
         params: { item: item.name },
         link: "/admin/inventory",
@@ -233,6 +252,7 @@ export function notifyStockLevels(
       });
     } else if (item.qty <= item.lowStockThreshold) {
       notifyAdmins("INVENTORY", {
+        outletId: item.outletId,
         type: "INVENTORY_LOW",
         params: { item: item.name },
         link: "/admin/inventory",
@@ -243,6 +263,8 @@ export function notifyStockLevels(
 }
 
 /** Used by the dev tools to confirm nothing is double-firing. */
-export function countOpenOrders(): number {
-  return readCollection<Order>("orders").filter(isOpenStatus).length;
+export function countOpenOrders(outletId?: OutletId): number {
+  return readCollection<Order>("orders")
+    .filter((order) => !outletId || order.outletId === outletId)
+    .filter(isOpenStatus).length;
 }

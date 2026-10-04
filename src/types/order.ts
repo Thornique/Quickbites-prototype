@@ -1,4 +1,5 @@
 import type { IsoDateTime, LocalizedText, Timestamped } from "./common";
+import type { OutletId, OutletScoped } from "./outlet";
 
 export const ORDER_TYPES = ["TAKEAWAY", "DINE_IN"] as const;
 export type OrderType = (typeof ORDER_TYPES)[number];
@@ -130,7 +131,7 @@ export interface OrderLine {
   notes?: string;
 }
 
-export interface Order extends Timestamped {
+export interface Order extends Timestamped, OutletScoped {
   /** Human-facing order number, e.g. "QB-1042". Also the primary key. */
   id: string;
   /** Short counter-display token, reset every day, e.g. "A23". */
@@ -203,6 +204,8 @@ export interface OrderFlags {
 
 /** Filters used by both the admin order table and the customer history. */
 export interface OrderFilters {
+  /** Omitted means every outlet — only the super admin may ask for that. */
+  outletId?: OutletId;
   status?: OrderStatus | "ACTIVE" | "ALL";
   orderType?: OrderType;
   customerId?: string;

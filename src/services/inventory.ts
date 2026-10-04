@@ -4,12 +4,14 @@ import type {
   InventoryItem,
   MenuItem,
   Order,
+  OutletId,
   StockMovement,
   StockMovementType,
   StockStatus,
 } from "@/types";
 import { notifyStockLevels } from "./order-notifications";
 import { logActivity, newId, nowIso, ready, requirePermission } from "./common";
+import { adminReadScope, assertOutletAccess, requireOutlet } from "./outlets";
 
 export function stockStatus(item: InventoryItem): StockStatus {
   if (item.qty <= 0) return "OUT";
@@ -17,40 +19,48 @@ export function stockStatus(item: InventoryItem): StockStatus {
   return "OK";
 }
 
-export async function listInventory(): Promise<InventoryItem[]> {
+/** One outlet's store cupboard; `undefined` combines both for the super admin. */
+export async function listInventory(outletId?: OutletId): Promise<InventoryItem[]> {
   await ready();
-  return readCollection<InventoryItem>("inventoryItems").sort((a, b) =>
-    a.name.localeCompare(b.name),
-  );
+  const scope = adminReadScope(outletId);
+  return readCollection<InventoryItem>("inventoryItems")
+    .filter((item) => !scope || item.outletId === scope)
+    .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function listLowStock(): Promise<InventoryItem[]> {
+export async function listLowStock(outletId?: OutletId): Promise<InventoryItem[]> {
   await ready();
+  const scope = adminReadScope(outletId);
   return readCollection<InventoryItem>("inventoryItems")
+    .filter((item) => !scope || item.outletId === scope)
     .filter((item) => stockStatus(item) !== "OK")
     .sort((a, b) => a.qty - b.qty);
 }
 
 export async function listMovements(
   inventoryItemId?: string,
+  outletId?: OutletId,
 ): Promise<StockMovement[]> {
   await ready();
+  const scope = adminReadScope(outletId);
   return readCollection<StockMovement>("stockMovements")
+    .filter((m) => !scope || m.outletId === scope)
     .filter((m) => !inventoryItemId || m.inventoryItemId === inventoryItemId)
     .sort((a, b) => Date.parse(b.at) - Date.parse(a.at));
 }
 
 /** Total value of everything on the shelf. */
-export async function getInventoryValuation(): Promise<number> {
+export async function getInventoryValuation(outletId?: OutletId): Promise<number> {
   await ready();
-  return readCollection<InventoryItem>("inventoryItems").reduce(
-    (sum, item) => sum + item.qty * item.costPerUnit,
-    0,
-  );
+  const scope = adminReadScope(outletId);
+  return readCollection<InventoryItem>("inventoryItems")
+    .filter((item) => !scope || item.outletId === scope)
+    .reduce((sum, item) => sum + item.qty * item.costPerUnit, 0);
 }
 
 interface MovementDraft {
   inventoryItemId: string;
+  outletId: OutletId;
   type: StockMovementType;
   quantity: number;
   reason?: string;
@@ -83,6 +93,7 @@ function applyMovements(drafts: MovementDraft[]): {
     movements.push({
       id: newId("mv"),
       inventoryItemId: draft.inventoryItemId,
+      outletId: draft.outletId,
       type: draft.type,
       quantity: draft.quantity,
       balanceAfter: item.qty,
@@ -162,7 +173,12 @@ function reconcileMenuAvailability(inventory: InventoryItem[]): {
   return { nowUnavailable, nowAvailable };
 }
 
-/** What an order will consume, aggregated per inventory item. */
+/**
+ * What an order will consume, aggregated per inventory item.
+ *
+ * Menu items only ever link to stock in their own outlet, so this needs no
+ * outlet filter of its own — the order's lines decide.
+ */
 export function consumptionForOrder(order: Order): Map<string, number> {
   const menu = new Map(readCollection<MenuItem>("menuItems").map((i) => [i.id, i]));
   const totals = new Map<string, number>();
@@ -199,6 +215,7 @@ export function deductForOrder(order: Order, byUserId: string) {
   const drafts: MovementDraft[] = [...consumptionForOrder(order)].map(
     ([inventoryItemId, quantity]) => ({
       inventoryItemId,
+      outletId: order.outletId,
       type: "SALE",
       quantity: -quantity,
       orderId: order.id,
@@ -213,6 +230,7 @@ export function restockForOrder(order: Order, byUserId: string) {
   const drafts: MovementDraft[] = [...consumptionForOrder(order)].map(
     ([inventoryItemId, quantity]) => ({
       inventoryItemId,
+      outletId: order.outletId,
       type: "RESTOCK_ON_CANCEL",
       quantity,
       orderId: order.id,
@@ -236,9 +254,17 @@ export async function stockIn(
     (i) => i.id === inventoryItemId,
   );
   if (!item) throw notFound("Inventory item");
+  assertOutletAccess(item.outletId);
 
   const result = applyMovements([
-    { inventoryItemId, type: "PURCHASE", quantity, reason, byUserId: admin.id },
+    {
+      inventoryItemId,
+      outletId: item.outletId,
+      type: "PURCHASE",
+      quantity,
+      reason,
+      byUserId: admin.id,
+    },
   ]);
   logActivity(
     admin,
@@ -266,9 +292,17 @@ export async function adjustStock(
     (i) => i.id === inventoryItemId,
   );
   if (!item) throw notFound("Inventory item");
+  assertOutletAccess(item.outletId);
 
   const result = applyMovements([
-    { inventoryItemId, type, quantity, reason, byUserId: admin.id },
+    {
+      inventoryItemId,
+      outletId: item.outletId,
+      type,
+      quantity,
+      reason,
+      byUserId: admin.id,
+    },
   ]);
   logActivity(
     admin,
@@ -280,13 +314,21 @@ export async function adjustStock(
 }
 
 export async function createInventoryItem(
-  input: Omit<InventoryItem, "id" | "createdAt">,
+  input: Omit<InventoryItem, "id" | "createdAt" | "outletId"> & {
+    outletId?: OutletId;
+  },
 ): Promise<InventoryItem> {
   await ready();
   const admin = requirePermission("INVENTORY");
+  const outletId = requireOutlet(input.outletId);
   const rows = readCollection<InventoryItem>("inventoryItems");
 
-  const item: InventoryItem = { ...input, id: newId("inv"), createdAt: nowIso() };
+  const item: InventoryItem = {
+    ...input,
+    outletId,
+    id: newId("inv"),
+    createdAt: nowIso(),
+  };
   writeCollection("inventoryItems", [...rows, item], "create", item.id);
   logActivity(admin, "INVENTORY_CREATED", `Added inventory item ${item.name}`, item.id);
   return item;
@@ -294,13 +336,14 @@ export async function createInventoryItem(
 
 export async function updateInventoryItem(
   id: string,
-  patch: Partial<Omit<InventoryItem, "id" | "createdAt">>,
+  patch: Partial<Omit<InventoryItem, "id" | "createdAt" | "outletId">>,
 ): Promise<InventoryItem> {
   await ready();
   const admin = requirePermission("INVENTORY");
   const rows = readCollection<InventoryItem>("inventoryItems");
   const existing = rows.find((i) => i.id === id);
   if (!existing) throw notFound("Inventory item");
+  assertOutletAccess(existing.outletId);
 
   const next: InventoryItem = { ...existing, ...patch, id, updatedAt: nowIso() };
   writeCollection(
@@ -319,6 +362,7 @@ export async function deleteInventoryItem(id: string): Promise<void> {
   const rows = readCollection<InventoryItem>("inventoryItems");
   const existing = rows.find((i) => i.id === id);
   if (!existing) throw notFound("Inventory item");
+  assertOutletAccess(existing.outletId);
 
   writeCollection(
     "inventoryItems",

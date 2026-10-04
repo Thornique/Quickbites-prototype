@@ -7,5 +7,6 @@ export * from "./inventory";
 export * from "./menu";
 export * from "./notification";
 export * from "./order";
+export * from "./outlet";
 export * from "./settings";
 export * from "./user";

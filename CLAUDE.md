@@ -7,7 +7,7 @@ You are building a production-grade, fully clickable PROTOTYPE web application f
 - Prefer finishing a screen end-to-end over perfecting one detail.
 
 # Client
-"Quick Bites" — a modern quick-service cafe in Khandwa, Madhya Pradesh, India. Sells burgers, sandwiches, wraps, fries & sides, pizzas, coffee (hot), cold beverages/shakes, desserts, and combo meals. Affordable, fast service. Single outlet. Customers mostly order from mobile.
+"Quick Bites" — a modern quick-service cafe in Khandwa, Madhya Pradesh, India. Sells burgers, sandwiches, wraps, fries & sides, pizzas, coffee (hot), cold beverages/shakes, desserts, and combo meals. Affordable, fast service. TWO outlets — see "Outlets". Customers mostly order from mobile.
 
 # What the prototype must prove
 A customer can browse the menu, customise items, add to cart, apply coupons, "pay" (fake), place a TAKEAWAY order, see an estimated ready time and track live status. Admins run the entire business from one admin panel: orders (they also act as the kitchen), menu, inventory, coupons, customers, enquiries, table bookings, website content, reports, settings and staff. Everything must WORK end to end with mock data — not static screens.
@@ -34,6 +34,20 @@ A customer can browse the menu, customise items, add to cart, apply coupons, "pa
 6. Every payment action is appended to paymentHistory[] {action, method, amount, ref?, reason?, byUserId?, at}.
 7. The ADMIN sets the ready time on acceptance — accept(orderId, readyInMinutes) and verifyAndAccept(orderId, readyInMinutes) require 1–90 minutes. Before acceptance the customer sees "Waiting for the cafe to confirm" plus a provisional estimate from lib/prep-time.ts. estimatedReadyAt = acceptedAt + readyInMinutes, recorded with readyTimeSetBy and readyTimeHistory[]. extendReadyTime(+5/+10) is logged and pushed live. Marking READY early is allowed. Past the promised time and not READY → customer sees "Almost ready…" (never a negative countdown) and the order is flagged OVERDUE.
 8. Scheduled takeaway: "As soon as possible" or a 15-minute slot today/tomorrow within opening hours, minimum lead scheduleMinLeadMinutes (30), capacity maxOrdersPerSlot (8). Payment is still upfront and online. estimatedReadyAt = scheduledFor, and the order is flagged DUE_TO_START once scheduledFor − max prepMinutes − basePrepBuffer has passed. Customers may cancel until scheduleCancelCutoffMinutes (60) before the slot, then the reason is shown instead.
+
+# Outlets (client-approved, supersedes "Single outlet")
+The client runs TWO outlets under one brand and one website:
+- `restaurant` — "Quick Bites", Bombay Bazar. Burgers, sandwiches, wraps, fries, pizzas, cold beverages & shakes, desserts, combos. 10:00–23:00. Flame-red brand.
+- `coffee` — "Quick Bites Coffee", Nagchun Road. Espresso & hot coffee, cold coffee & frappés, tea & hot chocolate, bakes & pastries, savoury bites. 07:30–22:30. Coffee-brown accent and its own "QUICK BITES COFFEE" wordmark.
+
+Rules:
+- Every business record carries a required `outletId`: categories, menu items (option groups live inside them and inherit it), coupons, inventory items, stock movements, orders, token counters, store settings, banners, gallery, reviews, table bookings, enquiries and notifications. One `StoreSettings` record per outlet (`store-settings:<outletId>`) — hours, holidays, prep config, tax, packaging, payment and scheduling rules are per outlet, so `storeSettings` is a collection, not a singleton. `SiteContent` stays shared except `content.outlets[outletId]`, which holds the offers strip, address, hours note, location note, phone and WhatsApp.
+- Daily counter tokens are counted per outlet and reset daily: restaurant "A12", coffee "C12". Order numbers stay ONE shared `QB-` series so `/order/QB-1234` resolves without knowing the outlet.
+- Customers are shared across outlets — one account, two places to order from. Only admins are pinned: `User.assignedOutletId` is set on every ADMIN and unset on the SUPER_ADMIN, who sees all outlets and a combined "All" view.
+- Outlet access is enforced in `src/services` (see `services/outlets.ts`), never only in the UI: admin-only reads narrow to `adminReadScope()`, and every admin write calls `assertOutletAccess()` or `requireOutlet()`.
+- The customer site has one active outlet at a time, remembered in localStorage and shareable as `?outlet=coffee`. Switching it switches menu, categories, search, offers, coupons, banners, ready-time strip, open/closed status, hours and recommendations. Each outlet keeps its OWN cart; switching never merges or clears the other one. Checkout, payment rules, scheduling slots and tokens use the active outlet's settings. Order tracking, order history and notifications show an outlet badge and work whichever outlet is selected.
+- Slugs and coupon codes are unique WITHIN an outlet, not across both. Menu item ids and option ids are therefore qualified by outlet (`item-coffee-cold-coffee`), so two same-named items can never merge in a cart.
+- New-order alerts and every other notification go only to admins of that outlet, plus the super admin.
 
 # Working speed
 - Verification budget per step: test only that step's core flows in the browser, at 360px and 1440px, English only, plus one quick Hindi spot-check of the new screens.
@@ -100,9 +114,10 @@ Rules to avoid the generic AI look:
 - Motion: subtle (150–200ms ease-out), respect prefers-reduced-motion.
 
 # Demo accounts (seeded)
-- Super Admin: owner@quickbites.in / Owner@123
-- Admin: manager@quickbites.in / Manager@123 (orders, menu, inventory, coupons, enquiries, bookings)
-- Customer: demo@quickbites.in / Demo@123 (has past orders)
+- Super Admin: owner@quickbites.in / Owner@123 (both outlets + combined "All" view)
+- Restaurant Admin: manager@quickbites.in / Manager@123 (orders, menu, inventory, coupons, enquiries, bookings — restaurant only)
+- Coffee Admin: coffee@quickbites.in / Coffee@123 (same permissions — coffee only)
+- Customer: demo@quickbites.in / Demo@123 (has past orders at both outlets)
 
 # Definition of done for every step
 - `npm run lint` and `npm run build` pass with zero errors.

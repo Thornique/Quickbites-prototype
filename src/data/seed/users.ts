@@ -8,6 +8,7 @@ const CREATED_AT = "2026-08-01T04:30:00.000Z";
 export const DEMO_ACCOUNTS = {
   superAdmin: { email: "owner@quickbites.in", password: "Owner@123" },
   admin: { email: "manager@quickbites.in", password: "Manager@123" },
+  coffeeAdmin: { email: "coffee@quickbites.in", password: "Coffee@123" },
   customer: { email: "demo@quickbites.in", password: "Demo@123" },
 } as const;
 
@@ -54,18 +55,24 @@ const LAST_NAMES = [
 ];
 
 /**
- * The three demo accounts plus 40 customers. Async because password hashing
+ * The four demo accounts plus 40 customers. Async because password hashing
  * goes through Web Crypto.
+ *
+ * Customers are shared across both outlets — one person, one account, two
+ * places to order from. Only admins are pinned to an outlet.
  */
 export async function buildSeedUsers(): Promise<User[]> {
   const random = createRandom(4242);
 
-  const [ownerHash, managerHash, demoHash, genericHash] = await Promise.all([
-    sha256Hex(DEMO_ACCOUNTS.superAdmin.password),
-    sha256Hex(DEMO_ACCOUNTS.admin.password),
-    sha256Hex(DEMO_ACCOUNTS.customer.password),
-    sha256Hex("Customer@123"),
-  ]);
+  const [ownerHash, managerHash, coffeeHash, demoHash, genericHash] = await Promise.all(
+    [
+      sha256Hex(DEMO_ACCOUNTS.superAdmin.password),
+      sha256Hex(DEMO_ACCOUNTS.admin.password),
+      sha256Hex(DEMO_ACCOUNTS.coffeeAdmin.password),
+      sha256Hex(DEMO_ACCOUNTS.customer.password),
+      sha256Hex("Customer@123"),
+    ],
+  );
 
   const users: User[] = [
     {
@@ -76,6 +83,7 @@ export async function buildSeedUsers(): Promise<User[]> {
       passwordHash: ownerHash,
       role: "SUPER_ADMIN",
       permissions: [],
+      // No assignedOutletId: the owner runs both outlets and sees all of it.
       status: "ACTIVE",
       createdAt: CREATED_AT,
     },
@@ -87,6 +95,19 @@ export async function buildSeedUsers(): Promise<User[]> {
       passwordHash: managerHash,
       role: "ADMIN",
       permissions: ["ORDERS", "MENU", "INVENTORY", "COUPONS", "ENQUIRIES", "BOOKINGS"],
+      assignedOutletId: "restaurant",
+      status: "ACTIVE",
+      createdAt: CREATED_AT,
+    },
+    {
+      id: "user-coffee",
+      name: "Farhan Qureshi",
+      email: DEMO_ACCOUNTS.coffeeAdmin.email,
+      phone: "9876500004",
+      passwordHash: coffeeHash,
+      role: "ADMIN",
+      permissions: ["ORDERS", "MENU", "INVENTORY", "COUPONS", "ENQUIRIES", "BOOKINGS"],
+      assignedOutletId: "coffee",
       status: "ACTIVE",
       createdAt: CREATED_AT,
     },
@@ -106,6 +127,7 @@ export async function buildSeedUsers(): Promise<User[]> {
   const seen = new Set<string>([
     DEMO_ACCOUNTS.superAdmin.email,
     DEMO_ACCOUNTS.admin.email,
+    DEMO_ACCOUNTS.coffeeAdmin.email,
     DEMO_ACCOUNTS.customer.email,
   ]);
 

@@ -1,5 +1,5 @@
 /** Bumping this re-seeds every collection on next load. */
-export const SCHEMA_VERSION = 13;
+export const SCHEMA_VERSION = 14;
 
 const NAMESPACE = "qb";
 
@@ -46,8 +46,14 @@ export type SessionScope = (typeof SESSION_SCOPES)[number];
 /** Sessions live outside the versioned namespace so they survive re-seeds. */
 export const sessionKey = (scope: SessionScope) => `${NAMESPACE}:session:${scope}`;
 
-/** Persisted cart, keyed per user id (or "guest"). */
+/** Persisted cart, keyed per user id (or "guest"). Holds both outlets' carts. */
 export const cartKey = (ownerId: string) => `${NAMESPACE}:cart:${ownerId}`;
+
+/** Which outlet the customer is browsing. Survives re-seeds. */
+export const OUTLET_KEY = `${NAMESPACE}:outlet`;
+
+/** Which outlet (or "all") the admin panel is showing. */
+export const ADMIN_OUTLET_KEY = `${NAMESPACE}:adminOutlet`;
 
 /** Per-user notification preferences (sound, browser alerts). */
 export const notificationPrefsKey = (userId: string) => `${NAMESPACE}:notify:${userId}`;

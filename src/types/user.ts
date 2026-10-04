@@ -1,4 +1,5 @@
 import type { IsoDateTime, Timestamped } from "./common";
+import type { OutletId } from "./outlet";
 
 export const ROLES = ["CUSTOMER", "ADMIN", "SUPER_ADMIN"] as const;
 export type Role = (typeof ROLES)[number];
@@ -34,6 +35,11 @@ export interface User extends Timestamped {
   role: Role;
   /** Empty for customers; SUPER_ADMIN implicitly holds every permission. */
   permissions: Permission[];
+  /**
+   * The one outlet an ADMIN works at. Unset for customers, and for the
+   * SUPER_ADMIN, who is not tied to an outlet and sees every one of them.
+   */
+  assignedOutletId?: OutletId;
   status: UserStatus;
   /** Admin-only free-text note shown on the customer detail screen. */
   notes?: string;

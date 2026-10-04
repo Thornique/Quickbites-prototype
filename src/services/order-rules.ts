@@ -1,8 +1,10 @@
 import { toDateKey } from "@/lib/format";
+import { OUTLETS } from "@/lib/outlets";
 import { readCollection, writeCollection } from "@/storage";
 import type {
   Order,
   OrderLine,
+  OutletId,
   OrderFlags,
   OrderType,
   PaymentMethod,
@@ -64,12 +66,20 @@ export function generatePaymentRef(): string {
   return ref;
 }
 
+/** The counter key for one outlet on one day. */
+export function tokenCounterId(outletId: OutletId, now = new Date()): string {
+  return `token:${outletId}:${toDateKey(now)}`;
+}
+
 /**
- * Short counter token, reset each day: A01…A99, then B01…
- * Stored per date so two days never collide.
+ * Short counter token, reset each day and counted separately per outlet:
+ * A01…A99 then B01… at the restaurant, C01…C99 then D01… at the coffee shop.
+ * Two outlets calling "A12" across the same counter would be chaos, so the
+ * series start apart and each one has 198 tokens before it could meet the
+ * other — far more than a day's trade at either.
  */
-export function nextTokenNumber(now = new Date()): string {
-  const key = `token:${toDateKey(now)}`;
+export function nextTokenNumber(outletId: OutletId, now = new Date()): string {
+  const key = tokenCounterId(outletId, now);
   const counters = readCollection<{ id: string; value: number }>("counters");
   const current = counters.find((c) => c.id === key)?.value ?? 0;
   const value = current + 1;
@@ -82,11 +92,12 @@ export function nextTokenNumber(now = new Date()): string {
     "update",
   );
 
-  return formatToken(value);
+  return formatToken(value, outletId);
 }
 
-export function formatToken(sequence: number): string {
-  const letter = String.fromCharCode(65 + Math.floor((sequence - 1) / 99));
+export function formatToken(sequence: number, outletId: OutletId): string {
+  const base = OUTLETS[outletId].tokenPrefix.charCodeAt(0);
+  const letter = String.fromCharCode(base + Math.floor((sequence - 1) / 99));
   const number = ((sequence - 1) % 99) + 1;
   return `${letter}${String(number).padStart(2, "0")}`;
 }
@@ -169,13 +180,23 @@ export function isOpenStatus(order: Order): boolean {
   return order.status !== "HANDED_OVER" && order.status !== "CANCELLED";
 }
 
+/** The settings fields the derived flags depend on. */
+export type FlagSettingKeys =
+  "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes" | "verificationAlertMinutes";
+
+/**
+ * Looks up one outlet's settings. Order lists now mix both outlets — on the
+ * super admin's combined board, at least — so a rule that depends on the
+ * cafe's configuration has to ask per order rather than be handed one record.
+ */
+export type SettingsLookup<K extends keyof StoreSettings> = (
+  outletId: OutletId,
+) => Pick<StoreSettings, K>;
+
 /** Everything the UI needs to know that is computed rather than stored. */
 export function deriveFlags(
   order: Order,
-  settings: Pick<
-    StoreSettings,
-    "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes" | "verificationAlertMinutes"
-  >,
+  settings: Pick<StoreSettings, FlagSettingKeys>,
   now = new Date(),
 ): OrderFlags {
   const open = isOpenStatus(order);
@@ -229,7 +250,7 @@ export function deriveFlags(
  */
 export function applyAutoCancellations(
   orders: Order[],
-  settings: Pick<StoreSettings, "unpaidTakeawayTimeoutMinutes">,
+  settingsOf: SettingsLookup<"unpaidTakeawayTimeoutMinutes">,
   now = new Date(),
 ): { orders: Order[]; changed: boolean } {
   let changed = false;
@@ -243,7 +264,8 @@ export function applyAutoCancellations(
       .find((event) => event.action === "PAYMENT_REJECTED")?.at;
     if (!rejectedAt) return order;
 
-    const deadline = rejectedAt + settings.unpaidTakeawayTimeoutMinutes * 60_000;
+    const timeout = settingsOf(order.outletId).unpaidTakeawayTimeoutMinutes;
+    const deadline = rejectedAt + timeout * 60_000;
     if (now.getTime() <= deadline) return order;
 
     changed = true;
@@ -256,7 +278,7 @@ export function applyAutoCancellations(
         {
           status: "CANCELLED" as const,
           at,
-          reason: `Payment not completed within ${settings.unpaidTakeawayTimeoutMinutes} minutes.`,
+          reason: `Payment not completed within ${timeout} minutes.`,
         },
       ],
       updatedAt: now.toISOString(),
@@ -279,17 +301,14 @@ export function applyAutoCancellations(
  */
 export function applyScheduledStarts(
   orders: Order[],
-  settings: Pick<
-    StoreSettings,
-    "basePrepBufferMinutes" | "scheduleCancelCutoffMinutes" | "verificationAlertMinutes"
-  >,
+  settingsOf: SettingsLookup<FlagSettingKeys>,
   now = new Date(),
 ): { orders: Order[]; started: Order[] } {
   const started: Order[] = [];
 
   const next = orders.map((order) => {
     if (!order.isScheduled) return order;
-    if (!deriveFlags(order, settings, now).isDueToStart) return order;
+    if (!deriveFlags(order, settingsOf(order.outletId), now).isDueToStart) return order;
 
     const at = now.getTime();
     // Attributed to whoever set the ready time; nobody pressed anything now.

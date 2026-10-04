@@ -1,4 +1,4 @@
-import type { InventoryItem, InventoryUnit } from "@/types";
+import type { InventoryItem, InventoryUnit, OutletId } from "@/types";
 
 const CREATED_AT = "2026-08-01T04:30:00.000Z";
 
@@ -12,7 +12,7 @@ type Row = [
   category: string,
 ];
 
-/** 25 stock items covering every menu item's ingredients and packaging. */
+/** The restaurant kitchen's 25 stock lines. */
 const ROWS: Row[] = [
   ["inv-burger-bun", "Burger buns", "pcs", 180, 40, 9, "Bakery"],
   ["inv-pav-bread", "Sandwich bread slices", "pcs", 240, 60, 4, "Bakery"],
@@ -46,15 +46,59 @@ const ROWS: Row[] = [
   ["inv-takeaway-box", "Takeaway boxes", "pcs", 350, 90, 6, "Packaging"],
 ];
 
-export const SEED_INVENTORY: InventoryItem[] = ROWS.map(
-  ([id, name, unit, qty, lowStockThreshold, costPerUnit, category]) => ({
-    id,
-    name,
-    unit,
-    qty,
-    lowStockThreshold,
-    costPerUnit,
-    category,
-    createdAt: CREATED_AT,
-  }),
-);
+/**
+ * The coffee shop's own cupboard. Deliberately separate rather than shared:
+ * each outlet counts its own milk, and a restaurant stock-take must not make
+ * a latte unavailable on Nagchun Road.
+ */
+const COFFEE_ROWS: Row[] = [
+  ["inv-c-arabica", "Arabica beans (Chikmagalur)", "kg", 9, 3, 1180, "Coffee"],
+  ["inv-c-filter-blend", "Filter coffee blend", "kg", 4, 1.5, 720, "Coffee"],
+  ["inv-c-cold-brew", "Cold brew concentrate", "litre", 7, 2, 460, "Coffee"],
+  ["inv-c-chai-premix", "Masala chai premix", "kg", 3, 1, 410, "Coffee"],
+  ["inv-c-green-tea", "Green tea leaves", "kg", 1.5, 0.5, 1650, "Coffee"],
+
+  ["inv-c-milk", "Milk", "litre", 60, 18, 62, "Dairy"],
+  ["inv-c-cheese-slice", "Cheese slices", "pcs", 160, 40, 11, "Dairy"],
+  ["inv-c-mozzarella", "Mozzarella", "kg", 4, 1.5, 420, "Dairy"],
+  ["inv-c-vanilla-ice", "Vanilla ice cream", "litre", 10, 3, 240, "Dairy"],
+
+  ["inv-c-choco", "Dark chocolate (couverture)", "kg", 5, 2, 880, "Pantry"],
+  ["inv-c-caramel", "Salted caramel sauce", "litre", 4, 1.5, 390, "Pantry"],
+
+  ["inv-c-croissant", "Croissants", "pcs", 48, 14, 38, "Bakery"],
+  ["inv-c-muffin", "Chocolate chip muffins", "pcs", 40, 12, 32, "Bakery"],
+  ["inv-c-brownie", "Walnut brownies", "pcs", 36, 10, 44, "Bakery"],
+  ["inv-c-cookie", "Double chocolate cookies", "pcs", 90, 24, 14, "Bakery"],
+  ["inv-c-garlic-loaf", "Garlic bread loaves", "pcs", 30, 10, 22, "Bakery"],
+  ["inv-c-sandwich-bread", "Sourdough slices", "pcs", 140, 40, 9, "Bakery"],
+
+  ["inv-c-chicken-grill", "Grilled chicken strips", "kg", 3, 1, 420, "Chilled"],
+
+  ["inv-c-cup-small", "Paper cups (180ml)", "pcs", 300, 80, 4, "Packaging"],
+  ["inv-c-cup-regular", "Paper cups (240ml)", "pcs", 380, 100, 5, "Packaging"],
+  ["inv-c-cup-cold", "Cold cups with lids", "pcs", 260, 70, 7, "Packaging"],
+  ["inv-c-bag", "Bakery paper bags", "pcs", 300, 80, 2, "Packaging"],
+  ["inv-c-box", "Sandwich boxes", "pcs", 180, 50, 6, "Packaging"],
+];
+
+function toItems(rows: Row[], outletId: OutletId): InventoryItem[] {
+  return rows.map(
+    ([id, name, unit, qty, lowStockThreshold, costPerUnit, category]) => ({
+      id,
+      outletId,
+      name,
+      unit,
+      qty,
+      lowStockThreshold,
+      costPerUnit,
+      category,
+      createdAt: CREATED_AT,
+    }),
+  );
+}
+
+export const SEED_INVENTORY: InventoryItem[] = [
+  ...toItems(ROWS, "restaurant"),
+  ...toItems(COFFEE_ROWS, "coffee"),
+];

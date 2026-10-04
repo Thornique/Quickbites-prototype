@@ -1,4 +1,5 @@
 import type { LocalizedText, Timestamped } from "./common";
+import type { OutletScoped } from "./outlet";
 
 /** Marketing labels shown on menu cards. */
 export const MENU_ITEM_TAGS = [
@@ -10,7 +11,7 @@ export const MENU_ITEM_TAGS = [
 ] as const;
 export type MenuItemTag = (typeof MENU_ITEM_TAGS)[number];
 
-export interface Category extends Timestamped {
+export interface Category extends Timestamped, OutletScoped {
   id: string;
   slug: string;
   name: LocalizedText;
@@ -52,7 +53,7 @@ export interface StockItemLink {
   quantityPerUnit: number;
 }
 
-export interface MenuItem extends Timestamped {
+export interface MenuItem extends Timestamped, OutletScoped {
   id: string;
   slug: string;
   categoryId: string;

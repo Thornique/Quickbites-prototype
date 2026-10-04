@@ -12,11 +12,13 @@ import type {
   NotificationPreferences,
   NotificationPriority,
   NotificationType,
+  OutletId,
   Permission,
   User,
 } from "@/types";
 import { DEFAULT_NOTIFICATION_PREFERENCES } from "@/types";
 import { getCurrentUser, newId, ready } from "./common";
+import { assignedOutletOf } from "./outlets";
 
 /**
  * In-app notifications.
@@ -50,6 +52,8 @@ function trimForUser(rows: AppNotification[], userId: string): AppNotification[]
 
 export interface NotifyInput {
   userId: string;
+  /** The outlet the alert concerns. Unset for account-wide messages. */
+  outletId?: OutletId;
   type: NotificationType;
   params?: NotificationParams;
   link?: string;
@@ -64,6 +68,7 @@ export interface NotifyInput {
  */
 export function notify({
   userId,
+  outletId,
   type,
   params = {},
   link,
@@ -82,6 +87,7 @@ export function notify({
   const notification: AppNotification = {
     id: newId("ntf"),
     recipientUserId: userId,
+    outletId,
     type,
     params,
     link,
@@ -100,20 +106,25 @@ export function notify({
 }
 
 /**
- * Notifies every admin who holds `permission`, plus the super admin.
+ * Notifies every admin who holds `permission` at the outlet the alert is
+ * about, plus the super admin, who covers both outlets.
  *
  * Fanning out one row per recipient keeps read state honest — marking a new
- * order as seen must not clear it for the other person on shift.
+ * order as seen must not clear it for the other person on shift. Scoping by
+ * outlet is what stops the restaurant manager being paged about a latte.
  */
 export function notifyAdmins(
   permission: Permission,
   input: Omit<NotifyInput, "userId">,
 ): number {
-  const recipients = readCollection<User>("users").filter(
-    (user) =>
-      user.status === "ACTIVE" &&
-      (user.role === "SUPER_ADMIN" || (user.role === "ADMIN" && can(user, permission))),
-  );
+  const recipients = readCollection<User>("users").filter((user) => {
+    if (user.status !== "ACTIVE") return false;
+    if (user.role === "SUPER_ADMIN") return true;
+    if (user.role !== "ADMIN" || !can(user, permission)) return false;
+    const assigned = assignedOutletOf(user);
+    // An alert with no outlet concerns the whole business, so everyone gets it.
+    return !input.outletId || !assigned || assigned === input.outletId;
+  });
 
   let sent = 0;
   for (const user of recipients) {
@@ -125,6 +136,8 @@ export function notifyAdmins(
 export interface ListOptions {
   unreadOnly?: boolean;
   limit?: number;
+  /** Narrows to one outlet; account-wide rows (no outlet) always show. */
+  outletId?: OutletId;
 }
 
 export async function list(
@@ -138,17 +151,23 @@ export async function list(
 /** Synchronous read for the bell, which re-reads on every sync event. */
 export function listSync(
   userId: string,
-  { unreadOnly = false, limit }: ListOptions = {},
+  { unreadOnly = false, limit, outletId }: ListOptions = {},
 ): AppNotification[] {
   const rows = readAll()
     .filter((n) => n.recipientUserId === userId)
+    .filter((n) => !outletId || !n.outletId || n.outletId === outletId)
     .filter((n) => (unreadOnly ? !n.readAt : true))
     .sort((a, b) => b.createdAt - a.createdAt);
   return typeof limit === "number" ? rows.slice(0, limit) : rows;
 }
 
-export function unreadCount(userId: string): number {
-  return readAll().filter((n) => n.recipientUserId === userId && !n.readAt).length;
+export function unreadCount(userId: string, outletId?: OutletId): number {
+  return readAll().filter(
+    (n) =>
+      n.recipientUserId === userId &&
+      !n.readAt &&
+      (!outletId || !n.outletId || n.outletId === outletId),
+  ).length;
 }
 
 export async function markRead(id: string): Promise<void> {

@@ -1,4 +1,5 @@
 import type { ClockTime, IsoDate, Timestamped } from "./common";
+import type { OutletScoped } from "./outlet";
 
 export const WEEKDAYS = [
   "sunday",
@@ -17,8 +18,14 @@ export interface DayHours {
   closeTime: ClockTime;
 }
 
-export interface StoreSettings extends Timestamped {
-  id: "store-settings";
+/**
+ * One settings record per outlet. The restaurant and the coffee shop keep
+ * their own hours, holidays, prep configuration, tax, packaging, payment and
+ * scheduling rules — so this is a collection keyed by `id`, not a singleton.
+ */
+export interface StoreSettings extends Timestamped, OutletScoped {
+  /** `store-settings:restaurant` / `store-settings:coffee`. */
+  id: string;
   /** Manual master switch; the computed open state also respects the hours. */
   isOpen: boolean;
   /** Pauses new orders while the store stays open for walk-ins. */

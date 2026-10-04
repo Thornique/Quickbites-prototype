@@ -1,8 +1,9 @@
 import type { IsoDateTime, LocalizedText, Timestamped } from "./common";
+import type { OutletScoped } from "./outlet";
 
 export type CouponType = "PERCENT" | "FLAT";
 
-export interface Coupon extends Timestamped {
+export interface Coupon extends Timestamped, OutletScoped {
   id: string;
   /** Always stored uppercase and unique. */
   code: string;

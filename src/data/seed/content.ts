@@ -1,7 +1,9 @@
-import { OPENING_HOURS, ORDER_DEFAULTS, STORE } from "@/lib/constants";
+import { ORDER_DEFAULTS, STORE } from "@/lib/constants";
+import { OUTLET_DETAILS } from "@/lib/outlets";
 import type {
   Banner,
   GalleryImage,
+  OutletId,
   SiteContent,
   StoreSettings,
   Weekday,
@@ -13,6 +15,7 @@ const CREATED_AT = "2026-08-01T04:30:00.000Z";
 export const SEED_BANNERS: Banner[] = [
   {
     id: "banner-1",
+    outletId: "restaurant",
     image: "/images/hero/burger-combo.webp",
     headline: { en: "Hot in 12 minutes", hi: "12 मिनट में गरम" },
     subhead: {
@@ -27,6 +30,7 @@ export const SEED_BANNERS: Banner[] = [
   },
   {
     id: "banner-2",
+    outletId: "restaurant",
     image: "/images/hero/pizza-night.webp",
     headline: { en: "Pizza, baked to order", hi: "पिज़्ज़ा, ऑर्डर पर बेक" },
     subhead: {
@@ -41,6 +45,7 @@ export const SEED_BANNERS: Banner[] = [
   },
   {
     id: "banner-3",
+    outletId: "restaurant",
     image: "/images/hero/shakes.webp",
     headline: { en: "Beat the Khandwa heat", hi: "खंडवा की गर्मी को मात दें" },
     subhead: {
@@ -53,80 +58,163 @@ export const SEED_BANNERS: Banner[] = [
     isActive: true,
     createdAt: CREATED_AT,
   },
+
+  /* ---- Quick Bites Coffee -------------------------------------------- */
+  {
+    id: "banner-c1",
+    outletId: "coffee",
+    image: "/images/menu/cappuccino.webp",
+    headline: { en: "Ground this morning", hi: "आज सुबह पिसी" },
+    subhead: {
+      en: "Chikmagalur arabica, pulled to order at Nagchun Road. Open from 7:30 AM.",
+      hi: "चिकमगलूर अरेबिका, नागचून रोड पर ऑर्डर पर बनी। सुबह 7:30 से खुला।",
+    },
+    ctaLabel: { en: "See the coffee menu", hi: "कॉफ़ी मेन्यू देखें" },
+    ctaHref: "/menu",
+    sortOrder: 1,
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "banner-c2",
+    outletId: "coffee",
+    image: "/images/menu/cold-coffee.webp",
+    headline: { en: "Frappés, properly blended", hi: "फ़्रापे, ठीक से ब्लेंड" },
+    subhead: {
+      en: "Cold brew steeped 16 hours, frappés made to order. From ₹129.",
+      hi: "16 घंटे की कोल्ड ब्रू, ऑर्डर पर बने फ़्रापे। ₹129 से।",
+    },
+    ctaLabel: { en: "See cold coffee", hi: "कोल्ड कॉफ़ी देखें" },
+    ctaHref: "/menu#cold-coffee-frappes",
+    sortOrder: 2,
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "banner-c3",
+    outletId: "coffee",
+    image: "/images/gallery/donuts.webp",
+    headline: { en: "Out of the oven at 8", hi: "8 बजे ओवन से" },
+    subhead: {
+      en: "Croissants, muffins and walnut brownies, baked on site each morning.",
+      hi: "क्रोसां, मफ़िन और वॉलनट ब्राउनी, हर सुबह यहीं बेक।",
+    },
+    ctaLabel: { en: "See the bakes", hi: "बेक्स देखें" },
+    ctaHref: "/menu#bakes-pastries",
+    sortOrder: 3,
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
 ];
 
-const GALLERY_ROWS: Array<[string, string, string, GalleryImage["category"]]> = [
+const GALLERY_ROWS: Array<
+  [string, string, string, GalleryImage["category"], OutletId]
+> = [
   /*
     Food and cafe shots alternate on purpose: the home page shows the first
     eight as a social feed, and four interiors in a row read as repetition
     rather than a feed.
   */
-  ["/images/menu/farmhouse-pizza.webp", "Farmhouse pizza", "फार्महाउस पिज़्ज़ा", "FOOD"],
+  [
+    "/images/menu/farmhouse-pizza.webp",
+    "Farmhouse pizza",
+    "फार्महाउस पिज़्ज़ा",
+    "FOOD",
+    "restaurant",
+  ],
   [
     "/images/gallery/cafe-interior.webp",
     "Inside the cafe",
     "कैफ़े का अंदरूनी हिस्सा",
     "CAFE",
+    "restaurant",
   ],
-  ["/images/gallery/donuts.webp", "Fresh doughnuts", "ताज़े डोनट", "FOOD"],
-  ["/images/gallery/coffee-moment.webp", "Coffee for two", "दो के लिए कॉफ़ी", "CAFE"],
+  ["/images/gallery/donuts.webp", "Fresh doughnuts", "ताज़े डोनट", "FOOD", "coffee"],
+  [
+    "/images/gallery/coffee-moment.webp",
+    "Coffee for two",
+    "दो के लिए कॉफ़ी",
+    "CAFE",
+    "coffee",
+  ],
   [
     "/images/menu/chocolate-shake.webp",
     "Thick chocolate shake",
     "थिक चॉकलेट शेक",
     "FOOD",
+    "restaurant",
   ],
   [
     "/images/gallery/cafe-counter.webp",
     "Our order counter",
     "हमारा ऑर्डर काउंटर",
     "CAFE",
+    "restaurant",
   ],
-  ["/images/menu/peri-peri-fries.webp", "Peri peri fries", "पेरी पेरी फ्राइज़", "FOOD"],
+  [
+    "/images/menu/peri-peri-fries.webp",
+    "Peri peri fries",
+    "पेरी पेरी फ्राइज़",
+    "FOOD",
+    "restaurant",
+  ],
   [
     "/images/gallery/cafe-dining.webp",
     "Evening at Quick Bites",
     "क्विक बाइट्स में शाम",
     "EVENTS",
+    "restaurant",
   ],
   [
     "/images/menu/margherita-pizza.webp",
     "Margherita, straight from the oven",
     "मार्गेरिटा, ओवन से सीधा",
     "FOOD",
+    "restaurant",
   ],
   [
     "/images/gallery/cafe-seating.webp",
     "Seating by the window",
     "खिड़की के पास बैठने की जगह",
     "CAFE",
+    "coffee",
   ],
-  ["/images/gallery/dessert-cups.webp", "Dessert cups", "डेज़र्ट कप", "FOOD"],
-  ["/images/menu/cold-coffee.webp", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD"],
+  ["/images/gallery/dessert-cups.webp", "Dessert cups", "डेज़र्ट कप", "FOOD", "coffee"],
+  ["/images/menu/cold-coffee.webp", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD", "coffee"],
   [
     "/images/gallery/burger-board.webp",
     "Burgers on the board",
     "बोर्ड पर बर्गर",
     "FOOD",
+    "restaurant",
   ],
   [
     "/images/menu/cappuccino.webp",
     "Cappuccino with cocoa dust",
     "कोको वाली कैपेचीनो",
     "FOOD",
+    "coffee",
   ],
-  ["/images/menu/brownie-sundae.webp", "Brownie sundae", "ब्राउनी संडे", "FOOD"],
+  [
+    "/images/menu/brownie-sundae.webp",
+    "Brownie sundae",
+    "ब्राउनी संडे",
+    "FOOD",
+    "restaurant",
+  ],
   [
     "/images/menu/veg-grilled-sandwich.webp",
     "Grilled veg sandwich",
     "ग्रिल्ड वेज सैंडविच",
     "FOOD",
+    "restaurant",
   ],
 ];
 
 export const SEED_GALLERY: GalleryImage[] = GALLERY_ROWS.map(
-  ([src, en, hi, category], i) => ({
+  ([src, en, hi, category, outletId], i) => ({
     id: `gal-${String(i + 1).padStart(3, "0")}`,
+    outletId,
     src,
     alt: { en, hi },
     category,
@@ -138,9 +226,41 @@ export const SEED_GALLERY: GalleryImage[] = GALLERY_ROWS.map(
 
 export const SEED_SITE_CONTENT: SiteContent = {
   id: "site-content",
-  offersStrip: {
-    en: "Use QUICK20 for 20% off orders above ₹249 · Takeaway only",
-    hi: "₹249 से ऊपर के ऑर्डर पर QUICK20 से 20% छूट · सिर्फ़ टेकअवे",
+  outlets: {
+    restaurant: {
+      offersStrip: {
+        en: "Use QUICK20 for 20% off orders above ₹249 · Takeaway only",
+        hi: "₹249 से ऊपर के ऑर्डर पर QUICK20 से 20% छूट · सिर्फ़ टेकअवे",
+      },
+      addressLine: {
+        en: "Bombay Bazar, Khandwa, Madhya Pradesh 450001",
+        hi: "बॉम्बे बाज़ार, खंडवा, मध्य प्रदेश 450001",
+      },
+      hoursNote: OUTLET_DETAILS.restaurant.hoursLabel,
+      locationNote: {
+        en: "Parking is easiest on the Bombay Bazar side lane after 7 PM.",
+        hi: "शाम 7 बजे के बाद बॉम्बे बाज़ार की साइड गली में पार्किंग सबसे आसान है।",
+      },
+      phone: "+91 99999 00000",
+      whatsapp: "+91 99999 00000",
+    },
+    coffee: {
+      offersStrip: {
+        en: "BREW15 takes 15% off coffee above ₹199 · Bakes out of the oven by 8 AM",
+        hi: "₹199 से ऊपर की कॉफ़ी पर BREW15 से 15% छूट · सुबह 8 बजे तक ताज़े बेक्स",
+      },
+      addressLine: {
+        en: "Nagchun Road, near Civil Lines, Khandwa, Madhya Pradesh 450001",
+        hi: "नागचून रोड, सिविल लाइन्स के पास, खंडवा, मध्य प्रदेश 450001",
+      },
+      hoursNote: OUTLET_DETAILS.coffee.hoursLabel,
+      locationNote: {
+        en: "Two-wheeler parking is right outside; cars are easier on the Civil Lines side.",
+        hi: "दोपहिया पार्किंग बाहर ही है; कार सिविल लाइन्स की तरफ़ आसान है।",
+      },
+      phone: "+91 99999 00011",
+      whatsapp: "+91 99999 00011",
+    },
   },
   home: {
     howItWorks: [
@@ -166,10 +286,6 @@ export const SEED_SITE_CONTENT: SiteContent = {
         },
       },
     ],
-    locationNote: {
-      en: "Parking is easiest on the Bombay Bazar side lane after 7 PM.",
-      hi: "शाम 7 बजे के बाद बॉम्बे बाज़ार की साइड गली में पार्किंग सबसे आसान है।",
-    },
   },
   about: {
     story: {
@@ -215,12 +331,6 @@ export const SEED_SITE_CONTENT: SiteContent = {
     fssaiNumber: STORE.fssai,
   },
   contact: {
-    addressLine: {
-      en: STORE.addressFull,
-      hi: "बॉम्बे बाज़ार, खंडवा, मध्य प्रदेश 450001",
-    },
-    phone: STORE.phoneDisplay,
-    whatsapp: STORE.whatsappHref,
     email: STORE.email,
   },
   services: [
@@ -233,11 +343,17 @@ export const SEED_SITE_CONTENT: SiteContent = {
         hi: "क्रिकेट फ़ाइनल के लिए बीस बर्गर, कॉलेज फ़ेस्ट के लिए पचास रोल — एक दिन पहले बता दीजिए, पूरा ऑर्डर एक ही समय पर गरम तैयार मिलेगा।",
       },
       bullets: [
-        { en: "Minimum 20 items, one day's notice", hi: "कम से कम 20 आइटम, एक दिन पहले" },
+        {
+          en: "Minimum 20 items, one day's notice",
+          hi: "कम से कम 20 आइटम, एक दिन पहले",
+        },
         { en: "Everything packed hot at one time", hi: "सब कुछ एक ही समय पर गरम पैक" },
         { en: "10% off above ₹5,000", hi: "₹5,000 से ऊपर 10% छूट" },
       ],
-      priceNote: { en: "Menu price, 10% off above ₹5,000", hi: "मेन्यू दाम, ₹5,000 से ऊपर 10% छूट" },
+      priceNote: {
+        en: "Menu price, 10% off above ₹5,000",
+        hi: "मेन्यू दाम, ₹5,000 से ऊपर 10% छूट",
+      },
       image: "/images/hero/burger-combo.webp",
     },
     {
@@ -269,7 +385,10 @@ export const SEED_SITE_CONTENT: SiteContent = {
         { en: "Weekly rotating menu", hi: "हफ़्ते में बदलता मेन्यू" },
         { en: "One monthly invoice", hi: "महीने का एक बिल" },
       ],
-      priceNote: { en: "₹120 per box, billed monthly", hi: "₹120 प्रति बॉक्स, महीने का बिल" },
+      priceNote: {
+        en: "₹120 per box, billed monthly",
+        hi: "₹120 प्रति बॉक्स, महीने का बिल",
+      },
       image: "/images/gallery/cafe-counter.webp",
     },
   ],
@@ -425,36 +544,68 @@ export const SEED_SITE_CONTENT: SiteContent = {
   createdAt: CREATED_AT,
 };
 
-function defaultHours(): Record<Weekday, StoreSettings["hours"][Weekday]> {
+function hoursFrom(
+  openTime: string,
+  closeTime: string,
+): Record<Weekday, StoreSettings["hours"][Weekday]> {
   const hours = {} as Record<Weekday, StoreSettings["hours"][Weekday]>;
   for (const day of WEEKDAYS) {
-    hours[day] = {
-      isClosed: false,
-      openTime: OPENING_HOURS.openTime,
-      closeTime: OPENING_HOURS.closeTime,
-    };
+    hours[day] = { isClosed: false, openTime, closeTime };
   }
   return hours;
 }
 
-export const SEED_STORE_SETTINGS: StoreSettings = {
-  id: "store-settings",
-  isOpen: true,
-  acceptingOrders: true,
-  hours: defaultHours(),
-  holidays: [],
-  basePrepBufferMinutes: ORDER_DEFAULTS.basePrepBufferMinutes,
-  perActiveOrderMinutes: ORDER_DEFAULTS.perActiveOrderMinutes,
-  taxRate: ORDER_DEFAULTS.taxRatePercent,
-  packagingCharge: ORDER_DEFAULTS.packagingCharge,
-  bookingSlotMinutes: 30,
-  maxCoversPerSlot: 16,
-  unpaidTakeawayTimeoutMinutes: 15,
-  requirePaymentBeforePrepForCash: false,
-  scheduleMinLeadMinutes: 30,
-  maxOrdersPerSlot: 8,
-  scheduleCancelCutoffMinutes: 60,
-  verificationAlertMinutes: 5,
-  notificationSound: true,
-  createdAt: CREATED_AT,
-};
+/**
+ * One settings record per outlet.
+ *
+ * The coffee shop is not the restaurant with a different sign over the door:
+ * it opens three hours earlier and shuts earlier, charges less for packaging
+ * (a cup and a paper bag, not a foil box), and holds fewer orders per slot
+ * because one barista cannot pull twenty lattes at 8:15.
+ */
+export const SEED_STORE_SETTINGS: StoreSettings[] = [
+  {
+    id: "store-settings:restaurant",
+    outletId: "restaurant",
+    isOpen: true,
+    acceptingOrders: true,
+    hours: hoursFrom("10:00", "23:00"),
+    holidays: [],
+    basePrepBufferMinutes: ORDER_DEFAULTS.basePrepBufferMinutes,
+    perActiveOrderMinutes: ORDER_DEFAULTS.perActiveOrderMinutes,
+    taxRate: ORDER_DEFAULTS.taxRatePercent,
+    packagingCharge: ORDER_DEFAULTS.packagingCharge,
+    bookingSlotMinutes: 30,
+    maxCoversPerSlot: 16,
+    unpaidTakeawayTimeoutMinutes: 15,
+    requirePaymentBeforePrepForCash: false,
+    scheduleMinLeadMinutes: 30,
+    maxOrdersPerSlot: 8,
+    scheduleCancelCutoffMinutes: 60,
+    verificationAlertMinutes: 5,
+    notificationSound: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "store-settings:coffee",
+    outletId: "coffee",
+    isOpen: true,
+    acceptingOrders: true,
+    hours: hoursFrom("07:30", "22:30"),
+    holidays: [],
+    basePrepBufferMinutes: 3,
+    perActiveOrderMinutes: 1,
+    taxRate: ORDER_DEFAULTS.taxRatePercent,
+    packagingCharge: 5,
+    bookingSlotMinutes: 30,
+    maxCoversPerSlot: 10,
+    unpaidTakeawayTimeoutMinutes: 10,
+    requirePaymentBeforePrepForCash: false,
+    scheduleMinLeadMinutes: 20,
+    maxOrdersPerSlot: 6,
+    scheduleCancelCutoffMinutes: 30,
+    verificationAlertMinutes: 5,
+    notificationSound: true,
+    createdAt: CREATED_AT,
+  },
+];

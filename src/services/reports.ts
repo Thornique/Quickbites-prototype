@@ -7,24 +7,38 @@ import type {
   MenuItem,
   Order,
   OrderType,
+  OutletId,
   PaymentMethod,
   TableBooking,
   User,
 } from "@/types";
+import { OUTLET_IDS } from "@/types";
 import { flagsFor } from "./orders";
 import { ready, requirePermission } from "./common";
+import { adminReadScope } from "./outlets";
 
 export interface DateRange {
   from: Date;
   to: Date;
 }
 
+/**
+ * A reporting window, optionally narrowed to one outlet. Leaving `outletId`
+ * unset is the super admin's combined view; an assigned admin is narrowed to
+ * their own outlet whatever they ask for.
+ */
+export interface ReportScope extends DateRange {
+  outletId?: OutletId;
+}
+
 /** Orders that actually earned money — cancellations never count as sales. */
-function salesOrders(range: DateRange): Order[] {
+function salesOrders(range: ReportScope): Order[] {
   const from = range.from.getTime();
   const to = range.to.getTime();
+  const outletId = adminReadScope(range.outletId);
   return readCollection<Order>("orders").filter((order) => {
     if (order.status === "CANCELLED") return false;
+    if (outletId && order.outletId !== outletId) return false;
     const at = Date.parse(order.createdAt);
     return at >= from && at <= to;
   });
@@ -67,7 +81,7 @@ export interface ComparedSummary {
   netSalesDelta: number;
 }
 
-export async function getSalesSummary(range: DateRange): Promise<ComparedSummary> {
+export async function getSalesSummary(range: ReportScope): Promise<ComparedSummary> {
   await ready();
   requirePermission("REPORTS");
 
@@ -75,6 +89,7 @@ export async function getSalesSummary(range: DateRange): Promise<ComparedSummary
   const span = range.to.getTime() - range.from.getTime();
   const previous = summarise(
     salesOrders({
+      outletId: range.outletId,
       from: new Date(range.from.getTime() - span),
       to: new Date(range.from.getTime() - 1),
     }),
@@ -90,9 +105,28 @@ export async function getSalesSummary(range: DateRange): Promise<ComparedSummary
   return { current, previous, netSalesDelta };
 }
 
+/**
+ * The same figures split per outlet, for the combined "All outlets" report —
+ * a single total hides which counter is actually carrying the day.
+ */
+export async function getSalesByOutlet(
+  range: ReportScope,
+): Promise<Array<{ outletId: OutletId; summary: SalesSummary }>> {
+  await ready();
+  requirePermission("REPORTS");
+
+  return OUTLET_IDS.filter((id) => {
+    const scope = adminReadScope(range.outletId);
+    return !scope || scope === id;
+  }).map((outletId) => ({
+    outletId,
+    summary: summarise(salesOrders({ ...range, outletId })),
+  }));
+}
+
 /** Net sales per day, for the 30-day revenue line chart. */
 export async function getRevenueByDay(
-  range: DateRange,
+  range: ReportScope,
 ): Promise<Array<{ date: string; revenue: number; orders: number }>> {
   await ready();
   requirePermission("REPORTS");
@@ -119,7 +153,7 @@ export async function getRevenueByDay(
 }
 
 /** Orders per hour, for the "today vs average" bar chart and the heatmap. */
-export async function getOrdersByHour(range: DateRange): Promise<number[]> {
+export async function getOrdersByHour(range: ReportScope): Promise<number[]> {
   await ready();
   requirePermission("REPORTS");
 
@@ -131,7 +165,7 @@ export async function getOrdersByHour(range: DateRange): Promise<number[]> {
 }
 
 /** Day × hour grid for the sales heatmap. Index [weekday][hour]. */
-export async function getSalesHeatmap(range: DateRange): Promise<number[][]> {
+export async function getSalesHeatmap(range: ReportScope): Promise<number[][]> {
   await ready();
   requirePermission("REPORTS");
 
@@ -150,7 +184,9 @@ export interface ItemPerformance {
   revenue: number;
 }
 
-export async function getItemPerformance(range: DateRange): Promise<ItemPerformance[]> {
+export async function getItemPerformance(
+  range: ReportScope,
+): Promise<ItemPerformance[]> {
   await ready();
   requirePermission("REPORTS");
 
@@ -172,7 +208,7 @@ export async function getItemPerformance(range: DateRange): Promise<ItemPerforma
 }
 
 export async function getCategoryShare(
-  range: DateRange,
+  range: ReportScope,
 ): Promise<Array<{ categoryId: string; revenue: number }>> {
   await ready();
   requirePermission("REPORTS");
@@ -194,7 +230,7 @@ export async function getCategoryShare(
 }
 
 export async function getPaymentSplit(
-  range: DateRange,
+  range: ReportScope,
 ): Promise<Array<{ method: PaymentMethod; count: number; revenue: number }>> {
   await ready();
   requirePermission("REPORTS");
@@ -210,14 +246,17 @@ export async function getPaymentSplit(
 }
 
 export async function getCouponPerformance(
-  range: DateRange,
+  range: ReportScope,
 ): Promise<
   Array<{ code: string; uses: number; discountGiven: number; revenue: number }>
 > {
   await ready();
   requirePermission("REPORTS");
 
-  const coupons = readCollection<Coupon>("coupons");
+  const scope = adminReadScope(range.outletId);
+  const coupons = readCollection<Coupon>("coupons").filter(
+    (c) => !scope || c.outletId === scope,
+  );
   const totals = new Map<
     string,
     { uses: number; discountGiven: number; revenue: number }
@@ -248,14 +287,17 @@ export async function getCouponPerformance(
  * New vs returning in the period. "New" means their first-ever order falls
  * inside the range, not merely that they ordered during it.
  */
-export async function getCustomerMix(range: DateRange): Promise<{
+export async function getCustomerMix(range: ReportScope): Promise<{
   newCustomers: number;
   returningCustomers: number;
 }> {
   await ready();
   requirePermission("REPORTS");
 
-  const all = readCollection<Order>("orders").filter((o) => o.status !== "CANCELLED");
+  const outletId = adminReadScope(range.outletId);
+  const all = readCollection<Order>("orders").filter(
+    (o) => o.status !== "CANCELLED" && (!outletId || o.outletId === outletId),
+  );
   const firstOrderAt = new Map<string, number>();
   for (const order of all) {
     const at = Date.parse(order.createdAt);
@@ -277,7 +319,7 @@ export async function getCustomerMix(range: DateRange): Promise<{
 
 /** Revenue and order count split by takeaway vs dine-in. */
 export async function getOrderTypeSplit(
-  range: DateRange,
+  range: ReportScope,
 ): Promise<Array<{ orderType: OrderType; count: number; revenue: number }>> {
   await ready();
   requirePermission("REPORTS");
@@ -307,7 +349,9 @@ export interface PrepTimeAccuracy {
  * accepted and marked ready can answer this, so cancellations and orders
  * still in the kitchen are excluded rather than counted as zero.
  */
-export async function getPrepTimeAccuracy(range: DateRange): Promise<PrepTimeAccuracy> {
+export async function getPrepTimeAccuracy(
+  range: ReportScope,
+): Promise<PrepTimeAccuracy> {
   await ready();
   requirePermission("REPORTS");
 
@@ -346,7 +390,10 @@ export async function getPrepTimeAccuracy(range: DateRange): Promise<PrepTimeAcc
 }
 
 /** KPI block on the admin dashboard. */
-export async function getDashboardKpis(now = new Date()): Promise<{
+export async function getDashboardKpis(
+  outletId?: OutletId,
+  now = new Date(),
+): Promise<{
   todayRevenue: number;
   todayOrders: number;
   averageOrderValue: number;
@@ -373,9 +420,12 @@ export async function getDashboardKpis(now = new Date()): Promise<{
   const endOfDay = new Date(start);
   endOfDay.setDate(endOfDay.getDate() + 1);
 
-  const today = salesOrders({ from: start, to: now });
+  const scope = adminReadScope(outletId);
+  const today = salesOrders({ from: start, to: now, outletId: scope });
   const summary = summarise(today);
-  const all = readCollection<Order>("orders");
+  const all = readCollection<Order>("orders").filter(
+    (o) => !scope || o.outletId === scope,
+  );
 
   let awaitingVerification = 0;
   let cashPending = 0;
@@ -413,10 +463,11 @@ export async function getDashboardKpis(now = new Date()): Promise<{
     scheduledToday,
     overdue,
     pendingBookings: readCollection<TableBooking>("bookings").filter(
-      (b) => b.status === "PENDING",
+      (b) => b.status === "PENDING" && (!scope || b.outletId === scope),
     ).length,
-    newEnquiries: readCollection<Enquiry>("enquiries").filter((e) => e.status === "NEW")
-      .length,
+    newEnquiries: readCollection<Enquiry>("enquiries").filter(
+      (e) => e.status === "NEW" && (!scope || e.outletId === scope),
+    ).length,
   };
 }
 

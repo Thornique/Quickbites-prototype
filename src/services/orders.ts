@@ -7,7 +7,7 @@ import {
 } from "@/lib/errors";
 import { isAdminRole } from "@/lib/permissions";
 import { estimatePrepMinutes } from "@/lib/prep-time";
-import { readCollection, readSingleton, writeCollection } from "@/storage";
+import { readCollection, writeCollection } from "@/storage";
 import type {
   CartLine,
   MenuItem,
@@ -16,6 +16,7 @@ import type {
   OrderFlags,
   OrderStatus,
   OrderType,
+  OutletId,
   PaymentEvent,
   PaymentMethod,
   StoreSettings,
@@ -35,7 +36,9 @@ import {
   requireActor,
   requirePermission,
   requireUser,
+  settingsFor,
 } from "./common";
+import { adminReadScope, assertOutletAccess } from "./outlets";
 import { recordCouponUse } from "./coupons";
 import { deductForOrder, projectShortfall, restockForOrder } from "./inventory";
 import {
@@ -74,11 +77,11 @@ import {
 const MIN_READY_MINUTES = 1;
 const MAX_READY_MINUTES = 90;
 
-function settings(): StoreSettings {
-  const stored = readSingleton<StoreSettings>("storeSettings");
-  if (!stored) throw notFound("Store settings");
-  return stored;
-}
+/**
+ * Settings are per outlet, and a list of orders can span both, so the rules
+ * that read them take this lookup rather than one record.
+ */
+const settingsOf = (outletId: OutletId): StoreSettings => settingsFor(outletId);
 
 /**
  * Reads orders, first applying the auto-cancel rule for takeaway payments
@@ -87,8 +90,7 @@ function settings(): StoreSettings {
  */
 function readOrders(): Order[] {
   const rows = readCollection<Order>("orders");
-  const config = settings();
-  const { orders: afterCancels, changed } = applyAutoCancellations(rows, config);
+  const { orders: afterCancels, changed } = applyAutoCancellations(rows, settingsOf);
 
   if (changed) {
     writeCollection("orders", afterCancels, "update");
@@ -104,7 +106,7 @@ function readOrders(): Order[] {
   // Scheduled slots start themselves — see applyScheduledStarts. The write is
   // what pushes the change into the customer's tab, so it happens before the
   // stock and the notifications, which follow from it.
-  const { orders, started } = applyScheduledStarts(afterCancels, config);
+  const { orders, started } = applyScheduledStarts(afterCancels, settingsOf);
   if (started.length > 0) {
     const toDeduct = started.filter((order) => !order.stockDeducted);
     const deducting = new Set(toDeduct.map((order) => order.id));
@@ -190,6 +192,7 @@ export function isActiveStatus(status: OrderStatus): boolean {
 export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order[] {
   let rows = [...orders];
 
+  if (filters.outletId) rows = rows.filter((o) => o.outletId === filters.outletId);
   if (filters.customerId)
     rows = rows.filter((o) => o.customerId === filters.customerId);
   if (filters.orderType) rows = rows.filter((o) => o.orderType === filters.orderType);
@@ -227,9 +230,16 @@ export function filterOrders(orders: Order[], filters: OrderFilters = {}): Order
   return rows.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 
+/**
+ * Admin order list. The outlet filter is narrowed to whatever the signed-in
+ * admin is allowed to see, so an assigned admin cannot widen it by asking.
+ */
 export async function listOrders(filters: OrderFilters = {}): Promise<Order[]> {
   await ready();
-  return filterOrders(readOrders(), filters);
+  return filterOrders(readOrders(), {
+    ...filters,
+    outletId: adminReadScope(filters.outletId),
+  });
 }
 
 export async function listMyOrders(): Promise<Order[]> {
@@ -247,19 +257,22 @@ export async function getOrder(id: string): Promise<Order> {
 
 /** Computed flags (overdue, due-to-start, blocked handover, …). */
 export function flagsFor(order: Order, now = new Date()): OrderFlags {
-  return deriveFlags(order, settings(), now);
+  return deriveFlags(order, settingsFor(order.outletId), now);
 }
 
 /**
  * Provisional estimate shown before an admin has accepted the order. The real
  * promise is set by the admin on acceptance — this is only "usually about N".
  */
-export async function getProvisionalEstimate(lines: CartLine[]): Promise<number> {
+export async function getProvisionalEstimate(
+  lines: CartLine[],
+  outletId: OutletId,
+): Promise<number> {
   await ready();
-  const config = settings();
+  const config = settingsFor(outletId);
   return estimatePrepMinutes({
     prepMinutes: lines.map((line) => line.prepMinutes),
-    activeOrders: countActiveOrders(),
+    activeOrders: countActiveOrders(outletId),
     basePrepBufferMinutes: config.basePrepBufferMinutes,
     perActiveOrderMinutes: config.perActiveOrderMinutes,
   });
@@ -267,6 +280,7 @@ export async function getProvisionalEstimate(lines: CartLine[]): Promise<number>
 
 export interface PlaceOrderInput {
   lines: CartLine[];
+  outletId: OutletId;
   orderType: OrderType;
   paymentMethod: PaymentMethod;
   pickupName: string;
@@ -288,7 +302,7 @@ export interface PlaceOrderInput {
 export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
   await ready();
   const user = requireUser();
-  const config = settings();
+  const config = settingsFor(input.outletId);
 
   if (input.lines.length === 0) throw invalid("Your cart is empty.");
   if (!config.acceptingOrders) {
@@ -308,11 +322,15 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     if (input.orderType !== "TAKEAWAY") {
       throw invalid("Only takeaway orders can be scheduled.", "scheduledFor");
     }
-    const slot = checkSlot(input.scheduledFor!, config, readOrders());
+    const slot = checkSlot(
+      input.scheduledFor!,
+      config,
+      readOrders().filter((order) => order.outletId === input.outletId),
+    );
     if (!slot.ok) throw conflict(slot.reason ?? "That slot is not available.");
   }
 
-  const availability = await validateCartAvailability(input.lines);
+  const availability = await validateCartAvailability(input.lines, input.outletId);
   if (!availability.ok) {
     const names = availability.unavailable.map((u) => u.name).join(", ");
     throw conflict(`${names} just sold out. Please remove it and try again.`);
@@ -320,6 +338,7 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
 
   const priced = await priceCart({
     lines: input.lines,
+    outletId: input.outletId,
     couponCode: input.couponCode,
     orderType: input.orderType,
   });
@@ -331,7 +350,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
 
   const order: Order = {
     id: nextOrderNumber(),
-    tokenNumber: nextTokenNumber(),
+    tokenNumber: nextTokenNumber(input.outletId),
+    outletId: input.outletId,
     customerId: user.id,
     orderType: input.orderType,
     tableNumber: input.orderType === "DINE_IN" ? input.tableNumber?.trim() : undefined,
@@ -378,7 +398,8 @@ export async function placeOrder(input: PlaceOrderInput): Promise<Order> {
     "create",
     order.id,
   );
-  if (priced.appliedCouponCode) recordCouponUse(priced.appliedCouponCode);
+  if (priced.appliedCouponCode)
+    recordCouponUse(input.outletId, priced.appliedCouponCode);
   notifyOrderPlaced(order);
   return order;
 }
@@ -461,6 +482,7 @@ export async function verifyPayment(id: string): Promise<Order> {
   await ready();
   const admin = requirePermission("ORDERS");
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
 
   if (order.paymentStatus !== "PAID_UNVERIFIED") {
     throw conflict("There is no online payment waiting to be verified.");
@@ -489,6 +511,7 @@ export async function rejectPayment(id: string, reason: string): Promise<Order> 
   await ready();
   const admin = requirePermission("ORDERS");
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
 
   if (!reason.trim()) {
     throw invalid("Give a reason for rejecting the payment.", "reason");
@@ -512,7 +535,10 @@ export async function rejectPayment(id: string, reason: string): Promise<Order> 
       { paymentStatus: "FAILED" },
     ),
   );
-  notifyPaymentRejected(rejected, settings().unpaidTakeawayTimeoutMinutes);
+  notifyPaymentRejected(
+    rejected,
+    settingsFor(order.outletId).unpaidTakeawayTimeoutMinutes,
+  );
   logActivity(admin, "PAYMENT_REJECTED", `Rejected payment for ${id}: ${reason}`, id);
   return rejected;
 }
@@ -525,6 +551,7 @@ export async function recordCashPayment(
   await ready();
   const admin = requirePermission("ORDERS");
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
 
   if (order.paymentMethod !== "CASH") throw conflict("This is not a cash order.");
   if (order.paymentStatus === "VERIFIED") throw conflict("This order is already paid.");
@@ -598,8 +625,9 @@ export async function accept(
 ): Promise<Order> {
   await ready();
   const admin = requirePermission("ORDERS");
-  const config = settings();
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
+  const config = settingsFor(order.outletId);
 
   if (order.status !== "PLACED") {
     throw conflict(`Order ${id} has already been ${order.status.toLowerCase()}.`);
@@ -634,14 +662,20 @@ export async function accept(
     readyTimeSetBy: admin.id,
     readyTimeHistory: order.isScheduled
       ? order.readyTimeHistory
-      : [...order.readyTimeHistory, { minutes: readyInMinutes, at, byUserId: admin.id }],
+      : [
+          ...order.readyTimeHistory,
+          { minutes: readyInMinutes, at, byUserId: admin.id },
+        ],
     status: toKitchen ? "PREPARING" : "ACCEPTED",
     statusHistory: [
       ...order.statusHistory,
-      { status: "ACCEPTED" as const, at, byUserId: admin.id, reason: options.overrideReason },
-      ...(toKitchen
-        ? [{ status: "PREPARING" as const, at, byUserId: admin.id }]
-        : []),
+      {
+        status: "ACCEPTED" as const,
+        at,
+        byUserId: admin.id,
+        reason: options.overrideReason,
+      },
+      ...(toKitchen ? [{ status: "PREPARING" as const, at, byUserId: admin.id }] : []),
     ],
     stockDeducted: toKitchen ? true : order.stockDeducted,
     updatedAt: new Date(at).toISOString(),
@@ -680,6 +714,7 @@ export async function extendReadyTime(
   await ready();
   const admin = requirePermission("ORDERS");
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
 
   if (!order.estimatedReadyAt) {
     throw conflict("Accept the order before changing its ready time.");
@@ -712,8 +747,9 @@ export async function extendReadyTime(
 export async function advanceOrder(id: string, status: OrderStatus): Promise<Order> {
   await ready();
   const admin = requirePermission("ORDERS");
-  const config = settings();
   const order = await getOrder(id);
+  assertOutletAccess(order.outletId);
+  const config = settingsFor(order.outletId);
 
   if (status === "ACCEPTED") throw invalid("Use accept() so a ready time is recorded.");
   if (status === "CANCELLED") throw invalid("Use cancelOrder so a reason is recorded.");
@@ -733,7 +769,13 @@ export async function advanceOrder(id: string, status: OrderStatus): Promise<Ord
   // Stock follows the order into the kitchen, wherever it entered from.
   const deducting = status === "PREPARING" && !order.stockDeducted;
   const next = persist(
-    withStatus(order, status, admin, undefined, deducting ? { stockDeducted: true } : {}),
+    withStatus(
+      order,
+      status,
+      admin,
+      undefined,
+      deducting ? { stockDeducted: true } : {},
+    ),
   );
   if (deducting) deductForOrder(next, admin.id);
   notifyStatusChange(next);
@@ -760,8 +802,8 @@ export async function cancelOrder(id: string, reason: string): Promise<Order> {
   await ready();
   // Either side may cancel, so the actor depends on which session is live.
   const user = requireActor("ORDERS");
-  const config = settings();
   const order = await getOrder(id);
+  const config = settingsFor(order.outletId);
 
   if (!reason.trim()) {
     throw invalid("Please give a reason for the cancellation.", "reason");
@@ -770,6 +812,7 @@ export async function cancelOrder(id: string, reason: string): Promise<Order> {
   if (order.status === "HANDED_OVER") throw conflict("That order is already closed.");
 
   const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN";
+  if (isAdmin) assertOutletAccess(order.outletId);
   if (!isAdmin) {
     if (order.customerId !== user.id) {
       throw forbidden("You can only cancel your own orders.");
@@ -884,7 +927,10 @@ export async function getAdminNames(): Promise<Record<string, string>> {
  * ORDERS admin must act on, and they should not need the REPORTS permission to
  * see that two payments are waiting.
  */
-export async function getOperationalCounts(now = new Date()): Promise<{
+export async function getOperationalCounts(
+  outletId?: OutletId,
+  now = new Date(),
+): Promise<{
   active: number;
   awaitingVerification: number;
   cashPending: number;
@@ -893,6 +939,7 @@ export async function getOperationalCounts(now = new Date()): Promise<{
 }> {
   await ready();
   requirePermission("ORDERS");
+  const scope = adminReadScope(outletId);
 
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
@@ -906,6 +953,7 @@ export async function getOperationalCounts(now = new Date()): Promise<{
   let scheduledToday = 0;
 
   for (const order of readOrders()) {
+    if (scope && order.outletId !== scope) continue;
     const flags = flagsFor(order, now);
     if (isActiveStatus(order.status)) active += 1;
     if (flags.awaitingVerification) awaitingVerification += 1;
@@ -926,8 +974,11 @@ export async function getOperationalCounts(now = new Date()): Promise<{
 }
 
 /** Counts for the admin dashboard's live board. */
-export async function getBoardCounts(): Promise<Record<OrderStatus, number>> {
+export async function getBoardCounts(
+  outletId?: OutletId,
+): Promise<Record<OrderStatus, number>> {
   await ready();
+  const scope = adminReadScope(outletId);
   const counts = {
     PLACED: 0,
     ACCEPTED: 0,
@@ -941,6 +992,7 @@ export async function getBoardCounts(): Promise<Record<OrderStatus, number>> {
   today.setHours(0, 0, 0, 0);
 
   for (const order of readOrders()) {
+    if (scope && order.outletId !== scope) continue;
     if (
       Date.parse(order.createdAt) >= today.getTime() ||
       isActiveStatus(order.status)
@@ -957,18 +1009,25 @@ export function canCustomerCancel(order: Order): boolean {
   return flagsFor(order).canCustomerCancel;
 }
 
-/** Bookable scheduled-takeaway slots for one date. */
-export async function getAvailableSlots(date: Date): Promise<ScheduleSlot[]> {
+/** Bookable scheduled-takeaway slots for one date at one outlet. */
+export async function getAvailableSlots(
+  date: Date,
+  outletId: OutletId,
+): Promise<ScheduleSlot[]> {
   await ready();
-  return buildSlotsForDate(date, settings(), readOrders());
+  return buildSlotsForDate(
+    date,
+    settingsFor(outletId),
+    readOrders().filter((order) => order.outletId === outletId),
+  );
 }
 
 /** Today and tomorrow, which is as far ahead as scheduling is offered. */
-export async function getSchedulableDays(): Promise<
-  Array<{ date: string; slots: ScheduleSlot[] }>
-> {
+export async function getSchedulableDays(
+  outletId: OutletId,
+): Promise<Array<{ date: string; slots: ScheduleSlot[] }>> {
   await ready();
-  return buildSchedulableDays(settings());
+  return buildSchedulableDays(settingsFor(outletId), outletId);
 }
 
 export { isPaymentVerified };

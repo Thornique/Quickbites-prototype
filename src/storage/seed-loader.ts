@@ -51,8 +51,8 @@ async function writeSeed(): Promise<void> {
   writeCollection("notifications", data.notifications, "reset");
   writeCollection("activityLog", data.activityLog, "reset");
   writeCollection("counters", data.counters, "reset");
+  writeCollection("storeSettings", data.storeSettings, "reset");
   writeSingleton("siteContent", data.siteContent);
-  writeSingleton("storeSettings", data.storeSettings);
 
   setStoredSchemaVersion();
 }

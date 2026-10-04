@@ -7,6 +7,7 @@ import type {
   CouponRejectionReason,
   MenuItem,
   Order,
+  OutletId,
   PricedCartLine,
 } from "@/types";
 import {
@@ -17,6 +18,7 @@ import {
   ready,
   requirePermission,
 } from "./common";
+import { assertOutletAccess, requireOutlet } from "./outlets";
 
 /** Lifecycle state shown in the admin coupon list. */
 export type CouponState = "ACTIVE" | "SCHEDULED" | "EXPIRED" | "EXHAUSTED" | "INACTIVE";
@@ -101,42 +103,51 @@ export function evaluateCoupon(
   return { coupon, isEligible: true, discount: couponDiscountFor(coupon, eligible) };
 }
 
-export async function listCoupons(activeOnly = false): Promise<Coupon[]> {
+export async function listCoupons(
+  outletId: OutletId,
+  activeOnly = false,
+): Promise<Coupon[]> {
   await ready();
-  const rows = readCollection<Coupon>("coupons");
+  const rows = readCollection<Coupon>("coupons").filter((c) => c.outletId === outletId);
   return activeOnly ? rows.filter((c) => couponState(c) === "ACTIVE") : rows;
 }
 
-export async function getCouponByCode(code: string): Promise<Coupon> {
+/** A coupon by code. Codes are unique within an outlet, not across both. */
+export async function getCouponByCode(
+  outletId: OutletId,
+  code: string,
+): Promise<Coupon> {
   await ready();
   const normalised = code.trim().toUpperCase();
-  const coupon = readCollection<Coupon>("coupons").find((c) => c.code === normalised);
+  const coupon = readCollection<Coupon>("coupons").find(
+    (c) => c.code === normalised && c.outletId === outletId,
+  );
   if (!coupon) throw notFound(`Coupon "${normalised}"`);
   return coupon;
 }
 
 /** Evaluates a code typed into the cart, against the current customer. */
 export async function applyCouponCode(
+  outletId: OutletId,
   code: string,
   lines: PricedCartLine[],
 ): Promise<CouponEvaluation> {
   await ready();
-  const normalised = code.trim().toUpperCase();
-  const coupon = readCollection<Coupon>("coupons").find((c) => c.code === normalised);
-  if (!coupon) throw notFound(`Coupon "${normalised}"`);
-
+  const coupon = await getCouponByCode(outletId, code);
   const menu = readCollection<MenuItem>("menuItems");
   return evaluateCoupon(coupon, lines, menu, getCurrentUser()?.id ?? null);
 }
 
 /** Every coupon with its eligibility, for the "Available offers" list. */
 export async function listOffersForCart(
+  outletId: OutletId,
   lines: PricedCartLine[],
 ): Promise<CouponEvaluation[]> {
   await ready();
   const menu = readCollection<MenuItem>("menuItems");
   const customerId = getCurrentUser()?.id ?? null;
   return readCollection<Coupon>("coupons")
+    .filter((c) => c.outletId === outletId)
     .filter((c) => {
       const state = couponState(c);
       return state === "ACTIVE" || state === "EXHAUSTED";
@@ -148,25 +159,32 @@ export async function listOffersForCart(
 }
 
 /** Increments usage after an order is placed. */
-export function recordCouponUse(code: string): void {
+export function recordCouponUse(outletId: OutletId, code: string): void {
   const rows = readCollection<Coupon>("coupons");
   writeCollection(
     "coupons",
-    rows.map((c) => (c.code === code ? { ...c, usedCount: c.usedCount + 1 } : c)),
+    rows.map((c) =>
+      c.code === code && c.outletId === outletId
+        ? { ...c, usedCount: c.usedCount + 1 }
+        : c,
+    ),
     "update",
   );
 }
 
 export async function createCoupon(
-  input: Omit<Coupon, "id" | "createdAt" | "usedCount">,
+  input: Omit<Coupon, "id" | "createdAt" | "usedCount" | "outletId"> & {
+    outletId?: OutletId;
+  },
 ): Promise<Coupon> {
   await ready();
   const admin = requirePermission("COUPONS");
+  const outletId = requireOutlet(input.outletId);
   const rows = readCollection<Coupon>("coupons");
 
   const code = input.code.trim().toUpperCase();
   if (!code) throw invalid("A coupon needs a code.", "code");
-  if (rows.some((c) => c.code === code))
+  if (rows.some((c) => c.code === code && c.outletId === outletId))
     throw conflict(`Coupon ${code} already exists.`);
   if (input.type === "PERCENT" && (input.value <= 0 || input.value > 100)) {
     throw invalid("A percentage discount must be between 1 and 100.", "value");
@@ -177,6 +195,7 @@ export async function createCoupon(
 
   const coupon: Coupon = {
     ...input,
+    outletId,
     code,
     id: newId("coupon"),
     usedCount: 0,
@@ -189,16 +208,19 @@ export async function createCoupon(
 
 export async function updateCoupon(
   id: string,
-  patch: Partial<Omit<Coupon, "id" | "createdAt">>,
+  patch: Partial<Omit<Coupon, "id" | "createdAt" | "outletId">>,
 ): Promise<Coupon> {
   await ready();
   const admin = requirePermission("COUPONS");
   const rows = readCollection<Coupon>("coupons");
   const existing = rows.find((c) => c.id === id);
   if (!existing) throw notFound("Coupon");
+  assertOutletAccess(existing.outletId);
 
   const code = patch.code ? patch.code.trim().toUpperCase() : existing.code;
-  if (rows.some((c) => c.code === code && c.id !== id)) {
+  if (
+    rows.some((c) => c.code === code && c.id !== id && c.outletId === existing.outletId)
+  ) {
     throw conflict(`Coupon ${code} already exists.`);
   }
 
@@ -219,6 +241,7 @@ export async function deleteCoupon(id: string): Promise<void> {
   const rows = readCollection<Coupon>("coupons");
   const existing = rows.find((c) => c.id === id);
   if (!existing) throw notFound("Coupon");
+  assertOutletAccess(existing.outletId);
 
   writeCollection(
     "coupons",

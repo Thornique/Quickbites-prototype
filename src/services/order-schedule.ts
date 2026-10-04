@@ -1,6 +1,6 @@
 import { toDateKey } from "@/lib/format";
 import { readCollection } from "@/storage";
-import type { Order, StoreSettings, Weekday } from "@/types";
+import type { Order, OutletId, StoreSettings, Weekday } from "@/types";
 import { WEEKDAYS } from "@/types";
 
 /**
@@ -40,6 +40,9 @@ function slotsBookedOn(orders: Order[], iso: string): number {
  * Slots for one date. Past and too-soon slots are returned but marked
  * unavailable, so the UI can show them disabled with a reason rather than
  * silently hiding half the day.
+ *
+ * `orders` must already be narrowed to the outlet being booked — capacity is
+ * one counter's capacity, and coffee slots do not fill the kitchen's.
  */
 export function buildSlotsForDate(
   date: Date,
@@ -93,9 +96,12 @@ export function buildSchedulableDays(
     StoreSettings,
     "hours" | "holidays" | "scheduleMinLeadMinutes" | "maxOrdersPerSlot"
   >,
+  outletId: OutletId,
   now = new Date(),
 ): Array<{ date: string; slots: ScheduleSlot[] }> {
-  const orders = readCollection<Order>("orders");
+  const orders = readCollection<Order>("orders").filter(
+    (order) => order.outletId === outletId,
+  );
   const days: Array<{ date: string; slots: ScheduleSlot[] }> = [];
 
   for (const offset of [0, 1]) {

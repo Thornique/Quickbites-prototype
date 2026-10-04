@@ -1,4 +1,5 @@
 import type { ClockTime, IsoDate, IsoDateTime, Timestamped } from "./common";
+import type { OutletScoped } from "./outlet";
 
 export const ENQUIRY_STATUSES = ["NEW", "IN_PROGRESS", "CLOSED"] as const;
 export type EnquiryStatus = (typeof ENQUIRY_STATUSES)[number];
@@ -14,7 +15,7 @@ export const ENQUIRY_SUBJECTS = [
 ] as const;
 export type EnquirySubject = (typeof ENQUIRY_SUBJECTS)[number];
 
-export interface Enquiry extends Timestamped {
+export interface Enquiry extends Timestamped, OutletScoped {
   id: string;
   name: string;
   phone: string;
@@ -36,7 +37,7 @@ export const BOOKING_STATUSES = [
 ] as const;
 export type BookingStatus = (typeof BOOKING_STATUSES)[number];
 
-export interface TableBooking extends Timestamped {
+export interface TableBooking extends Timestamped, OutletScoped {
   id: string;
   /** Set when a signed-in customer booked, so it appears in their account. */
   customerId?: string;
@@ -51,7 +52,7 @@ export interface TableBooking extends Timestamped {
   statusMessage?: string;
 }
 
-export interface Review extends Timestamped {
+export interface Review extends Timestamped, OutletScoped {
   id: string;
   customerId: string;
   customerName: string;

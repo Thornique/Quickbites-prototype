@@ -1,7 +1,7 @@
 import { sha256Hex } from "@/lib/crypto";
 import { conflict, forbidden, invalid, notFound } from "@/lib/errors";
 import { readCollection, writeCollection } from "@/storage";
-import type { ActivityLogEntry, Permission, User } from "@/types";
+import type { ActivityLogEntry, OutletId, Permission, User } from "@/types";
 import { logActivity, newId, nowIso, ready, requireSuperAdmin } from "./common";
 
 /*
@@ -31,6 +31,8 @@ export interface CreateAdminInput {
   /** Temporary password handed to the new admin. */
   password: string;
   permissions: Permission[];
+  /** Every admin works at exactly one outlet. */
+  assignedOutletId: OutletId;
 }
 
 export async function createAdmin(input: CreateAdminInput): Promise<User> {
@@ -44,6 +46,8 @@ export async function createAdmin(input: CreateAdminInput): Promise<User> {
     throw conflict("An account with this email already exists.");
   }
 
+  if (!input.assignedOutletId) throw invalid("Choose an outlet.", "assignedOutletId");
+
   const admin: User = {
     id: newId("user"),
     name: input.name.trim(),
@@ -52,18 +56,26 @@ export async function createAdmin(input: CreateAdminInput): Promise<User> {
     passwordHash: await sha256Hex(input.password),
     role: "ADMIN",
     permissions: input.permissions,
+    assignedOutletId: input.assignedOutletId,
     status: "ACTIVE",
     createdAt: nowIso(),
   };
 
   writeCollection("users", [...users, admin], "create", admin.id);
-  logActivity(owner, "ADMIN_CREATED", `Created admin ${admin.name}`, admin.id);
+  logActivity(
+    owner,
+    "ADMIN_CREATED",
+    `Created ${input.assignedOutletId} admin ${admin.name}`,
+    admin.id,
+  );
   return admin;
 }
 
 export async function updateAdmin(
   id: string,
-  patch: Partial<Pick<User, "name" | "phone" | "permissions" | "status">>,
+  patch: Partial<
+    Pick<User, "name" | "phone" | "permissions" | "status" | "assignedOutletId">
+  >,
 ): Promise<User> {
   await ready();
   const owner = requireSuperAdmin();
@@ -78,6 +90,10 @@ export async function updateAdmin(
     // Permissions are meaningless for the super admin — they hold everything.
     if (patch.permissions) {
       throw forbidden("The super admin already has every permission.");
+    }
+    // Nor can they be tied to one outlet: they run both.
+    if (patch.assignedOutletId) {
+      throw forbidden("The super admin is not assigned to a single outlet.");
     }
   }
 

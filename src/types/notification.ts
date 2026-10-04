@@ -1,4 +1,5 @@
 import type { EpochMs } from "./order";
+import type { OutletId } from "./outlet";
 
 /**
  * Notification types. Each one maps to a title/body pair in the i18n
@@ -64,6 +65,8 @@ export interface AppNotification {
   id: string;
   /** Fanned out per user at creation, so read state is per person. */
   recipientUserId: string;
+  /** The outlet the alert is about; unset on account-wide messages. */
+  outletId?: OutletId;
   type: NotificationType;
   params: NotificationParams;
   /** Where clicking it should go. */

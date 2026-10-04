@@ -1,8 +1,17 @@
-import type { MenuItemTag } from "@/types";
+import type { MenuItemTag, OutletId } from "@/types";
 
 /** Which shared option groups an item gets. See option-groups.ts. */
 export type GroupKind =
-  "size" | "addons" | "meal" | "spice" | "crust" | "toppings" | "coffee";
+  | "size"
+  | "addons"
+  | "meal"
+  | "spice"
+  | "crust"
+  | "toppings"
+  | "cupSize"
+  | "milkType"
+  | "shot"
+  | "sugar";
 
 /**
  * Compact seed row. Expanded into a full MenuItem by menu-items.ts so the
@@ -10,6 +19,8 @@ export type GroupKind =
  */
 export interface MenuRow {
   slug: string;
+  /** Which outlet sells it. Derived from the category, never written per row. */
+  outletId?: OutletId;
   categoryId: string;
   en: string;
   hi: string;

@@ -202,64 +202,154 @@ export function toppingsGroup(slug: string): OptionGroup {
   };
 }
 
-/** Milk and sugar choices for hot coffee. */
-export function coffeeGroup(slug: string): OptionGroup[] {
-  return [
-    {
-      id: g(slug, "milk"),
-      name: { en: "Milk", hi: "दूध" },
-      type: "single",
-      isRequired: true,
-      minSelect: 1,
-      maxSelect: 1,
-      options: [
-        {
-          id: o(slug, "milk", "regular"),
-          name: { en: "Regular", hi: "सामान्य" },
-          priceDelta: 0,
-          isAvailable: true,
-        },
-        {
-          id: o(slug, "milk", "less"),
-          name: { en: "Less milk", hi: "कम दूध" },
-          priceDelta: 0,
-          isAvailable: true,
-        },
-        {
-          id: o(slug, "milk", "extra"),
-          name: { en: "Extra milk", hi: "ज़्यादा दूध" },
-          priceDelta: 10,
-          isAvailable: true,
-        },
-      ],
-    },
-    {
-      id: g(slug, "sugar"),
-      name: { en: "Sugar", hi: "चीनी" },
-      type: "single",
-      isRequired: true,
-      minSelect: 1,
-      maxSelect: 1,
-      options: [
-        {
-          id: o(slug, "sugar", "normal"),
-          name: { en: "Normal", hi: "सामान्य" },
-          priceDelta: 0,
-          isAvailable: true,
-        },
-        {
-          id: o(slug, "sugar", "less"),
-          name: { en: "Less sugar", hi: "कम चीनी" },
-          priceDelta: 0,
-          isAvailable: true,
-        },
-        {
-          id: o(slug, "sugar", "none"),
-          name: { en: "No sugar", hi: "बिना चीनी" },
-          priceDelta: 0,
-          isAvailable: true,
-        },
-      ],
-    },
-  ];
+/** Cup size for the coffee counter's milk drinks. */
+export function cupSizeGroup(slug: string, largeDelta: number): OptionGroup {
+  return {
+    id: g(slug, "size"),
+    name: { en: "Cup size", hi: "कप साइज़" },
+    type: "single",
+    isRequired: true,
+    minSelect: 1,
+    maxSelect: 1,
+    options: [
+      {
+        id: o(slug, "size", "small"),
+        name: { en: "Small (180ml)", hi: "स्मॉल (180ml)" },
+        priceDelta: -15,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "size", "regular"),
+        name: { en: "Regular (240ml)", hi: "रेगुलर (240ml)" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "size", "large"),
+        name: { en: "Large (350ml)", hi: "लार्ज (350ml)" },
+        priceDelta: largeDelta,
+        isAvailable: true,
+      },
+    ],
+  };
+}
+
+/** Which milk goes in it. The plant milks carry a real cost, so they cost more. */
+export function milkTypeGroup(slug: string): OptionGroup {
+  return {
+    id: g(slug, "milk"),
+    name: { en: "Milk", hi: "दूध" },
+    type: "single",
+    isRequired: true,
+    minSelect: 1,
+    maxSelect: 1,
+    options: [
+      {
+        id: o(slug, "milk", "whole"),
+        name: { en: "Whole milk", hi: "फ़ुल क्रीम दूध" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "milk", "skimmed"),
+        name: { en: "Skimmed milk", hi: "टोंड दूध" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "milk", "oat"),
+        name: { en: "Oat milk", hi: "ओट मिल्क" },
+        priceDelta: 30,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "milk", "almond"),
+        name: { en: "Almond milk", hi: "बादाम मिल्क" },
+        priceDelta: 30,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "milk", "soy"),
+        name: { en: "Soy milk", hi: "सोया मिल्क" },
+        priceDelta: 25,
+        isAvailable: true,
+      },
+    ],
+  };
+}
+
+/** Strength. Single-select rather than multi so "two extra" is one choice. */
+export function extraShotGroup(slug: string): OptionGroup {
+  return {
+    id: g(slug, "shot"),
+    name: { en: "Extra shot", hi: "एक्स्ट्रा शॉट" },
+    type: "single",
+    isRequired: false,
+    minSelect: 0,
+    maxSelect: 1,
+    options: [
+      {
+        id: o(slug, "shot", "none"),
+        name: { en: "As it comes", hi: "जैसा है वैसा" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "shot", "one"),
+        name: { en: "One extra shot", hi: "एक एक्स्ट्रा शॉट" },
+        priceDelta: 30,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "shot", "two"),
+        name: { en: "Two extra shots", hi: "दो एक्स्ट्रा शॉट" },
+        priceDelta: 55,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "shot", "decaf"),
+        name: { en: "Decaf", hi: "डीकैफ़" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+    ],
+  };
+}
+
+/** How sweet. Free either way — it is a spoon of sugar, not an upsell. */
+export function sugarGroup(slug: string): OptionGroup {
+  return {
+    id: g(slug, "sugar"),
+    name: { en: "Sugar", hi: "चीनी" },
+    type: "single",
+    isRequired: true,
+    minSelect: 1,
+    maxSelect: 1,
+    options: [
+      {
+        id: o(slug, "sugar", "none"),
+        name: { en: "No sugar", hi: "बिना चीनी" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "sugar", "less"),
+        name: { en: "Less sugar", hi: "कम चीनी" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "sugar", "normal"),
+        name: { en: "Normal", hi: "सामान्य" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+      {
+        id: o(slug, "sugar", "extra"),
+        name: { en: "Extra sweet", hi: "ज़्यादा मीठा" },
+        priceDelta: 0,
+        isAvailable: true,
+      },
+    ],
+  };
 }

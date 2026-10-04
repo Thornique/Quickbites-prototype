@@ -9,6 +9,7 @@ const TO = "2027-03-31T18:29:59.000Z";
 export const SEED_COUPONS: Coupon[] = [
   {
     id: "coupon-welcome50",
+    outletId: "restaurant",
     code: "WELCOME50",
     description: {
       en: "₹50 off your first order above ₹299.",
@@ -28,6 +29,7 @@ export const SEED_COUPONS: Coupon[] = [
   },
   {
     id: "coupon-quick20",
+    outletId: "restaurant",
     code: "QUICK20",
     description: {
       en: "20% off up to ₹80 on orders above ₹249.",
@@ -48,6 +50,7 @@ export const SEED_COUPONS: Coupon[] = [
   },
   {
     id: "coupon-combo99",
+    outletId: "restaurant",
     code: "COMBO99",
     description: {
       en: "₹99 off any combo meal above ₹249.",
@@ -67,6 +70,7 @@ export const SEED_COUPONS: Coupon[] = [
   },
   {
     id: "coupon-freefries",
+    outletId: "restaurant",
     code: "FREEFRIES",
     description: {
       en: "₹69 off — effectively free regular fries on orders above ₹349.",
@@ -86,6 +90,7 @@ export const SEED_COUPONS: Coupon[] = [
   },
   {
     id: "coupon-student10",
+    outletId: "restaurant",
     code: "STUDENT10",
     description: {
       en: "10% off up to ₹40. Show a student ID at the counter.",
@@ -107,6 +112,7 @@ export const SEED_COUPONS: Coupon[] = [
   {
     /* Deliberately expired, so the "coupon expired" path is demoable. */
     id: "coupon-monsoon25",
+    outletId: "restaurant",
     code: "MONSOON25",
     description: {
       en: "25% off up to ₹100. Monsoon offer — now ended.",
@@ -126,5 +132,47 @@ export const SEED_COUPONS: Coupon[] = [
     categoryIds: [],
     isActive: true,
     createdAt: "2026-06-01T04:30:00.000Z",
+  },
+  /* ---- Quick Bites Coffee ------------------------------------------- */
+  {
+    id: "coupon-brew15",
+    outletId: "coffee",
+    code: "BREW15",
+    description: {
+      en: "15% off up to ₹60 on coffee orders above ₹199.",
+      hi: "₹199 से ऊपर की कॉफ़ी पर 15% छूट, अधिकतम ₹60।",
+    },
+    type: "PERCENT",
+    value: 15,
+    minOrder: 199,
+    maxDiscount: 60,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 800,
+    usedCount: 211,
+    perUserLimit: 4,
+    categoryIds: [],
+    isActive: true,
+    createdAt: CREATED_AT,
+  },
+  {
+    id: "coupon-bake49",
+    outletId: "coffee",
+    code: "BAKE49",
+    description: {
+      en: "₹49 off a bake with any coffee above ₹149.",
+      hi: "₹149 से ऊपर की कॉफ़ी के साथ बेक पर ₹49 की छूट।",
+    },
+    type: "FLAT",
+    value: 49,
+    minOrder: 149,
+    validFrom: FROM,
+    validTo: TO,
+    usageLimit: 400,
+    usedCount: 87,
+    perUserLimit: 2,
+    categoryIds: ["cat-coffee-bakes"],
+    isActive: true,
+    createdAt: CREATED_AT,
   },
 ];

@@ -22,9 +22,11 @@ export {
 } from "./adapter";
 
 export {
+  ADMIN_OUTLET_KEY,
   COLLECTIONS,
   IDB_IMAGE_PREFIX,
   LOCALE_KEY,
+  OUTLET_KEY,
   SCHEMA_VERSION,
   SESSION_SCOPES,
   SYNC_CHANNEL,

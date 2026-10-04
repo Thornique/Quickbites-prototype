@@ -1,4 +1,4 @@
-import { forbidden, unauthorized } from "@/lib/errors";
+import { forbidden, notFound, unauthorized } from "@/lib/errors";
 import { can, canManageStaff } from "@/lib/permissions";
 import {
   ensureSeeded,
@@ -8,7 +8,14 @@ import {
   writeCollection,
   type SessionScope,
 } from "@/storage";
-import type { ActivityLogEntry, Permission, Role, User } from "@/types";
+import type {
+  ActivityLogEntry,
+  OutletId,
+  Permission,
+  Role,
+  StoreSettings,
+  User,
+} from "@/types";
 
 /** Session as persisted in localStorage. */
 export interface StoredSession {
@@ -31,7 +38,9 @@ export async function ready(): Promise<void> {
   await ensureSeeded();
 }
 
-export function getStoredSession(scope: SessionScope = "customer"): StoredSession | null {
+export function getStoredSession(
+  scope: SessionScope = "customer",
+): StoredSession | null {
   const session = readKey<StoredSession | null>(sessionKey(scope), null);
   if (!session) return null;
   if (Date.parse(session.expiresAt) <= Date.now()) return null;
@@ -113,6 +122,31 @@ export function logActivity(
   };
   const rows = readCollection<ActivityLogEntry>("activityLog");
   writeCollection("activityLog", [entry, ...rows].slice(0, 200), "create", entry.id);
+}
+
+/** Storage id of one outlet's settings record. */
+export function storeSettingsId(outletId: OutletId): string {
+  return `store-settings:${outletId}`;
+}
+
+/**
+ * One outlet's settings, read synchronously.
+ *
+ * Lives here rather than in services/settings.ts because orders, pricing,
+ * bookings and the notification reconciler all need it, and routing them
+ * through the settings module would make a cycle out of four straight reads.
+ */
+export function settingsFor(outletId: OutletId): StoreSettings {
+  const row = readCollection<StoreSettings>("storeSettings").find(
+    (s) => s.outletId === outletId,
+  );
+  if (!row) throw notFound(`Settings for the ${outletId} outlet`);
+  return row;
+}
+
+/** Every outlet's settings, for the combined admin views. */
+export function allSettings(): StoreSettings[] {
+  return readCollection<StoreSettings>("storeSettings");
 }
 
 /** Short unique id for records the admin creates at runtime. */
