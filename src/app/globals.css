@@ -56,14 +56,30 @@
 
   /* ---- Coffee outlet palette ------------------------------------------ */
   /*
-    White on #6F4E37 measures 7.4:1, and ink on the caramel accent 7.3:1, so
-    both carry small text at AA. The dark fill is the same brown taken down
-    far enough to sit behind white at AAA.
+    A specialty coffee bar, not the restaurant in brown: deep espresso for the
+    dark bands, warm caramel for everything that invites a tap, and creamy
+    surfaces in between.
+
+    Measured on white: caramel #A85A26 is 4.63:1, so it carries small text and
+    is safe as a button fill under white (4.53:1). The first caramel tried,
+    #C8743F, measured 3.1:1 against white and 2.9:1 with white text on it —
+    both below AA — so it survives only as a decorative gradient stop, never
+    as a text colour or a flat button.
   */
-  --color-coffee-hover: #563c2a;
-  --color-coffee-dark: #3b2a1f; /* dark bands, switches, active tabs */
-  --color-caramel: #d9a05b; /* accent — carries INK text, never white */
-  --color-caramel-dark: #7a4a12; /* the accent as small text on its tint */
+  --color-espresso: #1c120d; /* dark bands, and text on cream */
+  --color-roast: #3a2318; /* secondary dark — cards in dark mode */
+  --color-caramel: #a85a26; /* primary accent: buttons, chips, active states */
+  --color-caramel-bright: #c8743f; /* gradients and glows only — fails AA flat */
+  --color-caramel-deep: #8a4418; /* hover, and caramel text on a caramel tint */
+  --color-crema: #f4e7d4; /* cards and raised surfaces */
+  --color-milk: #fbf7f1; /* page background */
+  --color-sage: #5f7556; /* secondary accent: Cold / New / veg badges, 5.4:1 */
+  --color-sage-tint: #e6ece2;
+
+  /* Legacy aliases kept so the outlet badge and wordmark keep compiling. */
+  --color-coffee-hover: var(--color-caramel-deep);
+  --color-coffee-dark: var(--color-espresso);
+  --color-caramel-dark: var(--color-caramel-deep);
 
   /* Warm neutrals derived from the cream base, used for hovers and fills */
   --color-sand-50: #f2eadc;
@@ -103,6 +119,17 @@
 :root {
   --font-display-face: var(--font-display-latin), var(--font-display-deva);
   --font-mukta: var(--font-mukta-latin), var(--font-mukta-deva);
+}
+
+/*
+  The coffee shop's headings are set in Fraunces, a modern serif, which is what
+  separates a specialty coffee bar from a burger counter at a glance. Only the
+  Latin subset is loaded: Devanagari falls through to Baloo, which already
+  carries it, so a Hindi heading is unchanged and nothing extra is downloaded
+  for a reader who never sees a Latin heading.
+*/
+:root[data-outlet="coffee"] {
+  --font-display-face: var(--font-serif-latin), var(--font-display-deva);
 }
 
 @theme inline {
@@ -155,15 +182,83 @@
 }
 
 /*
-  The coffee shop's identity. Only the accents move: the cream page, the ink
-  and the hairlines stay, because it is still one brand and one website.
+  The coffee shop's identity.
+
+  Scoped entirely to [data-outlet="coffee"], so the restaurant renders byte for
+  byte as before. Because the storefront is built on tokens rather than literal
+  colours, re-pointing them here re-skins every existing component — the page,
+  the cards, the borders, the radii and the shadows — without a single
+  restaurant file being touched.
 */
 :root[data-outlet="coffee"] {
-  --color-brand: var(--color-brand-coffee);
-  --color-brand-hover: var(--color-coffee-hover);
-  --color-cocoa: var(--color-coffee-dark);
-  --color-mustard: var(--color-caramel);
-  --color-mustard-dark: var(--color-caramel-dark);
+  --color-brand: var(--color-caramel);
+  --color-brand-hover: var(--color-caramel-deep);
+  --color-cocoa: var(--color-espresso);
+  --color-mustard: var(--color-caramel-bright);
+  --color-mustard-dark: var(--color-caramel-deep);
+
+  /* Surfaces: creamier and lighter than the restaurant's warm cream. */
+  --color-cream: var(--color-milk);
+  --color-surface: #ffffff;
+  --color-ink: var(--color-espresso);
+  --color-ink-muted: #6b5546;
+  --color-hairline: #e7d9c6;
+  --color-sand-50: #f8f1e7;
+  --color-sand-100: var(--color-crema);
+  --color-sand-200: #e9d8bf;
+
+  /* Veg mark follows the secondary accent so the badges read as one family. */
+  --color-veg: var(--color-sage);
+  --color-veg-dark: #4b5e44;
+
+  /* Softer, rounder, warmer than the restaurant. */
+  --radius-card: 20px;
+  --radius-control: 10px;
+
+  /*
+    Layered shadows tinted with espresso rather than grey — a neutral drop
+    shadow on a cream page is the thing that reads as "flat beige template".
+  */
+  --shadow-card: 0 1px 2px rgb(28 18 13 / 0.06), 0 4px 12px -4px rgb(28 18 13 / 0.08);
+  --shadow-pop: 0 2px 6px rgb(28 18 13 / 0.08), 0 16px 32px -12px rgb(28 18 13 / 0.22);
+
+  /* Gradients: the hero scrim and the one caramel fill used for offers. */
+  --gradient-hero: linear-gradient(
+    180deg,
+    rgb(28 18 13 / 0.15) 0%,
+    rgb(28 18 13 / 0.55) 45%,
+    rgb(28 18 13 / 0.92) 100%
+  );
+  --gradient-hero-side: linear-gradient(
+    90deg,
+    rgb(28 18 13 / 0.94) 0%,
+    rgb(28 18 13 / 0.55) 55%,
+    transparent 100%
+  );
+  --gradient-caramel: linear-gradient(135deg, #8a4418 0%, #a85a26 45%, #c8743f 100%);
+}
+
+/*
+  Dark mode. The project ships light-only and has no theme toggle, so this is
+  the contract for when one arrives rather than something a visitor can reach
+  today: espresso page, roast cards, caramel accent, cream text.
+*/
+:root[data-outlet="coffee"].dark,
+:root[data-outlet="coffee"][data-theme="dark"] {
+  --color-cream: var(--color-espresso);
+  --color-surface: var(--color-roast);
+  --color-ink: #f6ece0;
+  --color-ink-muted: #c3ac98;
+  --color-hairline: #4a3124;
+  --color-sand-50: #2a1a12;
+  --color-sand-100: #33201630;
+  --color-sand-200: #4a3124;
+  /* #D08A4F on roast measures 5.1:1, where the light-mode caramel would be 2.4. */
+  --color-brand: #d08a4f;
+  --color-brand-hover: #e0a06a;
+  --color-cocoa: #120b07;
+  --color-veg: #9db17c;
+  --color-veg-dark: #b6c69b;
 }
 
 @layer base {
@@ -234,6 +329,272 @@
 
   *::-webkit-scrollbar {
     display: none; /* Chrome, Safari, Edge */
+  }
+}
+
+/* ---------------------------------------------------------------------- */
+/* Coffee outlet — texture, motion and the few shapes tokens cannot express  */
+/* ---------------------------------------------------------------------- */
+
+/*
+  A barely-there grain over the page. Cream flats are what make a warm palette
+  read as "beige template"; a little noise is what print and specialty-coffee
+  branding use to stop that, and at 3.5% it is felt rather than seen.
+
+  Fixed, behind everything, and pointer-events:none, so it never intercepts a
+  tap. Inline SVG turbulence — no image request.
+*/
+:root[data-outlet="coffee"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* The page's own content sits above the grain. */
+:root[data-outlet="coffee"] body > * {
+  position: relative;
+  z-index: 1;
+}
+
+@layer utilities {
+  /*
+    Headings on coffee are the serif; the eyebrow labels above them are the
+    opposite — small, uppercase, widely tracked. Together they are most of what
+    makes the outlet read as a different brand rather than a recolour.
+  */
+  .coffee-eyebrow {
+    font-family: var(--font-sans);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+
+  /*
+    The shared .text-display utility picks up Fraunces automatically on
+    coffee, because it asks for --font-display-face and that variable is
+    re-pointed. Two things still need saying.
+
+    WONK 0 turns off Fraunces' "wonky" alternates. Its default ampersand is a
+    looping et-ligature that, uppercased at heading size, reads as a circled
+    cross — "ESPRESSO ⊗ HOT COFFEE". The plain form is the one a menu needs.
+
+    And 800 is far heavier in a serif than in Baloo: 600 at this size is the
+    same visual weight the restaurant's headings carry.
+  */
+  :root[data-outlet="coffee"] .text-display {
+    font-weight: 600;
+    font-variation-settings:
+      "opsz" 72,
+      "WONK" 0,
+      "SOFT" 12;
+    letter-spacing: -0.015em;
+    /*
+      Fraunces ships a looping et-style ampersand as a ligature. Uppercased at
+      heading size it reads as a circled cross — "ESPRESSO (x) HOT COFFEE" —
+      so ligatures and contextual alternates are off here.
+    */
+    font-variant-ligatures: none;
+    font-feature-settings:
+      "liga" 0,
+      "dlig" 0,
+      "calt" 0;
+    /*
+      And the serif is set in title case. Uppercase is the restaurant's voice,
+      borrowed from the chains; a specialty counter sets its board in mixed
+      case, and it is kinder to the ampersand besides.
+    */
+    text-transform: none;
+  }
+
+  /* Hindi headings stay on Baloo, so none of the above applies to them. */
+  :root[data-outlet="coffee"] :lang(hi) .text-display,
+  :root[data-outlet="coffee"] [lang="hi"] .text-display {
+    font-weight: 800;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+  }
+
+  /* Hero type: big, tight, and set in the serif's optical display axis. */
+  .coffee-display {
+    font-family: var(--font-serif-latin), var(--font-display-deva), serif;
+    font-variation-settings:
+      "opsz" 120,
+      "SOFT" 20;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.02;
+  }
+
+  /* Devanagari has no Fraunces, so it keeps Baloo and its own leading. */
+  :lang(hi) .coffee-display,
+  [lang="hi"] .coffee-display {
+    font-family: var(--font-display-face), sans-serif;
+    font-weight: 800;
+    letter-spacing: 0;
+    line-height: 1.3;
+  }
+
+  .coffee-hero-title {
+    font-size: clamp(2.5rem, 7.5vw, 4.75rem);
+  }
+
+  /* The caramel fill used by offer strips and the hero's primary button. */
+  .coffee-gradient {
+    background-image: var(--gradient-caramel);
+  }
+
+  /* Dark bands carry a faint scatter of coffee beans. */
+  .coffee-bean-pattern {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' fill='none' stroke='%23F4E7D4' stroke-opacity='0.14' stroke-width='1.4'%3E%3Cg transform='translate(18 22) rotate(25)'%3E%3Cellipse rx='9' ry='13'/%3E%3Cpath d='M0 -13 Q3 0 0 13'/%3E%3C/g%3E%3Cg transform='translate(78 54) rotate(-40)'%3E%3Cellipse rx='9' ry='13'/%3E%3Cpath d='M0 -13 Q3 0 0 13'/%3E%3C/g%3E%3Cg transform='translate(40 96) rotate(70)'%3E%3Cellipse rx='9' ry='13'/%3E%3Cpath d='M0 -13 Q3 0 0 13'/%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /*
+    Steam. Three wisps drifting up off the cup, each offset so they never
+    pulse together. Transform and opacity only — nothing here forces layout —
+    and the whole thing is switched off below under prefers-reduced-motion.
+  */
+  .coffee-steam {
+    animation: coffee-steam 4.5s ease-in-out infinite;
+    transform-origin: 50% 100%;
+    filter: blur(6px);
+  }
+
+  .coffee-steam-2 {
+    animation-delay: 1.3s;
+    animation-duration: 5.4s;
+  }
+
+  .coffee-steam-3 {
+    animation-delay: 2.6s;
+    animation-duration: 6.1s;
+  }
+
+  @keyframes coffee-steam {
+    0% {
+      opacity: 0;
+      transform: translateY(6px) scaleX(0.9);
+    }
+    25% {
+      opacity: 0.5;
+    }
+    60% {
+      opacity: 0.32;
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-46px) scaleX(1.35);
+    }
+  }
+
+  /* Horizontal rails that stop neatly on a card. */
+  .snap-rail {
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+  }
+
+  .snap-rail > * {
+    scroll-snap-align: start;
+  }
+}
+
+/*
+  Option rows become selectable pills on coffee.
+
+  Both the item page and the customise sheet render the same row shape and
+  both tag it `data-option-row`, so this one rule restyles size, milk, extra
+  shot and sugar everywhere they appear. `:has()` reads the Radix control's
+  own checked state, which means the selected pill needs no extra prop
+  threading through two components.
+*/
+:root[data-outlet="coffee"] [data-option-row] {
+  margin-bottom: 0.5rem;
+  border-bottom: 0;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-hairline);
+  padding: 0.5rem 0.9rem;
+  transition:
+    border-color 150ms var(--ease-out-soft),
+    background-color 150ms var(--ease-out-soft);
+}
+
+:root[data-outlet="coffee"] [data-option-row]:last-child {
+  margin-bottom: 0;
+}
+
+:root[data-outlet="coffee"] [data-option-row]:has([data-state="checked"]) {
+  border-color: var(--color-brand);
+  background-color: color-mix(in oklab, var(--color-brand) 9%, transparent);
+}
+
+/*
+  The fieldset around them loses its own box: a bordered card full of
+  bordered pills is two frames doing one job.
+*/
+:root[data-outlet="coffee"] fieldset:has([data-option-row]) {
+  border: 0;
+  padding: 0;
+}
+
+/*
+  The order token becomes a counter ticket on coffee: a crema card with two
+  notches bitten out of its sides and a dashed rule under the number.
+
+  Deliberately NOT a dark card. Everything else inside it — the pickup line,
+  the outlet badge, the order number — is coloured from the light-surface
+  tokens, and inverting the background would have left all of it unreadable
+  for the sake of one flourish.
+*/
+:root[data-outlet="coffee"] [data-token-card] {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--color-sand-50);
+  border-style: dashed;
+}
+
+:root[data-outlet="coffee"] [data-token-value] {
+  padding-bottom: 0.75rem;
+  border-bottom: 2px dashed var(--color-hairline);
+}
+
+/* The notches are filled with the page colour, so they read as cut out. */
+:root[data-outlet="coffee"] [data-token-card]::before,
+:root[data-outlet="coffee"] [data-token-card]::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 9999px;
+  background: var(--color-cream);
+  border: 1px dashed var(--color-hairline);
+  transform: translateY(-50%);
+}
+
+:root[data-outlet="coffee"] [data-token-card]::before {
+  left: -0.875rem;
+}
+
+:root[data-outlet="coffee"] [data-token-card]::after {
+  right: -0.875rem;
+}
+
+:root[data-outlet="coffee"] [data-token-card]::before {
+  left: -0.75rem;
+}
+
+:root[data-outlet="coffee"] [data-token-card]::after {
+  right: -0.75rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .coffee-steam {
+    animation: none;
+    opacity: 0.22;
   }
 }
 

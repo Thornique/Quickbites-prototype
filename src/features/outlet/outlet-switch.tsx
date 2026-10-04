@@ -27,6 +27,12 @@ export function OutletSwitch({
   const t = useT();
   const pick = usePick();
   const { outletId, setOutlet } = useOutlet();
+  /*
+    The active pill is always the outlet the page is already themed for, so
+    `bg-brand` on coffee is caramel while the restaurant keeps its mahogany
+    fill — the restaurant's switch is unchanged.
+  */
+  const activeFill = outletId === "coffee" ? "bg-brand" : "bg-cocoa";
 
   return (
     <div
@@ -50,12 +56,16 @@ export function OutletSwitch({
             aria-checked={isActive}
             onClick={() => setOutlet(outlet.id)}
             className={cn(
-              "inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-pill px-3 py-1.5",
+              "inline-flex items-center justify-center gap-1.5 rounded-pill px-3 py-1.5",
               "text-sm font-semibold whitespace-nowrap transition-colors duration-150",
+              /* Only the full-width sheet version shares the row equally; in
+                 the header each pill sizes to its own label, or "Restaurant"
+                 truncates the moment the coffee wordmark widens the bar. */
+              size === "lg" && "min-w-0 flex-1",
               "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1",
               size === "lg" && "py-2.5",
               isActive
-                ? "bg-cocoa text-white"
+                ? `${activeFill} text-white`
                 : "text-ink-muted hover:bg-surface hover:text-ink",
             )}
           >
@@ -65,7 +75,9 @@ export function OutletSwitch({
               aria-hidden="true"
               className="shrink-0"
             />
-            <span className="truncate">{pick(outlet.shortName)}</span>
+            <span className={size === "lg" ? "truncate" : undefined}>
+              {pick(outlet.shortName)}
+            </span>
           </button>
         );
       })}

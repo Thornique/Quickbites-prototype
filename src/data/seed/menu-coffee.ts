@@ -23,6 +23,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 5,
     popularity: 64,
+    image: "/images/coffee/espresso.webp",
     groups: ["shot", "sugar"],
     stock: [
       ["inv-c-arabica", 0.009],
@@ -42,6 +43,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 10,
     popularity: 72,
+    image: "/images/coffee/americano.webp",
     groups: ["cupSize", "shot", "sugar"],
     largeDelta: 25,
     stock: [
@@ -62,7 +64,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 150,
     popularity: 96,
-    image: "/images/menu/cappuccino.webp",
+    image: "/images/coffee/cappuccino.webp",
     groups: ["cupSize", "milkType", "shot", "sugar"],
     largeDelta: 35,
     stock: [
@@ -84,7 +86,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 190,
     popularity: 94,
-    image: "/images/gallery/coffee-moment.webp",
+    image: "/images/coffee/cafe-latte.webp",
     groups: ["cupSize", "milkType", "shot", "sugar"],
     largeDelta: 35,
     stock: [
@@ -106,6 +108,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 160,
     popularity: 78,
+    image: "/images/coffee/flat-white.webp",
     groups: ["milkType", "shot", "sugar"],
     stock: [
       ["inv-c-arabica", 0.02],
@@ -127,6 +130,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 290,
     popularity: 88,
+    image: "/images/coffee/hot-chocolate.webp",
     groups: ["cupSize", "milkType", "shot", "sugar"],
     largeDelta: 35,
     stock: [
@@ -149,6 +153,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 120,
     popularity: 86,
+    image: "/images/coffee/filter-coffee.webp",
     groups: ["sugar"],
     stock: [
       ["inv-c-filter-blend", 0.014],
@@ -171,7 +176,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 310,
     popularity: 98,
-    image: "/images/menu/cold-coffee.webp",
+    image: "/images/coffee/cold-coffee.webp",
     groups: ["cupSize", "milkType", "shot", "sugar"],
     largeDelta: 40,
     stock: [
@@ -193,6 +198,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 150,
     popularity: 83,
+    image: "/images/coffee/cold-coffee.webp",
     groups: ["cupSize", "milkType", "shot", "sugar"],
     largeDelta: 40,
     stock: [
@@ -214,6 +220,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 6,
     calories: 420,
     popularity: 91,
+    image: "/images/coffee/coffee-frappe.webp",
     groups: ["cupSize", "milkType", "shot"],
     largeDelta: 45,
     stock: [
@@ -281,6 +288,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 4,
     calories: 110,
     popularity: 92,
+    image: "/images/coffee/masala-chai.webp",
     groups: ["cupSize", "sugar"],
     largeDelta: 20,
     stock: [
@@ -302,6 +310,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 25,
     popularity: 61,
+    image: "/images/coffee/green-tea.webp",
     groups: ["sugar"],
     stock: [
       ["inv-c-green-tea", 0.004],
@@ -321,6 +330,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 5,
     calories: 340,
     popularity: 79,
+    image: "/images/coffee/hot-chocolate.webp",
     groups: ["cupSize", "milkType", "sugar"],
     largeDelta: 35,
     stock: [
@@ -344,6 +354,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 310,
     popularity: 90,
+    image: "/images/coffee/croissant.webp",
     stock: [
       ["inv-c-croissant", 1],
       ["inv-c-bag", 1],
@@ -362,6 +373,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 2,
     calories: 380,
     popularity: 82,
+    image: "/images/coffee/bakes.webp",
     stock: [
       ["inv-c-muffin", 1],
       ["inv-c-bag", 1],
@@ -380,7 +392,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 3,
     calories: 420,
     popularity: 93,
-    image: "/images/menu/brownie-sundae.webp",
+    image: "/images/coffee/brownie.webp",
     stock: [
       ["inv-c-brownie", 1],
       ["inv-c-bag", 1],
@@ -439,7 +451,7 @@ export const COFFEE_ROWS: MenuRow[] = [
     prepMinutes: 8,
     calories: 460,
     popularity: 87,
-    image: "/images/menu/veg-grilled-sandwich.webp",
+    image: "/images/coffee/club-sandwich.webp",
     groups: ["spice"],
     stock: [
       ["inv-c-sandwich-bread", 3],

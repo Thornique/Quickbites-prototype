@@ -9,6 +9,7 @@ import { useCoupons } from "@/features/coupons";
 import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
+import { cn } from "@/lib/utils";
 import type { Coupon } from "@/types";
 
 /** "20% off up to ₹80" / "₹50 off" — the headline figure on the ticket. */
@@ -28,6 +29,7 @@ export function Offers() {
   const pick = usePick();
   const headlineOf = useOfferHeadline();
   const outletId = useOutletId();
+  const isCoffee = outletId === "coffee";
   const { data: coupons, isLoading } = useCoupons(outletId, true);
 
   const copy = async (code: string) => {
@@ -43,19 +45,39 @@ export function Offers() {
   return (
     <section id="offers" className="scroll-mt-24 pb-12 sm:pb-16">
       {/*
-        Mustard band behind the title only, the way the chains head their deals
-        page. Ink on mustard rather than the white those sites use — white on
-        this yellow measures about 1.9:1 and the brief asks for AA.
+        The restaurant heads its deals page with a mustard band, the way the
+        chains do. Ink on mustard rather than the white those sites use —
+        white on this yellow measures about 1.9:1 and the brief asks for AA.
+
+        The coffee shop takes the caramel gradient instead, with cream type:
+        the gradient's lightest stop is #A85A26, which carries white at 5:1.
       */}
-      <div className="bg-mustard">
+      <div className={isCoffee ? "coffee-gradient" : "bg-mustard"}>
         <Container className="py-8 text-center sm:py-10">
-          <p className="text-xs font-bold tracking-[0.12em] text-ink/70 uppercase">
+          <p
+            className={cn(
+              "coffee-eyebrow",
+              isCoffee ? "text-white/75" : "text-ink/70",
+            )}
+          >
             {t.offers.eyebrow}
           </p>
-          <h2 className="text-display mt-1.5 text-[clamp(1.75rem,5vw,3rem)] text-ink uppercase">
+          <h2
+            className={cn(
+              "mt-1.5 text-[clamp(1.75rem,5vw,3rem)]",
+              isCoffee
+                ? "coffee-display text-white"
+                : "text-display text-ink uppercase",
+            )}
+          >
             {t.offers.title}
           </h2>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-ink/75 sm:text-base">
+          <p
+            className={cn(
+              "mx-auto mt-2 max-w-xl text-sm sm:text-base",
+              isCoffee ? "text-white/85" : "text-ink/75",
+            )}
+          >
             {t.offers.description}
           </p>
         </Container>
@@ -96,7 +118,12 @@ export function Offers() {
                 />
 
                 <div className="flex flex-1 flex-col p-5 sm:p-6">
-                  <p className="text-display text-3xl text-brand uppercase sm:text-4xl">
+                  <p
+                    className={cn(
+                      "text-3xl text-brand sm:text-4xl",
+                      isCoffee ? "coffee-display" : "text-display uppercase",
+                    )}
+                  >
                     {headlineOf(coupon)}
                   </p>
                   <p className="mt-1.5 text-sm text-ink-muted">
@@ -107,7 +134,7 @@ export function Offers() {
                   </p>
 
                   <div className="mt-4 flex items-center gap-2 border-t border-dashed border-hairline pt-4">
-                    <code className="nums rounded-control bg-mustard/25 px-3 py-1.5 text-sm font-bold tracking-wider text-ink">
+                    <code className="nums rounded-control bg-brand/12 px-3 py-1.5 text-sm font-bold tracking-wider text-ink">
                       {coupon.code}
                     </code>
                     <button

@@ -46,6 +46,7 @@ export function MenuCard({
   const t = useT();
   const pick = usePick();
 
+  const isCoffee = item.outletId === "coffee";
   const { requestAdd, openCustomise, isOrderingDisabled } = useAddToCart();
   const { quantity, lastLineKey } = useCartLinesFor(item.outletId, item.id);
   const setQuantity = useCartStore((s) => s.setQuantity);
@@ -119,8 +120,17 @@ export function MenuCard({
         onClick={handleAdd}
         aria-label={`${t.menuCard.add} ${name}`}
         className={cn(
-          "inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-control border px-3 text-sm font-semibold transition-colors",
+          "inline-flex shrink-0 items-center justify-center gap-1 border text-sm font-semibold transition-colors",
           "focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
+          /*
+            Coffee drops the word: a round "+" beside a price chip is the
+            specialty-bar idiom, and the accessible name still says "Add
+            <item>". Sold-out stays a labelled pill in both outlets, because
+            a struck-through "+" would say nothing.
+          */
+          isCoffee && !isSoldOut
+            ? "size-10 rounded-full"
+            : "h-9 rounded-control px-3",
           isBlocked
             ? "cursor-not-allowed border-hairline bg-sand-100 text-ink-muted/60"
             : "border-brand bg-brand text-white hover:bg-brand-hover",
@@ -131,7 +141,7 @@ export function MenuCard({
         ) : (
           <>
             <Plus size={16} strokeWidth={2.5} aria-hidden="true" />
-            {t.menuCard.add}
+            {!isCoffee && t.menuCard.add}
           </>
         )}
       </button>
@@ -141,6 +151,8 @@ export function MenuCard({
     <article
       className={cn(
         "group relative overflow-hidden rounded-card border border-hairline bg-surface",
+        isCoffee &&
+          "shadow-card transition-shadow duration-200 hover:shadow-pop",
         isSoldOut && "opacity-70",
         isResponsive
           ? "grid grid-cols-[6.5rem_1fr] gap-3 p-3 sm:grid-cols-1 sm:gap-0 sm:p-0"
@@ -164,6 +176,8 @@ export function MenuCard({
             isResponsive
               ? "aspect-square rounded-control sm:aspect-[4/3] sm:rounded-none"
               : "aspect-[4/3]",
+            isCoffee &&
+              "transition-transform duration-300 ease-out group-hover:scale-[1.05] motion-reduce:transform-none",
           )}
         />
         {visibleTags.length > 0 && (
@@ -197,7 +211,14 @@ export function MenuCard({
       >
         <div className="flex items-start gap-2">
           <VegMark isVeg={item.isVeg} size="sm" className="mt-1" />
-          <h3 className="min-w-0 flex-1 text-base leading-snug font-semibold text-ink">
+          <h3
+            className={cn(
+              "min-w-0 flex-1 leading-snug text-ink",
+              isCoffee
+                ? "coffee-display text-lg"
+                : "text-base font-semibold",
+            )}
+          >
             <Link href={`/menu/${item.slug}`} className="hover:text-brand">
               {name}
             </Link>
@@ -213,7 +234,13 @@ export function MenuCard({
         </p>
 
         <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-          <Price value={item.price} compareAt={item.compareAtPrice} size="lg" />
+          {isCoffee ? (
+            <span className="nums rounded-pill bg-brand/10 px-2.5 py-1 text-sm font-bold text-brand">
+              <Price value={item.price} compareAt={item.compareAtPrice} />
+            </span>
+          ) : (
+            <Price value={item.price} compareAt={item.compareAtPrice} size="lg" />
+          )}
           {action}
         </div>
       </div>

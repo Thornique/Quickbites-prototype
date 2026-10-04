@@ -112,9 +112,18 @@ ordering from?" — the restaurant and the coffee shop side by side. Pick **Quic
 
 Everything changes at once, and it is worth pausing on:
 
-- The wordmark becomes **QUICK BITES COFFEE** and the red turns **coffee brown**.
+- The wordmark becomes **QUICK BITES COFFEE**, the headings switch to a **serif**, and the
+  red becomes **caramel on espresso**. It reads as a specialty coffee bar, not the restaurant
+  in a different colour.
+- The **home page is a different page**: one full-bleed photograph with steam drifting off the
+  cup, a "Signatures" rail you can scroll, category pills, and a dark "brew bar" band showing
+  how a drink is built.
 - The menu is the coffee menu — espresso, frappés, bakes. No burgers anywhere.
 - The address, the phone, the opening hours and the offers line are the coffee shop's.
+
+Open any drink and show the **customise sheet**: cup size, milk, extra shot and sugar are
+selectable pills, and the price in the button at the bottom moves as you tick them. That is
+the single best thing to demo on this side.
 
 Use the **Restaurant | Coffee** toggle in the header to switch back and forth. Two things to
 show the client while you do:

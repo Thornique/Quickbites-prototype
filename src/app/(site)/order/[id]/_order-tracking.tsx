@@ -144,11 +144,12 @@ export function OrderTracking({ id }: { id: string }) {
     <Container className="py-6 pb-16 sm:py-10">
       <div className="mx-auto max-w-2xl">
         {/* Token — the only thing the counter asks for. */}
-        <Card className="p-6 text-center">
-          <p className="text-xs font-bold tracking-[0.12em] text-ink-muted uppercase">
-            {t.confirm.tokenLabel}
-          </p>
-          <p className="text-display nums mt-1 text-[clamp(3.5rem,20vw,6rem)] leading-none text-brand">
+        <Card data-token-card className="p-6 text-center">
+          <p className="coffee-eyebrow text-ink-muted">{t.confirm.tokenLabel}</p>
+          <p
+            data-token-value
+            className="text-display nums mt-1 text-[clamp(3.5rem,20vw,6rem)] leading-none text-brand"
+          >
             {order.tokenNumber}
           </p>
           <p className="mt-2 text-sm text-ink-muted">{t.track.showAtCounter}</p>

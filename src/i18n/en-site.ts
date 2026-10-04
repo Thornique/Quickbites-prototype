@@ -43,6 +43,44 @@ export const enSite = {
     bothOutlets: "Both outlets",
   },
 
+  /**
+   * Coffee outlet copy. Only the coffee storefront reads these, so the
+   * restaurant's wording is untouched by anything added here.
+   */
+  coffeeHome: {
+    heroEyebrow: "Freshly brewed",
+    heroTitle: "Ground this morning, pulled to order.",
+    heroBody:
+      "Chikmagalur arabica, roasted for us and ground the same day. Milk steamed to order, bakes out of the oven by eight.",
+    orderNow: "Order now",
+    viewMenu: "View menu",
+
+    signaturesEyebrow: "Signatures",
+    signaturesTitle: "What the counter is known for",
+    signaturesBody:
+      "Eight drinks and bakes people come back for. Every one is made to order.",
+
+    brewEyebrow: "The brew bar",
+    brewTitle: "Three steps, and it is in your hand.",
+    stepPickTitle: "Pick your brew",
+    stepPickBody:
+      "Espresso and milk coffee, cold brew and frappés, chai and hot chocolate.",
+    stepPickNote: "22 drinks and bakes",
+    stepCustomiseTitle: "Make it yours",
+    stepCustomiseBody:
+      "Cup size, the milk you want, an extra shot, and how sweet. The price moves as you choose.",
+    stepCustomiseNote: "Oat, almond and soy milk available",
+    stepCollectTitle: "Pick it up hot",
+    stepCollectBody:
+      "Pay online, watch the live status, and collect at the counter when your token is called.",
+    stepCollectNote: "Most drinks in under 6 minutes",
+
+    emptyCartTitle: "Nothing brewing yet",
+    emptyCartBody: "Pick a coffee and we will start it the moment you pay.",
+    emptyOrdersTitle: "No orders from the coffee bar yet",
+    emptyOrdersBody: "Your first flat white is one tap away.",
+  },
+
   header: {
     skipToContent: "Skip to content",
     primaryNav: "Main navigation",

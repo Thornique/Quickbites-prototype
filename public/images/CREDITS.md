@@ -59,6 +59,33 @@ adding any new photography.
 | `gallery/coffee-moment.webp` | https://unsplash.com/photos/1495474472287-4d71bcdd2085 | _to fill_ |
 | `gallery/burger-board.webp` | https://unsplash.com/photos/1550547660-d9450f859349 | _to fill_ |
 
+## Quick Bites Coffee
+
+Shot for the coffee outlet's visual refresh. Centre-cropped with sharp's attention strategy —
+16:9 at 1600px for the hero, 21:9 for the two bands, 4:3 at 800px for every card — then
+re-encoded as WebP. The whole folder is 732KB: the hero is 30KB, and no card exceeds 78KB.
+
+| File | Source | Photographer |
+| --- | --- | --- |
+| `coffee/hero-pour.webp` | https://www.pexels.com/photo/person-holding-white-ceramic-mug-302899/ | _to fill_ |
+| `coffee/espresso.webp` | https://www.pexels.com/photo/espresso-machine-324028/ | _to fill_ |
+| `coffee/cappuccino.webp` | https://www.pexels.com/photo/cappuccino-in-black-cup-312418/ | _to fill_ |
+| `coffee/filter-coffee.webp` | https://www.pexels.com/photo/latte-art-on-wooden-table-851555/ | _to fill_ |
+| `coffee/beans-band.webp` | https://www.pexels.com/photo/roasted-coffee-beans-585750/ | _to fill_ |
+| `coffee/cold-coffee.webp` | https://unsplash.com/photos/1517701550927-30cf4ba1dba5 | _to fill_ |
+| `coffee/flat-white.webp` | https://unsplash.com/photos/1534778101976-62847782c213 | _to fill_ |
+| `coffee/masala-chai.webp` | https://unsplash.com/photos/1544787219-7f47ccb76574 | _to fill_ |
+| `coffee/green-tea.webp` | https://unsplash.com/photos/1564890369478-c89ca6d9cde9 | _to fill_ |
+| `coffee/croissant.webp` | https://unsplash.com/photos/1555507036-ab1f4038808a | _to fill_ |
+| `coffee/bakes.webp` | https://unsplash.com/photos/1587241321921-91a834d6d191 | _to fill_ |
+| `coffee/cafe-interior.webp` | https://unsplash.com/photos/1554118811-1e0d58224f24 | _to fill_ |
+| `coffee/cafe-latte.webp` | https://unsplash.com/photos/1497636577773-f1231844b336 | _to fill_ |
+| `coffee/americano.webp` | https://unsplash.com/photos/1521302080334-4bebac2763a6 | _to fill_ |
+| `coffee/hot-chocolate.webp` | https://unsplash.com/photos/1517578239113-b03992dcdd25 | _to fill_ |
+| `coffee/coffee-frappe.webp` | https://unsplash.com/photos/1572490122747-3968b75cc699 | _to fill_ |
+| `coffee/brownie.webp` | https://unsplash.com/photos/1564355808539-22fda35bed7e | _to fill_ |
+| `coffee/club-sandwich.webp` | https://unsplash.com/photos/1553909489-cd47e0907980 | _to fill_ |
+
 ## Rejected during review
 
 Every candidate is opened and looked at before it ships. These were discarded:
@@ -67,6 +94,10 @@ Every candidate is opened and looked at before it ships. These were discarded:
   family quick-service cafe.
 - A "hero table" candidate was a **meat platter**, unsuitable as the lead image for a
   predominantly vegetarian Indian menu.
+- Sourcing the coffee photography, five candidates were opened and discarded: Pexels `3756523`
+  and `2074130` are **laid-out food tables**, not drinks; `1193335` and `1695052` duplicated
+  shots already chosen; and Unsplash `1621263764928-df1444c5e859`, labelled as a frappé, is a
+  **lemon-and-mint cooler** — the wrong drink entirely on a coffee menu.
 - Four veg-burger candidates were rejected while sourcing the vegetarian burgers: Pexels
   photos `20741663` ("burger with meat and vegetables") and `10755735` ("a sliced hamburger")
   are meat despite "veggie burger" search alt text; `20722055` is titled "cheeseburger with

@@ -76,9 +76,19 @@ export function ReadyStrip() {
           {t.ready.dineInOrTakeaway}
         </p>
 
-        {/* Whatever the admin typed into Content → Offers strip. */}
+        {/*
+          Whatever the admin typed into Content → Offers strip. On coffee it
+          becomes a filled caramel chip — the one spot of saturated colour in
+          an otherwise creamy band, which is what stops the strip reading flat.
+        */}
         {offer && (
-          <p className="flex items-center gap-2 text-sm font-semibold text-brand">
+          <p
+            className={
+              outletId === "coffee"
+                ? "coffee-gradient inline-flex items-center gap-2 rounded-pill px-3 py-1.5 text-sm font-semibold text-white"
+                : "flex items-center gap-2 text-sm font-semibold text-brand"
+            }
+          >
             <Tag size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
             {offer}
           </p>

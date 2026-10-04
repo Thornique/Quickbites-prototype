@@ -41,6 +41,40 @@ export const hiSite: SiteDictionary = {
     bothOutlets: "दोनों आउटलेट",
   },
 
+  coffeeHome: {
+    heroEyebrow: "ताज़ा बनी",
+    heroTitle: "आज सुबह पिसी, ऑर्डर पर बनी।",
+    heroBody:
+      "हमारे लिए भुनी चिकमगलूर अरेबिका, उसी दिन पिसी। दूध ऑर्डर पर स्टीम, और आठ बजे तक ओवन से ताज़े बेक्स।",
+    orderNow: "अभी ऑर्डर करें",
+    viewMenu: "मेन्यू देखें",
+
+    signaturesEyebrow: "हमारी ख़ासियत",
+    signaturesTitle: "काउंटर की पहचान",
+    signaturesBody:
+      "आठ ड्रिंक और बेक्स जिनके लिए लोग लौटकर आते हैं। हर एक ऑर्डर पर बनती है।",
+
+    brewEyebrow: "ब्रू बार",
+    brewTitle: "तीन कदम, और कप आपके हाथ में।",
+    stepPickTitle: "अपनी कॉफ़ी चुनिए",
+    stepPickBody:
+      "एस्प्रेसो और मिल्क कॉफ़ी, कोल्ड ब्रू और फ़्रापे, चाय और हॉट चॉकलेट।",
+    stepPickNote: "22 ड्रिंक और बेक्स",
+    stepCustomiseTitle: "अपने हिसाब से",
+    stepCustomiseBody:
+      "कप साइज़, कौन-सा दूध, एक्स्ट्रा शॉट, और कितनी मिठास। चुनते ही दाम बदलता है।",
+    stepCustomiseNote: "ओट, बादाम और सोया मिल्क उपलब्ध",
+    stepCollectTitle: "गरम ले जाइए",
+    stepCollectBody:
+      "ऑनलाइन भुगतान कीजिए, लाइव स्टेटस देखिए, और टोकन बुलते ही काउंटर से ले जाइए।",
+    stepCollectNote: "ज़्यादातर ड्रिंक 6 मिनट से कम में",
+
+    emptyCartTitle: "अभी कुछ नहीं बन रहा",
+    emptyCartBody: "एक कॉफ़ी चुनिए — भुगतान होते ही हम बनाना शुरू कर देंगे।",
+    emptyOrdersTitle: "कॉफ़ी बार से अभी कोई ऑर्डर नहीं",
+    emptyOrdersBody: "आपकी पहली फ़्लैट व्हाइट बस एक टैप दूर है।",
+  },
+
   header: {
     skipToContent: "सीधे सामग्री पर जाएँ",
     primaryNav: "मुख्य नेविगेशन",

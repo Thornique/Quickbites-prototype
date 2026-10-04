@@ -3,6 +3,12 @@ import { cn } from "@/lib/utils";
 
 export interface EmptyStateProps {
   icon?: LucideIcon;
+  /**
+   * A drawing to use instead of the lucide glyph — the coffee outlet passes
+   * its cup. Takes the whole circle rather than sitting inside it, because an
+   * illustration boxed in a 48px tinted puck reads as an icon that went wrong.
+   */
+  illustration?: React.ReactNode;
   title: string;
   description?: string;
   /** Every empty state should offer the obvious next action. */
@@ -14,6 +20,7 @@ export interface EmptyStateProps {
 
 export function EmptyState({
   icon: Icon,
+  illustration,
   title,
   description,
   action,
@@ -30,10 +37,14 @@ export function EmptyState({
         className,
       )}
     >
-      {Icon && (
-        <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-sand-100 text-ink-muted">
-          <Icon size={24} strokeWidth={1.75} aria-hidden="true" />
-        </span>
+      {illustration ? (
+        <span className="mb-4 inline-flex">{illustration}</span>
+      ) : (
+        Icon && (
+          <span className="mb-4 inline-flex size-12 items-center justify-center rounded-full bg-sand-100 text-ink-muted">
+            <Icon size={24} strokeWidth={1.75} aria-hidden="true" />
+          </span>
+        )
       )}
       <p className="text-base font-semibold text-ink">{title}</p>
       {description && (

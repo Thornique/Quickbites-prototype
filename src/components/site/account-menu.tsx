@@ -62,7 +62,7 @@ export function AccountMenu({ className, showLabel = false }: AccountMenuProps) 
           href={signInHref}
           className={cn(
             "inline-flex h-10 shrink-0 items-center gap-2 rounded-control px-2",
-            "text-sm font-bold tracking-wide text-ink uppercase transition-colors",
+            "text-sm font-bold tracking-wide whitespace-nowrap text-ink uppercase transition-colors",
             "hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2",
             className,
           )}

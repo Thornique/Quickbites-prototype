@@ -98,8 +98,10 @@ export function SiteHeader() {
             <OutletSwitch />
             <span aria-hidden="true" className="h-6 w-px bg-hairline" />
             <OrderModeSwitch />
-            <span aria-hidden="true" className="hidden h-6 w-px bg-hairline xl:block" />
-            <OutletPill className="hidden max-w-56 xl:inline-flex" />
+            <span aria-hidden="true" className="hidden h-6 w-px bg-hairline 2xl:block" />
+            {/* Last in and first out: at 1280 the coffee wordmark plus the
+                switch already fill the row. */}
+            <OutletPill className="hidden max-w-56 2xl:inline-flex" />
           </div>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">

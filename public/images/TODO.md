@@ -39,11 +39,29 @@ Priority order for a shoot:
 1. **Wraps** — `paneer-kathi-roll`, `veg-frankie`, `chicken-kathi-roll`
 3. **Remaining pizzas** — `paneer-tikka-pizza`, `corn-cheese-pizza`, `veggie-supreme-pizza`
 4. **Sides** — `cheese-garlic-bread`, `veg-nuggets`, `masala-fries`, `onion-rings`
-5. **Hot coffee** — `filter-coffee`, `cafe-latte`, `masala-chai`, `hot-chocolate`
-6. **Cold drinks** — `oreo-shake`, `mango-shake`, `strawberry-shake`, `fresh-lime-soda`,
-   `iced-tea`, `butterscotch-shake`
-7. **Desserts** — `choco-lava-cake`, `gulab-jamun`, `ice-cream-scoop`, `red-velvet-pastry`
-8. **Combos** — `burger-combo-meal`, `pizza-combo-meal`, `student-combo`, `family-feast`
+5. **Cold drinks (restaurant)** — `oreo-shake`, `mango-shake`, `strawberry-shake`,
+   `fresh-lime-soda`, `iced-tea`, `butterscotch-shake`
+6. **Desserts** — `choco-lava-cake`, `gulab-jamun`, `ice-cream-scoop`, `red-velvet-pastry`
+7. **Combos** — `burger-combo-meal`, `pizza-combo-meal`, `student-combo`, `family-feast`
+
+## Quick Bites Coffee
+
+The visual refresh covered the coffee outlet's high-impact slots: the hero, both dark bands,
+all five category tiles, the three banners and 17 of its 22 items now carry real photography
+(see the `coffee/` section of `CREDITS.md`).
+
+Five coffee items still ship with the brand placeholder, all of them in the long tail of the
+menu rather than anywhere the eye lands first:
+
+- `cold-brew` — needs a tall glass with the concentrate visible, not another iced latte
+- `caramel-frappe` — distinct enough from `coffee-frappe` to need its own shot
+- `choco-cookies` — two cookies in a bag, not a tray of them
+- `chicken-pesto-sandwich` — the only non-veg item at this outlet
+- `cheese-garlic-bread` — shared slug with the restaurant's side, but a different plating
+
+Two of the shipped photos are stand-ins a real shoot should replace: `cafe-mocha` reuses the
+hot-chocolate cup, and `iced-latte` reuses the cold-coffee glass. Both are honest about what
+is in the cup; neither is that exact drink.
 
 ## Also outstanding
 
@@ -51,4 +69,6 @@ Priority order for a shoot:
   key for its search endpoint and photo pages, so these must be opened by hand. The Pexels
   rows are already credited.
 - A real team photo for `/about` — currently uses a cafe interior shot.
+- Interior and counter photography of the **actual coffee shop** on Nagchun Road. Everything
+  under `coffee/` is stock, so the room in the gallery is not the client's room.
 - An FSSAI licence number for the about page and footer (currently a placeholder).

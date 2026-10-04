@@ -63,7 +63,7 @@ export const SEED_BANNERS: Banner[] = [
   {
     id: "banner-c1",
     outletId: "coffee",
-    image: "/images/menu/cappuccino.webp",
+    image: "/images/coffee/hero-pour.webp",
     headline: { en: "Ground this morning", hi: "आज सुबह पिसी" },
     subhead: {
       en: "Chikmagalur arabica, pulled to order at Nagchun Road. Open from 7:30 AM.",
@@ -78,7 +78,7 @@ export const SEED_BANNERS: Banner[] = [
   {
     id: "banner-c2",
     outletId: "coffee",
-    image: "/images/menu/cold-coffee.webp",
+    image: "/images/coffee/cold-coffee.webp",
     headline: { en: "Frappés, properly blended", hi: "फ़्रापे, ठीक से ब्लेंड" },
     subhead: {
       en: "Cold brew steeped 16 hours, frappés made to order. From ₹129.",
@@ -93,7 +93,7 @@ export const SEED_BANNERS: Banner[] = [
   {
     id: "banner-c3",
     outletId: "coffee",
-    image: "/images/gallery/donuts.webp",
+    image: "/images/coffee/croissant.webp",
     headline: { en: "Out of the oven at 8", hi: "8 बजे ओवन से" },
     subhead: {
       en: "Croissants, muffins and walnut brownies, baked on site each morning.",
@@ -129,9 +129,9 @@ const GALLERY_ROWS: Array<
     "CAFE",
     "restaurant",
   ],
-  ["/images/gallery/donuts.webp", "Fresh doughnuts", "ताज़े डोनट", "FOOD", "coffee"],
+  ["/images/coffee/croissant.webp", "Fresh doughnuts", "ताज़े डोनट", "FOOD", "coffee"],
   [
-    "/images/gallery/coffee-moment.webp",
+    "/images/coffee/cafe-latte.webp",
     "Coffee for two",
     "दो के लिए कॉफ़ी",
     "CAFE",
@@ -173,14 +173,14 @@ const GALLERY_ROWS: Array<
     "restaurant",
   ],
   [
-    "/images/gallery/cafe-seating.webp",
+    "/images/coffee/cafe-interior.webp",
     "Seating by the window",
     "खिड़की के पास बैठने की जगह",
     "CAFE",
     "coffee",
   ],
-  ["/images/gallery/dessert-cups.webp", "Dessert cups", "डेज़र्ट कप", "FOOD", "coffee"],
-  ["/images/menu/cold-coffee.webp", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD", "coffee"],
+  ["/images/coffee/brownie.webp", "Dessert cups", "डेज़र्ट कप", "FOOD", "coffee"],
+  ["/images/coffee/cold-coffee.webp", "Cold coffee", "कोल्ड कॉफ़ी", "FOOD", "coffee"],
   [
     "/images/gallery/burger-board.webp",
     "Burgers on the board",
@@ -189,7 +189,7 @@ const GALLERY_ROWS: Array<
     "restaurant",
   ],
   [
-    "/images/menu/cappuccino.webp",
+    "/images/coffee/cappuccino.webp",
     "Cappuccino with cocoa dust",
     "कोको वाली कैपेचीनो",
     "FOOD",

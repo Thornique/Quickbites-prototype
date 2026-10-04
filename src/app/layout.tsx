@@ -84,6 +84,26 @@ const muktaDeva = localFont({
   fallback: ["ui-sans-serif", "system-ui", "sans-serif"],
 });
 
+/**
+ * Serif display face, coffee outlet only.
+ *
+ * Fraunces as one variable file over the Latin subset — the whole 400–900
+ * range for 66KB, and no Devanagari, because Hindi headings keep Baloo (it
+ * already carries the script, and a second Devanagari serif would be a
+ * download nobody sees). globals.css chains it in front of the Devanagari
+ * Baloo file under [data-outlet="coffee"], so Latin takes Fraunces and every
+ * other glyph falls through exactly as before.
+ */
+const frauncesLatin = localFont({
+  src: "../fonts/fraunces-latin-var.woff2",
+  weight: "400 900",
+  variable: "--font-serif-latin",
+  display: "swap",
+  /* Same reason as the Baloo Latin half: no fallback inside the variable, or
+     a system serif would sit in front of the Devanagari face. */
+  adjustFontFallback: false,
+});
+
 export const metadata: Metadata = {
   /** Resolves relative Open Graph and Twitter image URLs to absolute ones. */
   metadataBase: new URL(SITE_URL),
@@ -114,7 +134,7 @@ export default function RootLayout({
     */
     <html
       lang="en"
-      className={`${balooLatin.variable} ${balooDeva.variable} ${muktaLatin.variable} ${muktaDeva.variable}`}
+      className={`${balooLatin.variable} ${balooDeva.variable} ${frauncesLatin.variable} ${muktaLatin.variable} ${muktaDeva.variable}`}
       suppressHydrationWarning
     >
       <body>

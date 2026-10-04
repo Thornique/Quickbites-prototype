@@ -84,8 +84,16 @@ Two outlets, `restaurant` and `coffee`, share one codebase.
   knowing the outlet.
 - **The storefront has one active outlet**, held in `store/outlet.ts`, persisted, and shareable
   as `?outlet=coffee`. `features/outlet/provider.tsx` sets `data-outlet` on `<html>`, which
-  re-points `--color-brand` at the coffee palette — so every existing `bg-brand` / `text-brand`
-  utility follows the outlet without a component knowing about it.
+  re-points the colour, radius, shadow and font tokens at the coffee palette — so every
+  existing `bg-brand` / `text-brand` / `rounded-card` utility follows the outlet without a
+  component knowing about it. Every coffee style in `globals.css` is scoped to
+  `:root[data-outlet="coffee"]`, which is what keeps the restaurant byte-identical.
+- **The coffee outlet has its own personality, not a recolour.** Deep espresso bands, a caramel
+  accent (`#A85A26`, 5.05:1 under white), creamy surfaces, 20px card radii, warm-tinted
+  shadows, a faint SVG grain over the page, and **Fraunces** for Latin headings — self-hosted
+  beside the other faces, Latin subset only, so Hindi headings keep Baloo and download nothing
+  extra. Its home page is a different layout too (`_sections/home-sections.tsx` picks between
+  the two), with coffee-only composites under `components/site/coffee/`.
 - **Each outlet keeps its own cart.** Switching swaps which basket is on screen; nothing is
   merged or cleared.
 - **Slugs and coupon codes are unique within an outlet**, not across both, so menu item ids and
@@ -146,7 +154,8 @@ Next.js 15 (App Router) · TypeScript strict · Tailwind v4 · Radix UI · zusta
 react-hook-form + zod · TanStack Table · Recharts · sonner · date-fns · lucide-react ·
 idb-keyval (admin image uploads only)
 
-Fonts: **Baloo 2** (display) and **Mukta** (body), both carrying Latin and Devanagari. They are
+Fonts: **Baloo 2** (display), **Mukta** (body) — both carrying Latin and Devanagari — and
+**Fraunces** (variable serif, Latin only) for the coffee outlet's headings. They are
 **self-hosted** from `src/fonts` rather than fetched by `next/font/google`, whose download timed
 out on every dev start and every build. Each family is split into a Latin file and a Devanagari
 file and chained in a font stack, so Latin text uses the small Latin file and Hindi — plus ₹,

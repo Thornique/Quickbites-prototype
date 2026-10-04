@@ -43,9 +43,14 @@ export function Wordmark({
   };
 
   if (variant === "stacked") {
+    /*
+      The coffee lockup needs a third line, so its box is taller. Without the
+      extra height the sub-line sat on top of "BITES" and was clipped by the
+      viewBox — the two marks cannot share one.
+    */
     return (
       <svg
-        viewBox="0 0 104 54"
+        viewBox={isCoffee ? "0 0 104 70" : "0 0 104 54"}
         role="img"
         aria-label={label}
         className={cn("h-12 w-auto", className)}
@@ -62,10 +67,11 @@ export function Wordmark({
           <text
             {...textProps}
             x="0"
-            y="54"
-            fontSize="9"
+            y="66"
+            fontSize="12"
             textLength="86"
-            letterSpacing="0.14em"
+            letterSpacing="0.1em"
+            fill={tone === "light" ? "#FFFFFF" : "var(--color-caramel-deep)"}
           >
             COFFEE
           </text>

@@ -1,17 +1,7 @@
 import type { Metadata } from "next";
 import { OPENING_HOURS, STORE } from "@/lib/constants";
 import { OUTLETS } from "@/lib/outlets";
-import { Bestsellers } from "./_sections/bestsellers";
-import { CategoryRail } from "./_sections/category-rail";
-import { ComboBand } from "./_sections/combo-band";
-import { HeroCarousel } from "./_sections/hero-carousel";
-import { HowItWorks } from "./_sections/how-it-works";
-import { LocationBlock } from "./_sections/location-block";
-import { Offers } from "./_sections/offers";
-import { OutletChoice } from "./_sections/outlet-choice";
-import { ReadyStrip } from "./_sections/ready-strip";
-import { ReviewsPreview } from "./_sections/reviews-preview";
-import { SocialGrid } from "./_sections/social-grid";
+import { HomeSections } from "./_sections/home-sections";
 
 const WEEK = [
   "Monday",
@@ -127,18 +117,11 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantJsonLd) }}
       />
 
-      {/* First visit only — a two-card choice above the restaurant's hero. */}
-      <OutletChoice />
-      <HeroCarousel />
-      <ReadyStrip />
-      <CategoryRail />
-      <Bestsellers />
-      <Offers />
-      <ComboBand />
-      <HowItWorks />
-      <ReviewsPreview />
-      <SocialGrid />
-      <LocationBlock />
+      {/*
+        Which page this is depends on the outlet, which only the browser
+        knows — so the stack itself is a client component.
+      */}
+      <HomeSections />
     </>
   );
 }

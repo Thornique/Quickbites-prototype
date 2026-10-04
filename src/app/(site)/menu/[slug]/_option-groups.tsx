@@ -141,7 +141,10 @@ function Row({
   control: React.ReactNode;
 }) {
   return (
+    /* data-option-row is the hook the coffee outlet's CSS uses to turn these
+       rows into selectable pills — see globals.css. */
     <div
+      data-option-row
       className={cn(
         "flex items-center gap-3 border-b border-hairline py-2.5 last:border-0",
         disabled && "opacity-50",

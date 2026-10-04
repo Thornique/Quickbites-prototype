@@ -6,6 +6,7 @@ import { CartLineRow } from "@/components/site/cart-line-row";
 import { CartSummary } from "@/components/site/cart-summary";
 import { CouponField } from "@/components/site/coupon-field";
 import { OrderTypeToggle } from "@/components/site/order-type-toggle";
+import { CupIllustration } from "@/components/site/coffee/cup-illustration";
 import { OtherCartNote } from "@/components/site/other-cart-note";
 import { PageHead } from "@/components/site/page-head";
 import { StoreClosedBanner } from "@/components/site/store-closed-banner";
@@ -42,9 +43,17 @@ export default function CartPage() {
         <PageHead title={t.cartPage.title} />
         <Container className="py-10">
           <EmptyState
-            icon={ShoppingBag}
-            title={t.cartPage.empty}
-            description={t.cartPage.emptyBody}
+            {...(outletId === "coffee"
+              ? {
+                  illustration: <CupIllustration />,
+                  title: t.coffeeHome.emptyCartTitle,
+                  description: t.coffeeHome.emptyCartBody,
+                }
+              : {
+                  icon: ShoppingBag,
+                  title: t.cartPage.empty,
+                  description: t.cartPage.emptyBody,
+                })}
             action={
               <Button asChild>
                 <Link href="/menu">{t.cartPage.browseMenu}</Link>
