@@ -19,7 +19,7 @@ import type { Order } from "@/types";
  */
 export function PaymentCard({ order }: { order: Order }) {
   const t = useT();
-  const { data: settings } = useSettings();
+  const { data: settings } = useSettings(order.outletId);
 
   // A cancelled order is closed: never invite the customer to pay for it.
   const isCancelled = order.status === "CANCELLED";

@@ -12,6 +12,7 @@ const CustomiseSheet = dynamic(
   () => import("@/components/site/customise-sheet").then((m) => m.CustomiseSheet),
   { ssr: false },
 );
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { usePick, useT } from "@/i18n";
 import { buildCartLine } from "@/services/cart-pricing";
@@ -40,7 +41,7 @@ export function AddToCartProvider({ children }: { children: React.ReactNode }) {
   const pick = usePick();
   const router = useRouter();
   const addLine = useCartStore((s) => s.addLine);
-  const { data: openState } = useOpenState();
+  const { data: openState } = useOpenState(useOutletId());
 
   const [item, setItem] = useState<MenuItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);

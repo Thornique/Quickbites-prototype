@@ -12,6 +12,7 @@ import { Price } from "@/components/ui/price";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMyOrders } from "@/features/orders";
+import { OutletBadge, useOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
@@ -23,6 +24,7 @@ import { RateOrderDialog } from "./_rate-order-dialog";
 export default function AccountOrdersPage() {
   const t = useT();
   const { data: orders, isLoading } = useMyOrders();
+  const { outletId, setOutlet } = useOutlet();
   const addLine = useCartStore((s) => s.addLine);
   const [ratingOrder, setRatingOrder] = useState<Order | null>(null);
 
@@ -32,16 +34,25 @@ export default function AccountOrdersPage() {
   const handleReorder = async (order: Order) => {
     try {
       const { lines, skipped } = await buildReorderLines(order.id);
+      /*
+        Reordering has to land in the right basket. Switching first means the
+        coffee lines go into the coffee cart even if the restaurant is on
+        screen — and the customer ends up looking at the menu they reordered
+        from, which is where they would want to be anyway.
+      */
+      if (order.outletId !== outletId) setOutlet(order.outletId);
       lines.forEach(addLine);
       if (lines.length > 0) toast.success(t.orders.reordered(lines.length));
-      if (skipped.length > 0) toast.warning(t.orders.reorderSkipped(skipped.join(", ")));
+      if (skipped.length > 0)
+        toast.warning(t.orders.reorderSkipped(skipped.join(", ")));
     } catch (caught) {
       toast.error(toErrorMessage(caught));
     }
   };
 
   const statusBadge = (order: Order) => {
-    if (order.status === "CANCELLED") return <Badge variant="danger">{t.track.steps.cancelled}</Badge>;
+    if (order.status === "CANCELLED")
+      return <Badge variant="danger">{t.track.steps.cancelled}</Badge>;
     if (order.status === "HANDED_OVER")
       return (
         <Badge variant="success">
@@ -50,9 +61,12 @@ export default function AccountOrdersPage() {
             : t.track.steps.handedOverDineIn}
         </Badge>
       );
-    if (order.status === "READY") return <Badge variant="success">{t.track.steps.ready}</Badge>;
-    if (order.status === "PREPARING") return <Badge variant="warning">{t.track.steps.preparing}</Badge>;
-    if (order.status === "ACCEPTED") return <Badge variant="secondary">{t.track.steps.accepted}</Badge>;
+    if (order.status === "READY")
+      return <Badge variant="success">{t.track.steps.ready}</Badge>;
+    if (order.status === "PREPARING")
+      return <Badge variant="warning">{t.track.steps.preparing}</Badge>;
+    if (order.status === "ACCEPTED")
+      return <Badge variant="secondary">{t.track.steps.accepted}</Badge>;
     return <Badge variant="muted">{t.track.steps.placed}</Badge>;
   };
 
@@ -104,19 +118,25 @@ export default function AccountOrdersPage() {
             <Card className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="nums text-display text-xl text-brand">{order.tokenNumber}</p>
+                  <p className="nums text-display text-xl text-brand">
+                    {order.tokenNumber}
+                  </p>
                   <p className="nums mt-0.5 text-xs text-ink-muted">
                     {order.id} · {formatDate(order.createdAt)}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* Which counter it came from — two outlets, one history. */}
+                  <OutletBadge outletId={order.outletId} />
                   {statusBadge(order)}
                   {paymentBadge(order)}
                 </div>
               </div>
 
               <p className="mt-2 truncate text-sm text-ink-muted">
-                {order.lines.map((line) => `${line.quantity} × ${line.name.en}`).join(", ")}
+                {order.lines
+                  .map((line) => `${line.quantity} × ${line.name.en}`)
+                  .join(", ")}
               </p>
 
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-hairline pt-3">
@@ -125,11 +145,19 @@ export default function AccountOrdersPage() {
                   <Button asChild size="sm" variant="outline">
                     <Link href={`/order/${order.id}`}>{t.orders.track}</Link>
                   </Button>
-                  <Button size="sm" variant="ghost" onClick={() => void handleReorder(order)}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => void handleReorder(order)}
+                  >
                     {t.orders.reorder}
                   </Button>
                   {order.status === "HANDED_OVER" && (
-                    <Button size="sm" variant="ghost" onClick={() => setRatingOrder(order)}>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setRatingOrder(order)}
+                    >
                       <Star aria-hidden="true" />
                       {t.orders.rate}
                     </Button>

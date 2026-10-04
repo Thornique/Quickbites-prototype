@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useCategoryCounts } from "@/features/menu";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 
 /**
@@ -21,8 +22,9 @@ import { usePick, useT } from "@/i18n";
 export function CategoryRail() {
   const t = useT();
   const pick = usePick();
-  const { data: categories, isLoading } = useCategories(true);
-  const { data: counts } = useCategoryCounts();
+  const outletId = useOutletId();
+  const { data: categories, isLoading } = useCategories(outletId, true);
+  const { data: counts } = useCategoryCounts(outletId);
   const railRef = useRef<HTMLUListElement>(null);
 
   const scrollBy = (direction: 1 | -1) => {
@@ -47,9 +49,7 @@ export function CategoryRail() {
             <h2 className="text-display text-2xl text-ink uppercase sm:text-3xl lg:text-4xl">
               {t.categories.title}
             </h2>
-            <p className="mt-1.5 text-sm text-ink-muted">
-              {t.categories.description}
-            </p>
+            <p className="mt-1.5 text-sm text-ink-muted">{t.categories.description}</p>
           </div>
 
           <Link

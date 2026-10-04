@@ -13,6 +13,7 @@ import { OutletPill } from "@/components/site/outlet-pill";
 import { StoreStatusPill } from "@/components/site/store-status-pill";
 import { useSession } from "@/features/auth";
 import { NotificationBell } from "@/features/notifications";
+import { OutletSwitch, useOutlet } from "@/features/outlet";
 import { Wordmark } from "@/components/site/wordmark";
 import { Container } from "@/components/ui/container";
 import {
@@ -22,7 +23,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useT } from "@/i18n";
+import { usePick, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 /** Jumps to — and focuses — the search field on the menu page. */
@@ -30,6 +31,8 @@ const SEARCH_HREF = "/menu#menu-search";
 
 export function SiteHeader() {
   const t = useT();
+  const pick = usePick();
+  const { outletId, outlet } = useOutlet();
   const pathname = usePathname();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -71,19 +74,32 @@ export function SiteHeader() {
             isScrolled ? "h-14" : "h-16 sm:h-18",
           )}
         >
-          <Link href="/" className="shrink-0" aria-label="Quick Bites — home">
+          <Link
+            href="/"
+            className="shrink-0"
+            aria-label={`${pick(outlet.name)} — home`}
+          >
             <Wordmark
+              outletId={outletId}
               className={cn(
                 "transition-[height] duration-150",
+                /* The coffee lockup is a third wider, so it sits a touch lower. */
                 isScrolled ? "h-5" : "h-5 sm:h-6",
+                outletId === "coffee" && "max-w-44 sm:max-w-none",
               )}
             />
           </Link>
 
-          <div className="hidden min-w-0 items-center gap-4 lg:flex">
-            <OrderModeSwitch />
+          {/*
+            The outlet switch comes before the order mode: which shop you are
+            buying from decides what the rest of the row even means.
+          */}
+          <div className="hidden min-w-0 items-center gap-3 lg:flex xl:gap-4">
+            <OutletSwitch />
             <span aria-hidden="true" className="h-6 w-px bg-hairline" />
-            <OutletPill className="max-w-64" />
+            <OrderModeSwitch />
+            <span aria-hidden="true" className="hidden h-6 w-px bg-hairline xl:block" />
+            <OutletPill className="hidden max-w-56 xl:inline-flex" />
           </div>
 
           <div className="ml-auto flex items-center gap-1 sm:gap-2">
@@ -118,13 +134,14 @@ export function SiteHeader() {
                 <SheetHeader className="border-b border-hairline p-5">
                   <SheetTitle asChild>
                     <span>
-                      <Wordmark className="h-5" />
+                      <Wordmark className="h-5" outletId={outletId} />
                     </span>
                   </SheetTitle>
                 </SheetHeader>
 
                 <div className="p-5">
-                  <StoreStatusPill />
+                  <OutletSwitch size="lg" />
+                  <StoreStatusPill className="mt-4" />
 
                   <nav aria-label={t.header.primaryNav} className="mt-5 grid">
                     <HeaderNavLinks variant="sheet" />

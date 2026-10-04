@@ -9,13 +9,15 @@ import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBestsellers, useCategories } from "@/features/menu";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 
 export function Bestsellers() {
   const t = useT();
   const pick = usePick();
-  const { data: items, isLoading } = useBestsellers(8);
-  const { data: categories } = useCategories();
+  const outletId = useOutletId();
+  const { data: items, isLoading } = useBestsellers(outletId, 8);
+  const { data: categories } = useCategories(outletId);
   const railRef = useRef<HTMLUListElement>(null);
 
   const categoryName = (categoryId: string) => {

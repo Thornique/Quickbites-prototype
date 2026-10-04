@@ -11,7 +11,7 @@ import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSiteContent } from "@/features/content";
 import { usePick, useT } from "@/i18n";
-import { OPENING_HOURS, STORE } from "@/lib/constants";
+import { OUTLET_LIST } from "@/lib/outlets";
 
 /**
  * The brand story. Every word comes from siteContent so the admin content
@@ -176,15 +176,24 @@ export function AboutContent() {
                 {t.about.visitTitle}
               </h2>
               <p className="measure mt-2 text-sm text-ink-muted">{t.about.visitBody}</p>
-              <p className="mt-3 text-sm text-ink">
-                {pick(content.contact.addressLine)} · {OPENING_HOURS.label}
-              </p>
+              {/* Both outlets, because "visit us" now means a choice. */}
+              <ul className="mt-3 grid gap-1.5">
+                {OUTLET_LIST.map((outlet) => (
+                  <li key={outlet.id} className="text-sm text-ink">
+                    <span className="font-semibold">{pick(outlet.name)}</span>
+                    {" — "}
+                    {pick(content.outlets[outlet.id].addressLine)}
+                    {" · "}
+                    <span className="nums">
+                      {pick(content.outlets[outlet.id].hoursNote)}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
             <div className="flex flex-wrap gap-3">
               <Button asChild variant="outline">
-                <a href={STORE.mapsUrl} target="_blank" rel="noopener noreferrer">
-                  {t.footer.getDirections}
-                </a>
+                <Link href="/contact">{t.footer.getDirections}</Link>
               </Button>
               <Button asChild>
                 <Link href="/book-table">{t.nav.bookTable}</Link>

@@ -6,9 +6,10 @@ import { ShoppingBag } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { useBottomBarSpace } from "@/components/site/use-bottom-bar-space";
 import { usePricedCart } from "@/features/cart";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
-import { useCartStore } from "@/store/cart";
+import { useCart, useCartStore } from "@/store/cart";
 
 /** Routes that already own the bottom of the screen. */
 const HIDDEN_ON = ["/cart", "/checkout", "/order/"];
@@ -22,12 +23,12 @@ const HIDDEN_ON = ["/cart", "/checkout", "/order/"];
 export function StickyCartBar() {
   const t = useT();
   const pathname = usePathname();
-  const lines = useCartStore((s) => s.lines);
+  const outletId = useOutletId();
+  const { lines, couponCode } = useCart(outletId);
   const orderType = useCartStore((s) => s.orderType);
-  const couponCode = useCartStore((s) => s.couponCode);
   const isHydrated = useCartStore((s) => s.isHydrated);
 
-  const { data: cart } = usePricedCart(lines, couponCode, orderType);
+  const { data: cart } = usePricedCart(lines, outletId, couponCode, orderType);
   const count = isHydrated ? lines.reduce((sum, line) => sum + line.quantity, 0) : 0;
   const isHidden = HIDDEN_ON.some((route) => pathname.startsWith(route));
   const isVisible = count > 0 && !isHidden;

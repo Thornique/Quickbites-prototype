@@ -5,12 +5,9 @@ import { Clock, MapPin, MessageCircle, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
-import { useT } from "@/i18n";
-import { OPENING_HOURS, STORE } from "@/lib/constants";
-
-const MAP_SRC = `https://www.google.com/maps?q=${encodeURIComponent(
-  STORE.addressFull,
-)}&output=embed`;
+import { useOutlet } from "@/features/outlet";
+import { usePick, useT } from "@/i18n";
+import { outletPhoneHref } from "@/lib/outlets";
 
 /**
  * Address, hours and contact, with the map behind a click.
@@ -21,7 +18,15 @@ const MAP_SRC = `https://www.google.com/maps?q=${encodeURIComponent(
  */
 export function LocationBlock() {
   const t = useT();
+  const pick = usePick();
+  const { outletId, outlet, details } = useOutlet();
   const [showMap, setShowMap] = useState(false);
+
+  const address = pick(outlet.address);
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
+    address,
+  )}&output=embed`;
+  const phoneHref = outletPhoneHref(outletId);
 
   return (
     <section className="py-12 sm:py-16">
@@ -41,7 +46,7 @@ export function LocationBlock() {
                 className="mt-0.5 shrink-0 text-brand"
                 aria-hidden="true"
               />
-              <span>{STORE.addressFull}</span>
+              <span>{address}</span>
             </p>
             <p className="mt-4 flex items-start gap-3 text-sm text-ink">
               <Clock
@@ -50,19 +55,19 @@ export function LocationBlock() {
                 className="mt-0.5 shrink-0 text-brand"
                 aria-hidden="true"
               />
-              <span className="nums">{OPENING_HOURS.label}</span>
+              <span className="nums">{pick(details.hoursLabel)}</span>
             </p>
 
             <div className="mt-6 flex flex-wrap gap-3">
               <Button asChild>
-                <a href={`tel:${STORE.phoneHref}`}>
+                <a href={`tel:${phoneHref}`}>
                   <Phone aria-hidden="true" />
                   {t.footer.callUs}
                 </a>
               </Button>
               <Button asChild variant="outline">
                 <a
-                  href={`https://wa.me/${STORE.whatsappHref}`}
+                  href={`https://wa.me/${phoneHref.replace("+", "")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -71,7 +76,7 @@ export function LocationBlock() {
                 </a>
               </Button>
               <Button asChild variant="ghost">
-                <a href={STORE.mapsUrl} target="_blank" rel="noopener noreferrer">
+                <a href={details.mapsUrl} target="_blank" rel="noopener noreferrer">
                   {t.footer.getDirections}
                 </a>
               </Button>
@@ -81,7 +86,7 @@ export function LocationBlock() {
           <div className="relative aspect-[4/3] overflow-hidden rounded-card border border-hairline bg-sand-100 lg:aspect-auto lg:min-h-80">
             {showMap ? (
               <iframe
-                src={MAP_SRC}
+                src={mapSrc}
                 title={t.location.mapLabel}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"

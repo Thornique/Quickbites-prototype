@@ -4,24 +4,41 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { cartLineKey } from "@/lib/pricing";
 import { cartKey, readKey, removeKey, writeKey } from "@/storage";
-import type { CartLine, OrderType } from "@/types";
+import type { CartLine, OrderType, OutletId } from "@/types";
+import { OUTLET_IDS } from "@/types";
+import { activeOutletId } from "./outlet";
 
 /**
  * Cart state.
  *
- * The active cart is persisted under one key. Each signed-in customer also
- * gets their own stored cart, so signing out does not hand the next person at
- * the counter the previous customer's basket — and signing in merges whatever
- * was built as a guest into the account's cart rather than discarding it.
+ * One basket per outlet, kept side by side: a customer who has three coffees
+ * queued up and then goes to look at the burger menu must come back to find
+ * the coffees still there. Switching outlet changes which basket is on screen
+ * and nothing else — nothing is merged, nothing is cleared.
+ *
+ * Each signed-in customer also gets their own stored carts, so signing out
+ * does not hand the next person at the counter the previous customer's
+ * basket — and signing in merges whatever was built as a guest into the
+ * account's carts rather than discarding it.
  */
 
 const GUEST = "guest";
 
-interface CartState {
+export interface OutletCart {
   lines: CartLine[];
-  orderType: OrderType;
   couponCode?: string;
-  /** Whose cart is currently loaded: a user id, or "guest". */
+}
+
+type CartsByOutlet = Record<OutletId, OutletCart>;
+
+interface CartState {
+  carts: CartsByOutlet;
+  /**
+   * Takeaway or dine-in. Shared across outlets on purpose — it is how the
+   * customer is eating today, not a property of one counter.
+   */
+  orderType: OrderType;
+  /** Whose carts are currently loaded: a user id, or "guest". */
   ownerId: string;
   /** Server render and first paint must agree; flips true after rehydration. */
   isHydrated: boolean;
@@ -32,18 +49,33 @@ interface CartState {
   restoreLine: (line: CartLine, index: number) => void;
   setOrderType: (orderType: OrderType) => void;
   setCoupon: (code: string | undefined) => void;
+  /** Empties the active outlet's cart only. */
   clear: () => void;
   /** Called when the session changes; merges or swaps carts as needed. */
   syncOwner: (userId: string | null) => void;
 }
 
-interface StoredCart {
-  lines: CartLine[];
-  couponCode?: string;
+function emptyCarts(): CartsByOutlet {
+  return OUTLET_IDS.reduce((carts, outletId) => {
+    carts[outletId] = { lines: [], couponCode: undefined };
+    return carts;
+  }, {} as CartsByOutlet);
+}
+
+/** Fills in any outlet missing from stored (or older) data. */
+function normaliseCarts(stored?: Partial<CartsByOutlet>): CartsByOutlet {
+  const carts = emptyCarts();
+  if (!stored) return carts;
+  for (const outletId of OUTLET_IDS) {
+    const cart = stored[outletId];
+    if (cart)
+      carts[outletId] = { lines: cart.lines ?? [], couponCode: cart.couponCode };
+  }
+  return carts;
 }
 
 function mergeLines(base: CartLine[], incoming: CartLine[]): CartLine[] {
-  const merged = [...base];
+  const merged = base.map((line) => ({ ...line }));
   for (const line of incoming) {
     const existing = merged.find((l) => l.lineKey === line.lineKey);
     if (existing) existing.quantity += line.quantity;
@@ -52,17 +84,33 @@ function mergeLines(base: CartLine[], incoming: CartLine[]): CartLine[] {
   return merged;
 }
 
+function mergeCarts(base: CartsByOutlet, incoming: CartsByOutlet): CartsByOutlet {
+  const merged = emptyCarts();
+  for (const outletId of OUTLET_IDS) {
+    merged[outletId] = {
+      lines: mergeLines(base[outletId].lines, incoming[outletId].lines),
+      couponCode: base[outletId].couponCode ?? incoming[outletId].couponCode,
+    };
+  }
+  return merged;
+}
+
+function hasAnyLines(carts: CartsByOutlet): boolean {
+  return OUTLET_IDS.some((outletId) => carts[outletId].lines.length > 0);
+}
+
 export const useCartStore = create<CartState>()(
   persist(
     (set, get) => ({
-      lines: [],
+      carts: emptyCarts(),
       orderType: "TAKEAWAY",
-      couponCode: undefined,
       ownerId: GUEST,
       isHydrated: false,
 
       addLine: (line) =>
         set((state) => {
+          const outletId = activeOutletId();
+          const cart = state.carts[outletId];
           // Same item with the same options and note merges; anything else
           // becomes its own line.
           const key =
@@ -72,89 +120,119 @@ export const useCartStore = create<CartState>()(
               line.selectedOptions.map((o) => o.optionId),
               line.notes,
             );
-          const existing = state.lines.find((l) => l.lineKey === key);
-          if (existing) {
-            return {
-              lines: state.lines.map((l) =>
+          const existing = cart.lines.find((l) => l.lineKey === key);
+          const lines = existing
+            ? cart.lines.map((l) =>
                 l.lineKey === key ? { ...l, quantity: l.quantity + line.quantity } : l,
-              ),
-            };
-          }
-          return { lines: [...state.lines, { ...line, lineKey: key }] };
+              )
+            : [...cart.lines, { ...line, lineKey: key }];
+
+          return { carts: { ...state.carts, [outletId]: { ...cart, lines } } };
         }),
 
       setQuantity: (lineKey, quantity) =>
-        set((state) => ({
-          lines:
+        set((state) => {
+          const outletId = activeOutletId();
+          const cart = state.carts[outletId];
+          const lines =
             quantity <= 0
-              ? state.lines.filter((l) => l.lineKey !== lineKey)
-              : state.lines.map((l) =>
-                  l.lineKey === lineKey ? { ...l, quantity } : l,
-                ),
-        })),
+              ? cart.lines.filter((l) => l.lineKey !== lineKey)
+              : cart.lines.map((l) => (l.lineKey === lineKey ? { ...l, quantity } : l));
+          return { carts: { ...state.carts, [outletId]: { ...cart, lines } } };
+        }),
 
       removeLine: (lineKey) => {
-        const removed = get().lines.find((l) => l.lineKey === lineKey) ?? null;
-        set((state) => ({ lines: state.lines.filter((l) => l.lineKey !== lineKey) }));
+        const outletId = activeOutletId();
+        const removed =
+          get().carts[outletId].lines.find((l) => l.lineKey === lineKey) ?? null;
+        set((state) => {
+          const cart = state.carts[outletId];
+          return {
+            carts: {
+              ...state.carts,
+              [outletId]: {
+                ...cart,
+                lines: cart.lines.filter((l) => l.lineKey !== lineKey),
+              },
+            },
+          };
+        });
         return removed;
       },
 
       /** Puts an undone removal back where it was, not at the end. */
       restoreLine: (line, index) =>
         set((state) => {
-          if (state.lines.some((l) => l.lineKey === line.lineKey)) return state;
-          const lines = [...state.lines];
+          const outletId = activeOutletId();
+          const cart = state.carts[outletId];
+          if (cart.lines.some((l) => l.lineKey === line.lineKey)) return state;
+          const lines = [...cart.lines];
           lines.splice(Math.min(index, lines.length), 0, line);
-          return { lines };
+          return { carts: { ...state.carts, [outletId]: { ...cart, lines } } };
         }),
 
       setOrderType: (orderType) => set({ orderType }),
-      setCoupon: (couponCode) => set({ couponCode }),
-      clear: () => set({ lines: [], couponCode: undefined }),
+
+      setCoupon: (couponCode) =>
+        set((state) => {
+          const outletId = activeOutletId();
+          return {
+            carts: {
+              ...state.carts,
+              [outletId]: { ...state.carts[outletId], couponCode },
+            },
+          };
+        }),
+
+      clear: () =>
+        set((state) => ({
+          carts: {
+            ...state.carts,
+            [activeOutletId()]: { lines: [], couponCode: undefined },
+          },
+        })),
 
       syncOwner: (userId) => {
         const state = get();
         const nextOwner = userId ?? GUEST;
         if (!state.isHydrated || state.ownerId === nextOwner) return;
 
-        // Park the cart that is on screen under whoever owned it.
-        writeKey(cartKey(state.ownerId), {
-          lines: state.ownerId === GUEST ? [] : state.lines,
-          couponCode: state.ownerId === GUEST ? undefined : state.couponCode,
-        } satisfies StoredCart);
+        // Park the carts that are on screen under whoever owned them.
+        writeKey(
+          cartKey(state.ownerId),
+          state.ownerId === GUEST ? emptyCarts() : state.carts,
+        );
 
-        const stored = readKey<StoredCart>(cartKey(nextOwner), {
-          lines: [],
-          couponCode: undefined,
-        });
+        const stored = normaliseCarts(
+          readKey<Partial<CartsByOutlet> | undefined>(cartKey(nextOwner), undefined),
+        );
 
-        if (state.ownerId === GUEST && state.lines.length > 0) {
-          // Signing in: fold the guest basket into the account's cart.
-          set({
-            ownerId: nextOwner,
-            lines: mergeLines(stored.lines, state.lines),
-            couponCode: stored.couponCode ?? state.couponCode,
-          });
+        if (state.ownerId === GUEST && hasAnyLines(state.carts)) {
+          // Signing in: fold the guest baskets into the account's, per outlet.
+          set({ ownerId: nextOwner, carts: mergeCarts(stored, state.carts) });
           removeKey(cartKey(GUEST));
           return;
         }
 
-        set({
-          ownerId: nextOwner,
-          lines: stored.lines,
-          couponCode: stored.couponCode,
-        });
+        set({ ownerId: nextOwner, carts: stored });
       },
     }),
     {
       name: "qb:cart:active",
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
-        lines: state.lines,
+        carts: state.carts,
         orderType: state.orderType,
-        couponCode: state.couponCode,
         ownerId: state.ownerId,
       }),
+      merge: (persisted, current) => {
+        const saved = (persisted ?? {}) as Partial<CartState>;
+        return {
+          ...current,
+          ...saved,
+          carts: normaliseCarts(saved.carts),
+        };
+      },
       onRehydrateStorage: () => (state) => {
         if (state) state.isHydrated = true;
       },
@@ -162,11 +240,27 @@ export const useCartStore = create<CartState>()(
   ),
 );
 
-/** Total units in the cart — what the header badge shows. */
-export function useCartCount(): number {
-  const lines = useCartStore((s) => s.lines);
+/** The active outlet's basket. */
+export function useCart(outletId: OutletId): OutletCart {
+  return useCartStore((s) => s.carts[outletId]);
+}
+
+/** Total units in the active outlet's cart — what the header badge shows. */
+export function useCartCount(outletId: OutletId): number {
+  const cart = useCartStore((s) => s.carts[outletId]);
   const isHydrated = useCartStore((s) => s.isHydrated);
   // Report 0 until rehydrated so the server and client markup agree.
   if (!isHydrated) return 0;
-  return lines.reduce((sum, line) => sum + line.quantity, 0);
+  return cart.lines.reduce((sum, line) => sum + line.quantity, 0);
+}
+
+/** Units waiting in the OTHER outlet's cart, for the "still in your…" nudge. */
+export function useOtherCartCount(outletId: OutletId): number {
+  const carts = useCartStore((s) => s.carts);
+  const isHydrated = useCartStore((s) => s.isHydrated);
+  if (!isHydrated) return 0;
+  return OUTLET_IDS.filter((id) => id !== outletId).reduce(
+    (sum, id) => sum + carts[id].lines.reduce((n, line) => n + line.quantity, 0),
+    0,
+  );
 }

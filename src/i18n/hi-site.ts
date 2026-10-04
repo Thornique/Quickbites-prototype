@@ -22,11 +22,29 @@ export const hiSite: SiteDictionary = {
     viewCart: "कार्ट देखें",
   },
 
+  outlet: {
+    switchLabel: "आउटलेट चुनें",
+    chooseTitle: "आप कहाँ से ऑर्डर कर रहे हैं?",
+    chooseBlurb: "दो काउंटर, दो मेन्यू। एक चुनिए — हेडर से कभी भी बदल सकते हैं।",
+    restaurantBlurb: "बर्गर, पिज़्ज़ा, रोल, शेक और कॉम्बो। बॉम्बे बाज़ार।",
+    coffeeBlurb: "एस्प्रेसो, फ़्रापे और ताज़े बेक्स। नागचून रोड।",
+    restaurantCta: "खाना ऑर्डर करें",
+    coffeeCta: "कॉफ़ी ऑर्डर करें",
+    openFrom: (hours: string) => `${hours} खुला`,
+    switchedTo: (name: string) => `अब ${name} दिख रहा है`,
+    otherCart: (count: number, name: string) =>
+      count === 1
+        ? `आपके ${name} कार्ट में 1 चीज़ अभी भी रखी है।`
+        : `आपके ${name} कार्ट में ${count} चीज़ें अभी भी रखी हैं।`,
+    goToOtherCart: "बदलकर देखें",
+    badgeLabel: "आउटलेट",
+    bothOutlets: "दोनों आउटलेट",
+  },
+
   header: {
     skipToContent: "सीधे सामग्री पर जाएँ",
     primaryNav: "मुख्य नेविगेशन",
-    outletAddress: "बॉम्बे बाज़ार, खंडवा, म.प्र.",
-    outletAria: "बॉम्बे बाज़ार, खंडवा, म.प्र. — हमारा आउटलेट। संपर्क विवरण देखें",
+    outletAria: (address: string) => `${address} — संपर्क विवरण देखें`,
     searchMenu: "मेन्यू में खोजें",
   },
 
@@ -566,7 +584,8 @@ export const hiSite: SiteDictionary = {
   contact: {
     eyebrow: "संपर्क",
     title: "काउंटर से बात कीजिए",
-    description: "ज़रूरी काम के लिए कॉल कीजिए। पार्टी ऑर्डर का फ़ॉर्म मैनेजर तक जाता है।",
+    description:
+      "ज़रूरी काम के लिए कॉल कीजिए। पार्टी ऑर्डर का फ़ॉर्म मैनेजर तक जाता है।",
     formTitle: "हमें संदेश भेजिए",
     name: "आपका नाम",
     phone: "फ़ोन नंबर",
@@ -630,8 +649,7 @@ export const hiSite: SiteDictionary = {
     privacyTitle: "प्राइवेसी नीति",
     termsTitle: "सेवा की शर्तें",
     draftBadge: "क्लाइंट की समीक्षा के लिए ड्राफ़्ट",
-    draftNote:
-      "यह शब्द क्लाइंट के वकील के लिए शुरुआत है, अंतिम कानूनी सलाह नहीं।",
+    draftNote: "यह शब्द क्लाइंट के वकील के लिए शुरुआत है, अंतिम कानूनी सलाह नहीं।",
     updatedOn: (date: string) => `अंतिम बदलाव ${date}`,
     questions: "इस बारे में सवाल?",
     questionsBody: "काउंटर पर कॉल कीजिए या संदेश भेजिए, हम समझा देंगे।",
@@ -647,5 +665,4 @@ export const hiSite: SiteDictionary = {
     goHome: "होम पर जाएँ",
     seeMenu: "मेन्यू देखें",
   },
-
 };

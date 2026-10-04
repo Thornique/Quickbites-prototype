@@ -10,6 +10,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCategories, useMenu } from "@/features/menu";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { matchesSearch } from "@/lib/search";
 import type { Category, MenuItem } from "@/types";
@@ -27,8 +28,9 @@ export function MenuClient() {
   const pick = usePick();
   const { state, apply, toggleTag, clear, isFiltered } = useMenuFilters();
 
-  const { data: items, isLoading } = useMenu();
-  const { data: categories } = useCategories(true);
+  const outletId = useOutletId();
+  const { data: items, isLoading } = useMenu({ outletId });
+  const { data: categories } = useCategories(outletId, true);
 
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const hasHandledHash = useRef(false);
@@ -135,7 +137,11 @@ export function MenuClient() {
 
   return (
     <>
-      <PageHead title={t.menu.title} subtitle={t.menu.paymentNote} className="border-b-0">
+      <PageHead
+        title={t.menu.title}
+        subtitle={t.menu.paymentNote}
+        className="border-b-0"
+      >
         <StoreClosedBanner className="mt-5" />
 
         <div className="mt-6">

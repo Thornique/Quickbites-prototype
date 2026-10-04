@@ -19,6 +19,7 @@ import { Tag } from "@/components/ui/tag";
 import { Textarea } from "@/components/ui/textarea";
 import { VegMark } from "@/components/ui/veg-mark";
 import { useCategories, useMenuItem } from "@/features/menu";
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { usePick, useT } from "@/i18n";
 import { MAX_ITEM_NOTE_LENGTH } from "@/lib/constants";
@@ -38,10 +39,11 @@ export function ItemDetail({ slug }: { slug: string }) {
   const pick = usePick();
   const router = useRouter();
   const addLine = useCartStore((s) => s.addLine);
+  const outletId = useOutletId();
 
-  const { data: item, isLoading, error } = useMenuItem(slug);
-  const { data: categories } = useCategories();
-  const { data: openState } = useOpenState();
+  const { data: item, isLoading, error } = useMenuItem(outletId, slug);
+  const { data: categories } = useCategories(outletId);
+  const { data: openState } = useOpenState(outletId);
 
   const [selected, setSelected] = useState<string[]>([]);
   const [quantity, setQuantity] = useState(1);

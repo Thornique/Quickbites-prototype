@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/features/auth";
+import { useOutletId } from "@/features/outlet";
 import { useRateableOrders } from "@/features/reviews";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
@@ -25,6 +26,7 @@ import { createReview } from "@/services/reviews";
 export function WriteReview() {
   const t = useT();
   const { user, isReady } = useSession();
+  const outletId = useOutletId();
   const { data: rateable } = useRateableOrders();
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
@@ -73,6 +75,7 @@ export function WriteReview() {
     setIsSending(true);
     try {
       await createReview({
+        outletId,
         rating: rating as 1 | 2 | 3 | 4 | 5,
         comment: comment.trim(),
         orderId,

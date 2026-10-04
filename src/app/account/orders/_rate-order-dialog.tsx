@@ -45,6 +45,8 @@ export function RateOrderDialog({
     setIsSending(true);
     try {
       await createReview({
+        // Rate the outlet the order was placed at, not the one on screen.
+        outletId: order.outletId,
         rating: rating as 1 | 2 | 3 | 4 | 5,
         comment: comment.trim() || "Good food, quick service.",
         orderId: order.id,

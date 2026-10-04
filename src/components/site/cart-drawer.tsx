@@ -15,8 +15,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { usePricedCart } from "@/features/cart";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
-import { useCartStore } from "@/store/cart";
+import { useCart, useCartStore } from "@/store/cart";
 
 /**
  * Cart preview from the header. Deliberately read-plus-edit only: the order
@@ -26,10 +27,15 @@ import { useCartStore } from "@/store/cart";
 export function CartDrawer({ children }: { children: React.ReactNode }) {
   const t = useT();
   const [isOpen, setIsOpen] = useState(false);
-  const lines = useCartStore((s) => s.lines);
+  const outletId = useOutletId();
+  const { lines, couponCode } = useCart(outletId);
   const orderType = useCartStore((s) => s.orderType);
-  const couponCode = useCartStore((s) => s.couponCode);
-  const { data: cart, isLoading } = usePricedCart(lines, couponCode, orderType);
+  const { data: cart, isLoading } = usePricedCart(
+    lines,
+    outletId,
+    couponCode,
+    orderType,
+  );
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>

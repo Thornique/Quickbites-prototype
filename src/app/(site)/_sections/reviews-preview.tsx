@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useOutletId } from "@/features/outlet";
 import { useRatingSummary, useReviews } from "@/features/reviews";
 import { useT } from "@/i18n";
 import { formatDate } from "@/lib/format";
@@ -29,8 +30,9 @@ export function Stars({ rating, className }: { rating: number; className?: strin
 
 export function ReviewsPreview() {
   const t = useT();
-  const { data: reviews, isLoading } = useReviews(true);
-  const { data: summary } = useRatingSummary();
+  const outletId = useOutletId();
+  const { data: reviews, isLoading } = useReviews(outletId, true);
+  const { data: summary } = useRatingSummary(outletId);
 
   const latest = reviews?.slice(0, 3);
 

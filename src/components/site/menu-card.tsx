@@ -47,7 +47,7 @@ export function MenuCard({
   const pick = usePick();
 
   const { requestAdd, openCustomise, isOrderingDisabled } = useAddToCart();
-  const { quantity, lastLineKey } = useCartLinesFor(item.id);
+  const { quantity, lastLineKey } = useCartLinesFor(item.outletId, item.id);
   const setQuantity = useCartStore((s) => s.setQuantity);
 
   const name = pick(item.name);
@@ -85,7 +85,9 @@ export function MenuCard({
 
   const handleDecrease = () => {
     if (!lastLineKey) return;
-    const line = useCartStore.getState().lines.find((l) => l.lineKey === lastLineKey);
+    const line = useCartStore
+      .getState()
+      .carts[item.outletId].lines.find((l) => l.lineKey === lastLineKey);
     if (line) setQuantity(lastLineKey, line.quantity - 1);
   };
 

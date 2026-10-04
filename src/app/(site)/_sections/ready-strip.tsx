@@ -4,6 +4,7 @@ import { Clock, MapPin, ShoppingBag, Tag } from "lucide-react";
 import { Container } from "@/components/ui/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSiteContent } from "@/features/content";
+import { useOutlet } from "@/features/outlet";
 import { useOpenState, usePrepEstimate } from "@/features/settings";
 import { usePick, useT } from "@/i18n";
 import { formatSlotLabel } from "@/lib/format";
@@ -16,10 +17,12 @@ import { formatSlotLabel } from "@/lib/format";
 export function ReadyStrip() {
   const t = useT();
   const pick = usePick();
-  const { data: openState, isLoading: openLoading } = useOpenState();
-  const { data: minutes, isLoading: minutesLoading } = usePrepEstimate();
+  const { outletId, outlet } = useOutlet();
+  const { data: openState, isLoading: openLoading } = useOpenState(outletId);
+  const { data: minutes, isLoading: minutesLoading } = usePrepEstimate(outletId);
   const { data: content } = useSiteContent();
-  const offer = content ? pick(content.offersStrip).trim() : "";
+  const outletCopy = content?.outlets[outletId];
+  const offer = outletCopy ? pick(outletCopy.offersStrip).trim() : "";
 
   if (openLoading || minutesLoading || !openState) {
     return (
@@ -59,7 +62,7 @@ export function ReadyStrip() {
           />
           <span>
             <span className="sr-only">{t.ready.pickUpAt} </span>
-            {t.ready.addressShort}
+            {pick(outlet.address)}
           </span>
         </p>
 
@@ -76,12 +79,7 @@ export function ReadyStrip() {
         {/* Whatever the admin typed into Content → Offers strip. */}
         {offer && (
           <p className="flex items-center gap-2 text-sm font-semibold text-brand">
-            <Tag
-              size={18}
-              strokeWidth={1.75}
-              className="shrink-0"
-              aria-hidden="true"
-            />
+            <Tag size={18} strokeWidth={1.75} className="shrink-0" aria-hidden="true" />
             {offer}
           </p>
         )}

@@ -11,6 +11,7 @@ import { FormField, fieldAria } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { usePricedCart } from "@/features/cart";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatPrice } from "@/lib/format";
@@ -21,12 +22,13 @@ import {
   retryOnlinePayment,
   switchToOnline,
 } from "@/services/orders";
-import { useCartStore } from "@/store/cart";
-import type { OrderType, PaymentMethod, PaymentStatus } from "@/types";
+import { useCart, useCartStore } from "@/store/cart";
+import type { OrderType, OutletId, PaymentMethod, PaymentStatus } from "@/types";
 
 const PROCESSING_MS = 1500;
 
 interface CheckoutDraft {
+  outletId: OutletId;
   orderType: OrderType;
   pickupName: string;
   phone: string;
@@ -49,11 +51,11 @@ export function PayForm() {
   const router = useRouter();
   const params = useSearchParams();
 
-  const lines = useCartStore((s) => s.lines);
+  const outletId = useOutletId();
+  const { lines, couponCode } = useCart(outletId);
   const orderType = useCartStore((s) => s.orderType);
-  const couponCode = useCartStore((s) => s.couponCode);
   const clearCart = useCartStore((s) => s.clear);
-  const { data: cart } = usePricedCart(lines, couponCode, orderType);
+  const { data: cart } = usePricedCart(lines, outletId, couponCode, orderType);
 
   const existingOrderId = params.get("orderId");
   const shouldFail = params.get("fail") === "1";
@@ -151,6 +153,9 @@ export function PayForm() {
 
       const order = await placeOrder({
         lines,
+        // The draft carries the outlet, so a switch mid-payment cannot
+        // charge one counter for the other's basket.
+        outletId: draft.outletId,
         orderType: draft.orderType,
         paymentMethod,
         pickupName: draft.pickupName,

@@ -9,6 +9,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGallery } from "@/features/content";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import type { GalleryCategory } from "@/types";
@@ -27,7 +28,7 @@ export function GalleryGrid() {
   const pick = usePick();
   const [filter, setFilter] = useState<Filter>("ALL");
   const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const { data: images, isLoading } = useGallery();
+  const { data: images, isLoading } = useGallery(useOutletId());
 
   const filters: Array<{ value: Filter; label: string }> = [
     { value: "ALL", label: t.gallery.filterAll },

@@ -3,11 +3,19 @@
 import { MenuCard } from "@/components/site/menu-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMenu } from "@/features/menu";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
-import { useCartStore } from "@/store/cart";
+import { useCart } from "@/store/cart";
+import type { OutletId } from "@/types";
 
-/** Categories worth suggesting alongside a main. */
-const SUGGEST_FROM = ["cat-sides", "cat-cold"];
+/**
+ * Categories worth suggesting alongside a main, per outlet. At the coffee
+ * counter the upsell is a bake, not a portion of fries.
+ */
+const SUGGEST_FROM: Record<OutletId, string[]> = {
+  restaurant: ["cat-sides", "cat-cold"],
+  coffee: ["cat-coffee-bakes", "cat-coffee-bites"],
+};
 
 /**
  * "Goes well with this" — sides and cold drinks that are not already in the
@@ -16,14 +24,15 @@ const SUGGEST_FROM = ["cat-sides", "cat-cold"];
  */
 export function SuggestedAddOns({ className }: { className?: string }) {
   const t = useT();
-  const lines = useCartStore((s) => s.lines);
-  const { data: items, isLoading } = useMenu();
+  const outletId = useOutletId();
+  const { lines } = useCart(outletId);
+  const { data: items, isLoading } = useMenu({ outletId });
 
   const inCart = new Set(lines.map((line) => line.menuItemId));
   const suggestions = (items ?? [])
     .filter(
       (item) =>
-        SUGGEST_FROM.includes(item.categoryId) &&
+        SUGGEST_FROM[outletId].includes(item.categoryId) &&
         item.isAvailable &&
         !inCart.has(item.id),
     )

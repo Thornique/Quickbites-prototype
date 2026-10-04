@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ShoppingBag } from "lucide-react";
 import { CartDrawer } from "@/components/site/cart-drawer";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { useCartCount } from "@/store/cart";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,7 @@ export interface CartButtonProps {
  */
 export function CartButton({ className, showLabel = false }: CartButtonProps) {
   const t = useT();
-  const count = useCartCount();
+  const count = useCartCount(useOutletId());
 
   const trigger = (
     <Link

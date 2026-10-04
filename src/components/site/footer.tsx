@@ -7,9 +7,10 @@ import { Wordmark } from "@/components/site/wordmark";
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { useSiteContent } from "@/features/content";
-import { useT } from "@/i18n";
-import { OPENING_HOURS, STORE } from "@/lib/constants";
-import { telHref } from "@/lib/format";
+import { useOutlet } from "@/features/outlet";
+import { usePick, useT } from "@/i18n";
+import { STORE } from "@/lib/constants";
+import { outletPhoneHref } from "@/lib/outlets";
 
 const QUICK_LINKS = [
   { href: "/menu", key: "menu" },
@@ -21,10 +22,8 @@ const QUICK_LINKS = [
   { href: "/book-table", key: "bookTable" },
 ] as const;
 
-const COLUMN_HEADING =
-  "text-xs font-bold tracking-[0.12em] text-white/50 uppercase";
-const COLUMN_LINK =
-  "text-sm text-white/80 transition-colors hover:text-white";
+const COLUMN_HEADING = "text-xs font-bold tracking-[0.12em] text-white/50 uppercase";
+const COLUMN_LINK = "text-sm text-white/80 transition-colors hover:text-white";
 
 /**
  * Ink footer, laid out as tight uppercase-header columns (brand, visit,
@@ -33,8 +32,14 @@ const COLUMN_LINK =
  */
 export function SiteFooter() {
   const t = useT();
+  const pick = usePick();
+  const { outletId, outlet, details } = useOutlet();
   const { data: content } = useSiteContent();
-  const contact = content?.contact;
+  const outletCopy = content?.outlets[outletId];
+
+  const address = outletCopy ? pick(outletCopy.addressLine) : pick(outlet.address);
+  const phone = outletCopy?.phone ?? outlet.phone;
+  const whatsapp = (outletCopy?.whatsapp ?? outlet.phone).replace(/\D/g, "");
 
   const linkLabels: Record<(typeof QUICK_LINKS)[number]["key"], string> = {
     menu: t.nav.menu,
@@ -52,7 +57,12 @@ export function SiteFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <Wordmark variant="stacked" tone="light" className="h-12" />
+            <Wordmark
+              variant="stacked"
+              tone="light"
+              className="h-12"
+              outletId={outletId}
+            />
             <p className="mt-4 text-xs text-white/65">{t.footer.fssai(STORE.fssai)}</p>
           </div>
 
@@ -60,7 +70,7 @@ export function SiteFooter() {
           <div>
             <h2 className={COLUMN_HEADING}>{t.footer.visitUs}</h2>
             <a
-              href={STORE.mapsUrl}
+              href={details.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-flex items-start gap-2 text-sm text-white/80 transition-colors hover:text-white"
@@ -72,7 +82,7 @@ export function SiteFooter() {
                 aria-hidden="true"
               />
               <span>
-                {STORE.addressFull}
+                {address}
                 <span className="mt-0.5 block text-xs text-mustard">
                   {t.footer.getDirections} →
                 </span>
@@ -89,7 +99,7 @@ export function SiteFooter() {
               <span className="nums">
                 {t.footer.everyDay}
                 <br />
-                {OPENING_HOURS.label}
+                {outletCopy ? pick(outletCopy.hoursNote) : pick(details.hoursLabel)}
               </span>
             </p>
           </div>
@@ -99,14 +109,14 @@ export function SiteFooter() {
             <h2 className={COLUMN_HEADING}>{t.footer.callUs}</h2>
             <div className="mt-3 grid gap-2.5">
               <a
-                href={`tel:${telHref(contact?.phone, STORE.phoneHref)}`}
+                href={`tel:${outletPhoneHref(outletId)}`}
                 className="inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-white"
               >
                 <Phone size={16} strokeWidth={1.75} aria-hidden="true" />
-                <span className="nums">{contact?.phone ?? STORE.phoneDisplay}</span>
+                <span className="nums">{phone}</span>
               </a>
               <a
-                href={`https://wa.me/${contact?.whatsapp ?? STORE.whatsappHref}`}
+                href={`https://wa.me/${whatsapp}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-sm text-white/80 transition-colors hover:text-white"
@@ -157,7 +167,7 @@ export function SiteFooter() {
         {/* Closing bar: mark, copyright, social — one row, like a real brand footer */}
         <div className="mt-12 flex flex-col gap-4 border-t border-white/10 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <Wordmark className="h-4" tone="light" />
+            <Wordmark className="h-4" tone="light" outletId={outletId} />
             <span aria-hidden="true" className="text-white/20">
               ·
             </span>

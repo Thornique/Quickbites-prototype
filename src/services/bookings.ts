@@ -95,6 +95,7 @@ export async function createBooking(input: CreateBookingInput): Promise<TableBoo
 
   const booking: TableBooking = {
     id: newId("bkg"),
+    outletId: input.outletId,
     customerId: getCurrentUser()?.id,
     name: input.name.trim(),
     phone: input.phone.trim(),

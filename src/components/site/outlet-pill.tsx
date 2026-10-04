@@ -2,21 +2,26 @@
 
 import Link from "next/link";
 import { MapPin } from "lucide-react";
-import { useT } from "@/i18n";
+import { useOutlet } from "@/features/outlet";
+import { usePick, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 /**
- * The address pill chains put next to their order-mode switch. Quick Bites has
- * exactly one outlet, so there is nothing to pick — it states where the food
- * is collected and links to the full contact details.
+ * Where the food is collected from. It states the ACTIVE outlet's address and
+ * links to the full contact details, which list both — the switcher next to it
+ * is what changes outlet, so this stays a statement rather than a second
+ * control saying the same thing.
  */
 export function OutletPill({ className }: { className?: string }) {
   const t = useT();
+  const pick = usePick();
+  const { outlet } = useOutlet();
+  const address = pick(outlet.address);
 
   return (
     <Link
       href="/contact"
-      aria-label={t.header.outletAria}
+      aria-label={t.header.outletAria(address)}
       className={cn(
         "inline-flex min-w-0 items-center gap-2 rounded-pill border border-hairline bg-sand-50 px-3 py-1.5",
         "text-sm font-medium text-ink transition-colors",
@@ -31,7 +36,7 @@ export function OutletPill({ className }: { className?: string }) {
         aria-hidden="true"
         className="shrink-0 text-brand"
       />
-      <span className="truncate">{t.header.outletAddress}</span>
+      <span className="truncate">{address}</span>
     </Link>
   );
 }

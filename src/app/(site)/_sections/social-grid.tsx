@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGallery } from "@/features/content";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { STORE } from "@/lib/constants";
 
@@ -17,7 +18,8 @@ import { STORE } from "@/lib/constants";
 export function SocialGrid() {
   const t = useT();
   const pick = usePick();
-  const { data: images, isLoading } = useGallery();
+  const outletId = useOutletId();
+  const { data: images, isLoading } = useGallery(outletId);
 
   const tiles = images?.slice(0, 8);
 

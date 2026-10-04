@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { formatSlotLabel } from "@/lib/format";
 import { getSchedulableDays, type ScheduleSlot } from "@/services/orders";
@@ -24,16 +25,17 @@ export function SlotPicker({
   className?: string;
 }) {
   const t = useT();
+  const outletId = useOutletId();
   const [days, setDays] = useState<Array<{ date: string; slots: ScheduleSlot[] }>>([]);
   const [dayIndex, setDayIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    void getSchedulableDays().then((result) => {
+    void getSchedulableDays(outletId).then((result) => {
       setDays(result);
       setIsLoading(false);
     });
-  }, []);
+  }, [outletId]);
 
   const reasonLabel = (slot: ScheduleSlot) => {
     switch (slot.reason) {

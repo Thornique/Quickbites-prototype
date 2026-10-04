@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOffersForCart } from "@/features/coupons";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
 import { toErrorMessage } from "@/lib/errors";
 import { applyCouponCode } from "@/services/coupons";
-import { useCartStore } from "@/store/cart";
+import { useCart, useCartStore } from "@/store/cart";
 import { cn } from "@/lib/utils";
 import type { CouponEvaluation, PricedCartLine } from "@/types";
 
@@ -30,13 +31,14 @@ export function CouponField({
 }) {
   const t = useT();
   const pick = usePick();
-  const couponCode = useCartStore((s) => s.couponCode);
+  const outletId = useOutletId();
+  const { couponCode } = useCart(outletId);
   const setCoupon = useCartStore((s) => s.setCoupon);
 
   const [draft, setDraft] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isChecking, setIsChecking] = useState(false);
-  const { data: offers, isLoading } = useOffersForCart(lines);
+  const { data: offers, isLoading } = useOffersForCart(outletId, lines);
 
   /** Turns a rejection reason into something a customer can act on. */
   const reasonText = (evaluation: CouponEvaluation): string | null => {
@@ -67,7 +69,7 @@ export function CouponField({
     setIsChecking(true);
     setError(null);
     try {
-      const result = await applyCouponCode(trimmed, lines);
+      const result = await applyCouponCode(outletId, trimmed, lines);
       if (!result.isEligible) {
         setError(reasonText(result) ?? t.coupon.invalid);
         return;

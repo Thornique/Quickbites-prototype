@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { OPENING_HOURS, STORE } from "@/lib/constants";
+import { OUTLETS } from "@/lib/outlets";
 import { Bestsellers } from "./_sections/bestsellers";
 import { CategoryRail } from "./_sections/category-rail";
 import { ComboBand } from "./_sections/combo-band";
@@ -7,12 +8,23 @@ import { HeroCarousel } from "./_sections/hero-carousel";
 import { HowItWorks } from "./_sections/how-it-works";
 import { LocationBlock } from "./_sections/location-block";
 import { Offers } from "./_sections/offers";
+import { OutletChoice } from "./_sections/outlet-choice";
 import { ReadyStrip } from "./_sections/ready-strip";
 import { ReviewsPreview } from "./_sections/reviews-preview";
 import { SocialGrid } from "./_sections/social-grid";
 
+const WEEK = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
+
 const DESCRIPTION =
-  "Order takeaway from Quick Bites, Bombay Bazar, Khandwa. Burgers, wraps, pizzas, shakes and hot coffee made fresh — ready in about 12 minutes.";
+  "Order takeaway from Quick Bites, Khandwa. Burgers, wraps, pizzas and shakes at Bombay Bazar; espresso, frappés and fresh bakes at Quick Bites Coffee on Nagchun Road.";
 
 export const metadata: Metadata = {
   title: {
@@ -43,7 +55,10 @@ export const metadata: Metadata = {
   },
 };
 
-/** Restaurant schema, so search results can show hours and location. */
+/**
+ * Restaurant schema, so search results can show hours and location. Two
+ * outlets now, so this is a graph of two places rather than one.
+ */
 const restaurantJsonLd = {
   "@context": "https://schema.org",
   "@type": "Restaurant",
@@ -68,21 +83,39 @@ const restaurantJsonLd = {
   openingHoursSpecification: [
     {
       "@type": "OpeningHoursSpecification",
-      dayOfWeek: [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Sunday",
-      ],
+      dayOfWeek: WEEK,
       opens: OPENING_HOURS.openTime,
       closes: OPENING_HOURS.closeTime,
     },
   ],
   hasMenu: "/menu",
   acceptsReservations: "/book-table",
+  department: [
+    {
+      "@type": "CafeOrCoffeeShop",
+      name: OUTLETS.coffee.name.en,
+      servesCuisine: ["Coffee", "Bakery"],
+      priceRange: "₹₹",
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: "Nagchun Road, near Civil Lines",
+        addressLocality: STORE.city,
+        addressRegion: STORE.state,
+        postalCode: STORE.pincode,
+        addressCountry: "IN",
+      },
+      telephone: OUTLETS.coffee.phone,
+      openingHoursSpecification: [
+        {
+          "@type": "OpeningHoursSpecification",
+          dayOfWeek: WEEK,
+          opens: "07:30",
+          closes: "22:30",
+        },
+      ],
+      hasMenu: "/menu?outlet=coffee",
+    },
+  ],
 };
 
 export default function HomePage() {
@@ -94,6 +127,8 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantJsonLd) }}
       />
 
+      {/* First visit only — a two-card choice above the restaurant's hero. */}
+      <OutletChoice />
       <HeroCarousel />
       <ReadyStrip />
       <CategoryRail />

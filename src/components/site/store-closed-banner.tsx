@@ -1,6 +1,7 @@
 "use client";
 
 import { Clock } from "lucide-react";
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { useT } from "@/i18n";
 import { formatSlotLabel } from "@/lib/format";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
  */
 export function StoreClosedBanner({ className }: { className?: string }) {
   const t = useT();
-  const { data } = useOpenState();
+  const { data } = useOpenState(useOutletId());
 
   if (!data) return null;
   if (data.isOpen && data.acceptingOrders) return null;

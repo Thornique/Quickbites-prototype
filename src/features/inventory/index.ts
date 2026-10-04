@@ -6,24 +6,29 @@ import {
   listLowStock,
   listMovements,
 } from "@/services/inventory";
+import type { OutletId } from "@/types";
 import { useStoreQuery } from "../use-store-query";
 
-export function useInventory() {
-  return useStoreQuery(listInventory, ["inventoryItems"]);
+export function useInventory(outletId?: OutletId) {
+  return useStoreQuery(() => listInventory(outletId), ["inventoryItems"], [outletId]);
 }
 
-export function useLowStock() {
-  return useStoreQuery(listLowStock, ["inventoryItems"]);
+export function useLowStock(outletId?: OutletId) {
+  return useStoreQuery(() => listLowStock(outletId), ["inventoryItems"], [outletId]);
 }
 
-export function useStockMovements(inventoryItemId?: string) {
+export function useStockMovements(inventoryItemId?: string, outletId?: OutletId) {
   return useStoreQuery(
-    () => listMovements(inventoryItemId),
+    () => listMovements(inventoryItemId, outletId),
     ["stockMovements"],
-    [inventoryItemId],
+    [inventoryItemId, outletId],
   );
 }
 
-export function useInventoryValuation() {
-  return useStoreQuery(getInventoryValuation, ["inventoryItems"]);
+export function useInventoryValuation(outletId?: OutletId) {
+  return useStoreQuery(
+    () => getInventoryValuation(outletId),
+    ["inventoryItems"],
+    [outletId],
+  );
 }

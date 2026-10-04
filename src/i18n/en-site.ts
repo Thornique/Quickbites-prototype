@@ -19,11 +19,34 @@ export const enSite = {
     viewCart: "View cart",
   },
 
+  /**
+   * The two outlets. Names themselves come from the outlet registry, which
+   * carries them in both languages, so only the surrounding copy is here.
+   */
+  outlet: {
+    switchLabel: "Choose an outlet",
+    chooseTitle: "Where are you ordering from?",
+    chooseBlurb:
+      "Two counters, two menus. Pick one — you can switch any time from the header.",
+    restaurantBlurb: "Burgers, pizzas, wraps, shakes and combos. Bombay Bazar.",
+    coffeeBlurb: "Espresso, frappés and fresh bakes. Nagchun Road.",
+    restaurantCta: "Order food",
+    coffeeCta: "Order coffee",
+    openFrom: (hours: string) => `Open ${hours}`,
+    switchedTo: (name: string) => `Now showing ${name}`,
+    otherCart: (count: number, name: string) =>
+      count === 1
+        ? `1 item is still waiting in your ${name} cart.`
+        : `${count} items are still waiting in your ${name} cart.`,
+    goToOtherCart: "Switch and view it",
+    badgeLabel: "Outlet",
+    bothOutlets: "Both outlets",
+  },
+
   header: {
     skipToContent: "Skip to content",
     primaryNav: "Main navigation",
-    outletAddress: "Bombay Bazar, Khandwa, MP",
-    outletAria: "Bombay Bazar, Khandwa, MP — our outlet. See contact details",
+    outletAria: (address: string) => `${address} — see contact details`,
     searchMenu: "Search the menu",
   },
 
@@ -486,7 +509,8 @@ export const enSite = {
       "Cold storage checked morning and night",
     ],
     licenceTitle: "FSSAI licence",
-    licenceNote: "Displayed at the counter as required. Number to be confirmed by the client.",
+    licenceNote:
+      "Displayed at the counter as required. Number to be confirmed by the client.",
     statKitchen: "Open kitchen",
     statMinutes: "Most orders in under 15 min",
     statSince: "Serving Khandwa since 2021",
@@ -497,7 +521,8 @@ export const enSite = {
   gallery: {
     eyebrow: "Gallery",
     title: "The counter, the kitchen, the food",
-    description: "Photographs from our counter at Bombay Bazar — no stock food styling.",
+    description:
+      "Photographs from our counter at Bombay Bazar — no stock food styling.",
     filterAll: "All",
     filterFood: "Food",
     filterCafe: "Cafe",
@@ -563,7 +588,8 @@ export const enSite = {
   contact: {
     eyebrow: "Contact",
     title: "Talk to the counter",
-    description: "Call for anything urgent. For party orders, the form reaches the manager.",
+    description:
+      "Call for anything urgent. For party orders, the form reaches the manager.",
     formTitle: "Send us a message",
     name: "Your name",
     phone: "Phone number",
@@ -609,7 +635,8 @@ export const enSite = {
     seatsLeft: (count: number) => `${count} left`,
     full: "Full",
     confirmedTitle: "Table requested",
-    confirmedBody: "We will confirm by phone shortly. Show this booking ID at the counter.",
+    confirmedBody:
+      "We will confirm by phone shortly. Show this booking ID at the counter.",
     bookingId: "Booking ID",
     bookAnother: "Book another table",
     myBookings: "Your bookings",
@@ -645,7 +672,6 @@ export const enSite = {
     goHome: "Back to home",
     seeMenu: "See the menu",
   },
-
 };
 
 export type SiteDictionary = typeof enSite;

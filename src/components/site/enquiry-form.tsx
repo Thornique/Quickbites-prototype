@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/features/auth";
+import { useOutletId } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { enquirySchema, type EnquiryValues } from "@/lib/validation";
@@ -49,6 +50,7 @@ export function EnquiryForm({
 }: EnquiryFormProps) {
   const t = useT();
   const { user } = useSession();
+  const outletId = useOutletId();
 
   const {
     register,
@@ -84,7 +86,8 @@ export function EnquiryForm({
 
   const onSubmit = handleSubmit(async (values) => {
     try {
-      await createEnquiry(values);
+      // The enquiry lands in the inbox of whichever outlet is being browsed.
+      await createEnquiry({ ...values, outletId });
       toast.success(t.contact.sent, { description: t.contact.sentBody });
     } catch (caught) {
       toast.error(toErrorMessage(caught));
@@ -131,7 +134,11 @@ export function EnquiryForm({
 
         <form onSubmit={onSubmit} className="mt-5 grid gap-4" noValidate>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FormField id="enq-name" label={t.contact.name} error={errors.name?.message}>
+            <FormField
+              id="enq-name"
+              label={t.contact.name}
+              error={errors.name?.message}
+            >
               <Input
                 {...fieldAria("enq-name", errors.name?.message)}
                 {...register("name")}
@@ -154,7 +161,11 @@ export function EnquiryForm({
             </FormField>
           </div>
 
-          <FormField id="enq-email" label={t.contact.email} error={errors.email?.message}>
+          <FormField
+            id="enq-email"
+            label={t.contact.email}
+            error={errors.email?.message}
+          >
             <Input
               {...fieldAria("enq-email", errors.email?.message)}
               {...register("email")}

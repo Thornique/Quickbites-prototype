@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BellOff } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { OutletBadge } from "@/features/outlet";
 import { useNotificationCopy, useT } from "@/i18n";
 import { formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -107,10 +108,20 @@ export function NotificationList({
                     )}
                   </span>
                   <span className="mt-0.5 block text-xs text-ink-muted">{body}</span>
-                  <span className="nums mt-1 block text-xs text-ink-muted/80">
-                    {when(notification.createdAt, t.notifications.relative)}
-                    {isUnread && (
-                      <span className="sr-only"> · {t.notifications.unread}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-2">
+                    <span className="nums text-xs text-ink-muted/80">
+                      {when(notification.createdAt, t.notifications.relative)}
+                      {isUnread && (
+                        <span className="sr-only"> · {t.notifications.unread}</span>
+                      )}
+                    </span>
+                    {/* Account-wide rows carry no outlet, and need no badge. */}
+                    {notification.outletId && (
+                      <OutletBadge
+                        outletId={notification.outletId}
+                        variant="plain"
+                        className="font-medium"
+                      />
                     )}
                   </span>
                 </span>

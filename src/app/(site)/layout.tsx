@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { ContactFab } from "@/components/site/contact-fab";
 import { SiteFooter } from "@/components/site/footer";
 import { SiteHeader } from "@/components/site/header";
 import { CartSync } from "@/features/cart";
 import { AddToCartProvider } from "@/features/menu/add-to-cart";
+import { OutletProvider } from "@/features/outlet";
 import { StickyCartBar } from "@/components/site/sticky-cart-bar";
 
 /**
@@ -17,6 +19,13 @@ import { StickyCartBar } from "@/components/site/sticky-cart-bar";
 export default function SiteLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col bg-cream">
+      {/*
+        OutletProvider reads `?outlet=` from the URL, so it needs a Suspense
+        boundary to keep this layout statically renderable.
+      */}
+      <Suspense fallback={null}>
+        <OutletProvider />
+      </Suspense>
       <AddToCartProvider>
         <SiteHeader />
         <main id="main" className="flex-1">

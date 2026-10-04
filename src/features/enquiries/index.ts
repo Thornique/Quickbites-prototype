@@ -1,13 +1,17 @@
 "use client";
 
 import { countNewEnquiries, listEnquiries } from "@/services/enquiries";
-import type { EnquiryStatus } from "@/types";
+import type { EnquiryStatus, OutletId } from "@/types";
 import { useStoreQuery } from "../use-store-query";
 
-export function useEnquiries(status?: EnquiryStatus) {
-  return useStoreQuery(() => listEnquiries(status), ["enquiries"], [status]);
+export function useEnquiries(status?: EnquiryStatus, outletId?: OutletId) {
+  return useStoreQuery(
+    () => listEnquiries(status, outletId),
+    ["enquiries"],
+    [status, outletId],
+  );
 }
 
-export function useNewEnquiryCount() {
-  return useStoreQuery(countNewEnquiries, ["enquiries"]);
+export function useNewEnquiryCount(outletId?: OutletId) {
+  return useStoreQuery(() => countNewEnquiries(outletId), ["enquiries"], [outletId]);
 }

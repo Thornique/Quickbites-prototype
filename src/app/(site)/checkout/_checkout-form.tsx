@@ -16,11 +16,12 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/features/auth";
 import { usePricedCart } from "@/features/cart";
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { getProvisionalEstimate, placeOrder } from "@/services/orders";
-import { useCartStore } from "@/store/cart";
+import { useCart, useCartStore } from "@/store/cart";
 import { cn } from "@/lib/utils";
 import { SlotPicker } from "./_slot-picker";
 
@@ -33,14 +34,19 @@ export function CheckoutForm() {
   const router = useRouter();
   const { user } = useSession();
 
-  const lines = useCartStore((s) => s.lines);
+  const outletId = useOutletId();
+  const { lines, couponCode } = useCart(outletId);
   const orderType = useCartStore((s) => s.orderType);
-  const couponCode = useCartStore((s) => s.couponCode);
   const isHydrated = useCartStore((s) => s.isHydrated);
   const clearCart = useCartStore((s) => s.clear);
 
-  const { data: cart, isLoading } = usePricedCart(lines, couponCode, orderType);
-  const { data: openState } = useOpenState();
+  const { data: cart, isLoading } = usePricedCart(
+    lines,
+    outletId,
+    couponCode,
+    orderType,
+  );
+  const { data: openState } = useOpenState(outletId);
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -72,8 +78,8 @@ export function CheckoutForm() {
   // Provisional estimate only — the real promise comes when an admin accepts.
   useEffect(() => {
     if (lines.length === 0) return;
-    void getProvisionalEstimate(lines).then(setEstimate);
-  }, [lines]);
+    void getProvisionalEstimate(lines, outletId).then(setEstimate);
+  }, [lines, outletId]);
 
   // Takeaway is online-only, so a stale "cash" choice must not survive a switch.
   useEffect(() => {
@@ -108,6 +114,7 @@ export function CheckoutForm() {
 
     if (!isCash) {
       const draft = {
+        outletId,
         orderType,
         paymentMethod: null,
         pickupName: name.trim(),
@@ -126,6 +133,7 @@ export function CheckoutForm() {
     try {
       const order = await placeOrder({
         lines,
+        outletId,
         orderType: "DINE_IN",
         paymentMethod: "CASH",
         pickupName: name.trim(),
@@ -155,207 +163,207 @@ export function CheckoutForm() {
           onSubmit={handleSubmit}
           className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start"
         >
-        <div className="grid gap-6">
-          <OrderTypeToggle />
+          <div className="grid gap-6">
+            <OrderTypeToggle />
 
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold text-ink">
-              {orderType === "TAKEAWAY"
-                ? t.checkout.pickupDetails
-                : t.checkout.tableDetails}
-            </h2>
+            <Card className="p-5">
+              <h2 className="text-sm font-semibold text-ink">
+                {orderType === "TAKEAWAY"
+                  ? t.checkout.pickupDetails
+                  : t.checkout.tableDetails}
+              </h2>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <FormField id="co-name" label={t.checkout.name}>
-                <Input
-                  {...fieldAria("co-name")}
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  autoComplete="name"
-                />
-              </FormField>
-              <FormField id="co-phone" label={t.checkout.phone}>
-                <Input
-                  {...fieldAria("co-phone")}
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={10}
-                  autoComplete="tel-national"
-                />
-              </FormField>
-
-              {orderType === "DINE_IN" && (
-                <FormField
-                  id="co-table"
-                  label={t.checkout.tableNumber}
-                  hint={t.checkout.tableNumberHint}
-                  className="sm:col-span-2"
-                >
+              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+                <FormField id="co-name" label={t.checkout.name}>
                   <Input
-                    {...fieldAria("co-table", undefined, t.checkout.tableNumberHint)}
-                    value={tableNumber}
-                    onChange={(event) => setTableNumber(event.target.value)}
-                    inputMode="numeric"
-                    maxLength={4}
+                    {...fieldAria("co-name")}
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                    autoComplete="name"
                   />
                 </FormField>
+                <FormField id="co-phone" label={t.checkout.phone}>
+                  <Input
+                    {...fieldAria("co-phone")}
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={10}
+                    autoComplete="tel-national"
+                  />
+                </FormField>
+
+                {orderType === "DINE_IN" && (
+                  <FormField
+                    id="co-table"
+                    label={t.checkout.tableNumber}
+                    hint={t.checkout.tableNumberHint}
+                    className="sm:col-span-2"
+                  >
+                    <Input
+                      {...fieldAria("co-table", undefined, t.checkout.tableNumberHint)}
+                      value={tableNumber}
+                      onChange={(event) => setTableNumber(event.target.value)}
+                      inputMode="numeric"
+                      maxLength={4}
+                    />
+                  </FormField>
+                )}
+
+                <FormField
+                  id="co-notes"
+                  label={t.checkout.notes}
+                  className="sm:col-span-2"
+                >
+                  <Textarea
+                    {...fieldAria("co-notes")}
+                    value={notes}
+                    onChange={(event) => setNotes(event.target.value)}
+                    placeholder={t.checkout.notesPlaceholder}
+                    rows={2}
+                    maxLength={160}
+                  />
+                </FormField>
+              </div>
+            </Card>
+
+            {orderType === "TAKEAWAY" && (
+              <Card className="p-5">
+                <h2 className="text-sm font-semibold text-ink">{t.checkout.when}</h2>
+                <SlotPicker
+                  value={scheduledFor}
+                  onChange={setScheduledFor}
+                  asapHint={
+                    estimate !== null ? t.checkout.asapHint(estimate) : t.common.loading
+                  }
+                  className="mt-4"
+                />
+              </Card>
+            )}
+
+            <Card className="p-5">
+              <h2 className="text-sm font-semibold text-ink">{t.checkout.payment}</h2>
+
+              {orderType === "TAKEAWAY" ? (
+                <div className="mt-3 flex items-start gap-3 rounded-control border border-brand/30 bg-brand/5 p-3.5">
+                  <CreditCard
+                    size={18}
+                    className="mt-0.5 shrink-0 text-brand"
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {t.checkout.payOnline}
+                    </p>
+                    <p className="mt-0.5 text-xs text-ink-muted">
+                      {t.checkout.prepaidNote}
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <fieldset className="mt-3 grid gap-2">
+                  <legend className="sr-only">{t.checkout.payment}</legend>
+                  {(
+                    [
+                      {
+                        value: "ONLINE",
+                        label: t.checkout.payOnline,
+                        hint: "",
+                        Icon: CreditCard,
+                      },
+                      {
+                        value: "CASH",
+                        label: t.checkout.payCash,
+                        hint: t.checkout.cashNote,
+                        Icon: Wallet,
+                      },
+                    ] as const
+                  ).map((option) => (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-3 rounded-control border p-3.5 transition-colors",
+                        "focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2",
+                        payment === option.value
+                          ? "border-brand bg-brand/5"
+                          : "border-hairline hover:border-ink/20",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="payment"
+                        value={option.value}
+                        checked={payment === option.value}
+                        onChange={() => setPayment(option.value)}
+                        className="sr-only"
+                      />
+                      <option.Icon
+                        size={18}
+                        className={cn(
+                          "mt-0.5 shrink-0",
+                          payment === option.value ? "text-brand" : "text-ink-muted",
+                        )}
+                        aria-hidden="true"
+                      />
+                      <span>
+                        <span className="block text-sm font-semibold text-ink">
+                          {option.label}
+                        </span>
+                        {option.hint && (
+                          <span className="mt-0.5 block text-xs text-ink-muted">
+                            {option.hint}
+                          </span>
+                        )}
+                      </span>
+                    </label>
+                  ))}
+                </fieldset>
+              )}
+            </Card>
+          </div>
+
+          <div className="lg:sticky lg:top-24">
+            <Card className="p-5">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-sm font-semibold text-ink">{t.checkout.summary}</h2>
+                <Link
+                  href="/cart"
+                  className="text-xs font-semibold text-brand underline decoration-brand/30 underline-offset-4 hover:decoration-brand"
+                >
+                  {t.checkout.editCart}
+                </Link>
+              </div>
+
+              <ul className="mt-3 grid gap-1 text-sm text-ink-muted">
+                {itemNames.map((label) => (
+                  <li key={label} className="truncate">
+                    {label}
+                  </li>
+                ))}
+              </ul>
+
+              <CartSummary cart={cart} isLoading={isLoading} className="mt-5" />
+
+              {error && (
+                <p role="alert" className="mt-4 text-sm font-medium text-danger">
+                  {error}
+                </p>
               )}
 
-              <FormField
-                id="co-notes"
-                label={t.checkout.notes}
-                className="sm:col-span-2"
+              <Button
+                type="submit"
+                size="lg"
+                className="mt-5 w-full"
+                disabled={!canOrder || isPlacing || isLoading}
               >
-                <Textarea
-                  {...fieldAria("co-notes")}
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder={t.checkout.notesPlaceholder}
-                  rows={2}
-                  maxLength={160}
-                />
-              </FormField>
-            </div>
-          </Card>
-
-          {orderType === "TAKEAWAY" && (
-            <Card className="p-5">
-              <h2 className="text-sm font-semibold text-ink">{t.checkout.when}</h2>
-              <SlotPicker
-                value={scheduledFor}
-                onChange={setScheduledFor}
-                asapHint={
-                  estimate !== null ? t.checkout.asapHint(estimate) : t.common.loading
-                }
-                className="mt-4"
-              />
+                {isPlacing
+                  ? t.checkout.placing
+                  : isCash
+                    ? t.checkout.placeOrder
+                    : t.checkout.continueToPayment}
+              </Button>
             </Card>
-          )}
-
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold text-ink">{t.checkout.payment}</h2>
-
-            {orderType === "TAKEAWAY" ? (
-              <div className="mt-3 flex items-start gap-3 rounded-control border border-brand/30 bg-brand/5 p-3.5">
-                <CreditCard
-                  size={18}
-                  className="mt-0.5 shrink-0 text-brand"
-                  aria-hidden="true"
-                />
-                <div>
-                  <p className="text-sm font-semibold text-ink">
-                    {t.checkout.payOnline}
-                  </p>
-                  <p className="mt-0.5 text-xs text-ink-muted">
-                    {t.checkout.prepaidNote}
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <fieldset className="mt-3 grid gap-2">
-                <legend className="sr-only">{t.checkout.payment}</legend>
-                {(
-                  [
-                    {
-                      value: "ONLINE",
-                      label: t.checkout.payOnline,
-                      hint: "",
-                      Icon: CreditCard,
-                    },
-                    {
-                      value: "CASH",
-                      label: t.checkout.payCash,
-                      hint: t.checkout.cashNote,
-                      Icon: Wallet,
-                    },
-                  ] as const
-                ).map((option) => (
-                  <label
-                    key={option.value}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-control border p-3.5 transition-colors",
-                      "focus-within:ring-2 focus-within:ring-brand focus-within:ring-offset-2",
-                      payment === option.value
-                        ? "border-brand bg-brand/5"
-                        : "border-hairline hover:border-ink/20",
-                    )}
-                  >
-                    <input
-                      type="radio"
-                      name="payment"
-                      value={option.value}
-                      checked={payment === option.value}
-                      onChange={() => setPayment(option.value)}
-                      className="sr-only"
-                    />
-                    <option.Icon
-                      size={18}
-                      className={cn(
-                        "mt-0.5 shrink-0",
-                        payment === option.value ? "text-brand" : "text-ink-muted",
-                      )}
-                      aria-hidden="true"
-                    />
-                    <span>
-                      <span className="block text-sm font-semibold text-ink">
-                        {option.label}
-                      </span>
-                      {option.hint && (
-                        <span className="mt-0.5 block text-xs text-ink-muted">
-                          {option.hint}
-                        </span>
-                      )}
-                    </span>
-                  </label>
-                ))}
-              </fieldset>
-            )}
-          </Card>
-        </div>
-
-        <div className="lg:sticky lg:top-24">
-          <Card className="p-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-sm font-semibold text-ink">{t.checkout.summary}</h2>
-              <Link
-                href="/cart"
-                className="text-xs font-semibold text-brand underline decoration-brand/30 underline-offset-4 hover:decoration-brand"
-              >
-                {t.checkout.editCart}
-              </Link>
-            </div>
-
-            <ul className="mt-3 grid gap-1 text-sm text-ink-muted">
-              {itemNames.map((label) => (
-                <li key={label} className="truncate">
-                  {label}
-                </li>
-              ))}
-            </ul>
-
-            <CartSummary cart={cart} isLoading={isLoading} className="mt-5" />
-
-            {error && (
-              <p role="alert" className="mt-4 text-sm font-medium text-danger">
-                {error}
-              </p>
-            )}
-
-            <Button
-              type="submit"
-              size="lg"
-              className="mt-5 w-full"
-              disabled={!canOrder || isPlacing || isLoading}
-            >
-              {isPlacing
-                ? t.checkout.placing
-                : isCash
-                  ? t.checkout.placeOrder
-                  : t.checkout.continueToPayment}
-            </Button>
-          </Card>
           </div>
         </form>
       </Container>

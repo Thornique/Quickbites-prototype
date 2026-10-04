@@ -23,7 +23,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/features/auth";
 import { useBookingSlots } from "@/features/bookings";
-import { useT } from "@/i18n";
+import { useOutlet } from "@/features/outlet";
+import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatSlotLabel, toDateKey } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -50,11 +51,13 @@ function useDays(): Array<{ key: string; weekday: string; day: string }> {
 export function BookingForm() {
   const t = useT();
   const { user } = useSession();
+  const pick = usePick();
+  const { outletId, outlet } = useOutlet();
   const days = useDays();
   const [date, setDate] = useState(days[0].key);
   const [booked, setBooked] = useState<TableBooking | null>(null);
 
-  const { data: slots, isLoading: isSlotsLoading } = useBookingSlots(date);
+  const { data: slots, isLoading: isSlotsLoading } = useBookingSlots(outletId, date);
 
   const {
     register,
@@ -93,6 +96,7 @@ export function BookingForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       const booking = await createBooking({
+        outletId,
         name: values.name,
         phone: values.phone,
         date: values.date,
@@ -113,7 +117,7 @@ export function BookingForm() {
           <span className="inline-flex size-12 items-center justify-center rounded-full bg-veg/10 text-veg-dark">
             <CheckCircle2 size={26} strokeWidth={1.75} aria-hidden="true" />
           </span>
-          <p className="mt-4 text-display text-2xl text-ink uppercase">
+          <p className="text-display mt-4 text-2xl text-ink uppercase">
             {t.booking.confirmedTitle}
           </p>
           <p className="measure mt-2 text-sm text-ink-muted">
@@ -124,7 +128,7 @@ export function BookingForm() {
             <p className="text-xs font-bold tracking-[0.12em] text-ink-muted uppercase">
               {t.booking.bookingId}
             </p>
-            <p className="nums mt-1 text-display text-xl text-brand">{booked.id}</p>
+            <p className="nums text-display mt-1 text-xl text-brand">{booked.id}</p>
             <p className="nums mt-3 text-sm text-ink">
               {booked.date} · {formatSlotLabel(booked.time)} ·{" "}
               {t.booking.people(booked.partySize)}
@@ -196,7 +200,9 @@ export function BookingForm() {
                         ? t.booking.tomorrow
                         : day.weekday}
                   </span>
-                  <span className="nums mt-0.5 block text-xs opacity-80">{day.day}</span>
+                  <span className="nums mt-0.5 block text-xs opacity-80">
+                    {day.day}
+                  </span>
                 </button>
               );
             })}
@@ -223,7 +229,11 @@ export function BookingForm() {
           )}
 
           {!isSlotsLoading && (slots ?? []).length > 0 && (
-            <div role="radiogroup" aria-label={t.booking.time} className="flex flex-wrap gap-2">
+            <div
+              role="radiogroup"
+              aria-label={t.booking.time}
+              className="flex flex-wrap gap-2"
+            >
               {(slots ?? []).map((slot) => {
                 const isActive = slot.time === time;
                 const isTooSmall = slot.remaining < Number(partySize);
@@ -249,7 +259,9 @@ export function BookingForm() {
                       {formatSlotLabel(slot.time)}
                     </span>
                     <span className="nums ml-1.5 text-xs opacity-75">
-                      {slot.isFull ? t.booking.full : t.booking.seatsLeft(slot.remaining)}
+                      {slot.isFull
+                        ? t.booking.full
+                        : t.booking.seatsLeft(slot.remaining)}
                     </span>
                   </button>
                 );

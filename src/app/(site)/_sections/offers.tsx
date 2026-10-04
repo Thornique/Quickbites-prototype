@@ -6,6 +6,7 @@ import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCoupons } from "@/features/coupons";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
 import type { Coupon } from "@/types";
@@ -26,7 +27,8 @@ export function Offers() {
   const t = useT();
   const pick = usePick();
   const headlineOf = useOfferHeadline();
-  const { data: coupons, isLoading } = useCoupons(true);
+  const outletId = useOutletId();
+  const { data: coupons, isLoading } = useCoupons(outletId, true);
 
   const copy = async (code: string) => {
     try {
@@ -60,7 +62,6 @@ export function Offers() {
       </div>
 
       <Container className="pt-8 sm:pt-10">
-
         {isLoading && (
           <div className="grid gap-4 sm:grid-cols-2">
             {Array.from({ length: 2 }).map((_, i) => (

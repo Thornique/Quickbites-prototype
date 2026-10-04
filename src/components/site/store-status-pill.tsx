@@ -1,5 +1,6 @@
 "use client";
 
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { useT } from "@/i18n";
 import { formatSlotLabel } from "@/lib/format";
@@ -12,7 +13,7 @@ import { cn } from "@/lib/utils";
  */
 export function StoreStatusPill({ className }: { className?: string }) {
   const t = useT();
-  const { data, isLoading } = useOpenState();
+  const { data, isLoading } = useOpenState(useOutletId());
 
   if (isLoading || !data) {
     return (

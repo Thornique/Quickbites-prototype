@@ -18,7 +18,16 @@
   --color-ink-muted: #6e6056; /* secondary text */
   --color-hairline: #e6dccb; /* borders & separators */
 
-  --color-brand: #d62300; /* flame red — buttons, prices, links */
+  /*
+    Two outlets, two accents. The restaurant's flame red is the default, and
+    `[data-outlet="coffee"]` below re-points --color-brand at the coffee
+    palette — so every `bg-brand`, `text-brand`, focus ring and chart colour
+    in the app follows the outlet without a component knowing about it.
+  */
+  --color-brand-restaurant: #d62300; /* flame red */
+  --color-brand-coffee: #6f4e37; /* roasted coffee brown */
+
+  --color-brand: var(--color-brand-restaurant); /* buttons, prices, links */
   --color-brand-hover: #ae1c00;
   --color-mustard: #f0b323; /* accent bands, deal highlights */
 
@@ -44,6 +53,17 @@
   --color-mustard-dark: #855000;
   --color-veg-dark: #146b2c;
   --color-warning-dark: #855000;
+
+  /* ---- Coffee outlet palette ------------------------------------------ */
+  /*
+    White on #6F4E37 measures 7.4:1, and ink on the caramel accent 7.3:1, so
+    both carry small text at AA. The dark fill is the same brown taken down
+    far enough to sit behind white at AAA.
+  */
+  --color-coffee-hover: #563c2a;
+  --color-coffee-dark: #3b2a1f; /* dark bands, switches, active tabs */
+  --color-caramel: #d9a05b; /* accent — carries INK text, never white */
+  --color-caramel-dark: #7a4a12; /* the accent as small text on its tint */
 
   /* Warm neutrals derived from the cream base, used for hovers and fills */
   --color-sand-50: #f2eadc;
@@ -132,6 +152,18 @@
   --color-sidebar-accent-foreground: var(--color-ink);
   --color-sidebar-border: var(--color-hairline);
   --color-sidebar-ring: var(--color-brand);
+}
+
+/*
+  The coffee shop's identity. Only the accents move: the cream page, the ink
+  and the hairlines stay, because it is still one brand and one website.
+*/
+:root[data-outlet="coffee"] {
+  --color-brand: var(--color-brand-coffee);
+  --color-brand-hover: var(--color-coffee-hover);
+  --color-cocoa: var(--color-coffee-dark);
+  --color-mustard: var(--color-caramel);
+  --color-mustard-dark: var(--color-caramel-dark);
 }
 
 @layer base {

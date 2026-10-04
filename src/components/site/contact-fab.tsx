@@ -3,9 +3,9 @@
 import { usePathname } from "next/navigation";
 import { MessageCircle, Phone } from "lucide-react";
 import { useSiteContent } from "@/features/content";
+import { useOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
-import { STORE } from "@/lib/constants";
-import { telHref } from "@/lib/format";
+import { outletPhoneHref } from "@/lib/outlets";
 
 /**
  * Routes where the bottom-right corner belongs to the ordering controls — the
@@ -25,8 +25,12 @@ const HIDDEN_ON = ["/menu", "/cart", "/checkout", "/order/", "/account"];
 export function ContactFab() {
   const t = useT();
   const pathname = usePathname();
+  const { outletId, outlet } = useOutlet();
   const { data: content } = useSiteContent();
-  const contact = content?.contact;
+  const outletCopy = content?.outlets[outletId];
+
+  const phone = outletCopy?.phone ?? outlet.phone;
+  const whatsapp = (outletCopy?.whatsapp ?? outlet.phone).replace(/\D/g, "");
 
   if (HIDDEN_ON.some((route) => pathname.startsWith(route))) return null;
 
@@ -37,15 +41,15 @@ export function ContactFab() {
     >
       {/* Calling is the mobile-first action, so it comes first on small screens. */}
       <a
-        href={`tel:${telHref(contact?.phone, STORE.phoneHref)}`}
-        aria-label={`${t.footer.callUs} ${contact?.phone ?? STORE.phoneDisplay}`}
+        href={`tel:${outletPhoneHref(outletId)}`}
+        aria-label={`${t.footer.callUs} ${phone}`}
         className="inline-flex size-12 items-center justify-center rounded-full border border-hairline bg-surface text-ink shadow-pop transition-colors hover:border-brand hover:text-brand focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 sm:hidden"
       >
         <Phone size={22} strokeWidth={1.75} aria-hidden="true" />
       </a>
 
       <a
-        href={`https://wa.me/${contact?.whatsapp ?? STORE.whatsappHref}`}
+        href={`https://wa.me/${whatsapp}`}
         target="_blank"
         rel="noopener noreferrer"
         aria-label={t.footer.whatsapp}

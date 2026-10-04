@@ -6,6 +6,7 @@ import { CartLineRow } from "@/components/site/cart-line-row";
 import { CartSummary } from "@/components/site/cart-summary";
 import { CouponField } from "@/components/site/coupon-field";
 import { OrderTypeToggle } from "@/components/site/order-type-toggle";
+import { OtherCartNote } from "@/components/site/other-cart-note";
 import { PageHead } from "@/components/site/page-head";
 import { StoreClosedBanner } from "@/components/site/store-closed-banner";
 import { SuggestedAddOns } from "@/components/site/suggested-add-ons";
@@ -14,18 +15,24 @@ import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { EmptyState } from "@/components/ui/empty-state";
 import { usePricedCart } from "@/features/cart";
+import { useOutletId } from "@/features/outlet";
 import { useOpenState } from "@/features/settings";
 import { useT } from "@/i18n";
-import { useCartStore } from "@/store/cart";
+import { useCart, useCartStore } from "@/store/cart";
 
 export default function CartPage() {
   const t = useT();
-  const lines = useCartStore((s) => s.lines);
+  const outletId = useOutletId();
+  const { lines, couponCode } = useCart(outletId);
   const orderType = useCartStore((s) => s.orderType);
-  const couponCode = useCartStore((s) => s.couponCode);
   const isHydrated = useCartStore((s) => s.isHydrated);
-  const { data: cart, isLoading } = usePricedCart(lines, couponCode, orderType);
-  const { data: openState } = useOpenState();
+  const { data: cart, isLoading } = usePricedCart(
+    lines,
+    outletId,
+    couponCode,
+    orderType,
+  );
+  const { data: openState } = useOpenState(outletId);
 
   const canOrder = !openState || (openState.isOpen && openState.acceptingOrders);
 
@@ -44,6 +51,9 @@ export default function CartPage() {
               </Button>
             }
           />
+          {/* An empty basket is where a forgotten one at the other outlet
+              is easiest to lose track of. */}
+          <OtherCartNote className="mt-6" />
         </Container>
       </>
     );
@@ -58,6 +68,8 @@ export default function CartPage() {
       <Container className="grid gap-8 py-6 pb-16 sm:py-10 lg:grid-cols-[1fr_22rem] lg:items-start">
         <div>
           <OrderTypeToggle />
+
+          <OtherCartNote className="mt-5" />
 
           <Card className="mt-5 divide-y divide-hairline px-4">
             {(cart?.lines ?? []).map((line, index) => (

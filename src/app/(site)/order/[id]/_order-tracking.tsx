@@ -28,6 +28,7 @@ import { toErrorMessage } from "@/lib/errors";
 import { formatDateTime, formatPrice, formatTime, minutesUntil } from "@/lib/format";
 import { cancelOrder, flagsFor } from "@/services/orders";
 import { scheduledStartAt } from "@/services/order-rules";
+import { OutletBadge } from "@/features/outlet";
 import { useSettings } from "@/features/settings";
 import { PaymentCard } from "./_payment-card";
 import { StatusTimeline } from "./_status-timeline";
@@ -44,7 +45,12 @@ export function OrderTracking({ id }: { id: string }) {
   const t = useT();
   const pick = usePick();
   const { data: order, isLoading, error, refetch } = useOrder(id);
-  const { data: settings } = useSettings();
+  /*
+    The order's own outlet, not the one being browsed: a tracking link has to
+    read the right ready-time and cancellation rules even if the customer has
+    since switched counters.
+  */
+  const { data: settings } = useSettings(order?.outletId ?? "restaurant");
   const [, setTick] = useState(0);
   const [isCancelling, setIsCancelling] = useState(false);
 
@@ -90,9 +96,13 @@ export function OrderTracking({ id }: { id: string }) {
   const flags = flagsFor(order);
   const isOpen = order.status !== "HANDED_OVER" && order.status !== "CANCELLED";
   const isAccepted = !!order.estimatedReadyAt && order.status !== "PLACED";
-  const minutesLeft = order.estimatedReadyAt ? minutesUntil(order.estimatedReadyAt) : null;
+  const minutesLeft = order.estimatedReadyAt
+    ? minutesUntil(order.estimatedReadyAt)
+    : null;
   const startAt =
-    settings && order.isScheduled ? scheduledStartAt(order, settings.basePrepBufferMinutes) : null;
+    settings && order.isScheduled
+      ? scheduledStartAt(order, settings.basePrepBufferMinutes)
+      : null;
 
   const handleCancel = async () => {
     setIsCancelling(true);
@@ -143,6 +153,12 @@ export function OrderTracking({ id }: { id: string }) {
           </p>
           <p className="mt-2 text-sm text-ink-muted">{t.track.showAtCounter}</p>
           <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+            {/*
+              Which counter to collect from. First in the row because a
+              tracking link opens whichever outlet the customer is browsing,
+              and the token alone does not say where to stand.
+            */}
+            <OutletBadge outletId={order.outletId} />
             <Badge variant="secondary">
               {order.orderType === "TAKEAWAY"
                 ? t.orderType.takeaway
@@ -160,7 +176,12 @@ export function OrderTracking({ id }: { id: string }) {
           className={`mt-4 p-5 text-center ${order.status === "READY" ? "border-veg/30 bg-veg/5" : ""}`}
         >
           <p className="flex items-center justify-center gap-2 text-lg font-semibold text-ink">
-            <Clock size={20} strokeWidth={1.75} className="text-brand" aria-hidden="true" />
+            <Clock
+              size={20}
+              strokeWidth={1.75}
+              className="text-brand"
+              aria-hidden="true"
+            />
             {timeHeadline()}
           </p>
           {timeDetail() && (
@@ -192,7 +213,10 @@ export function OrderTracking({ id }: { id: string }) {
 
             <ul className="mt-3 grid gap-2.5">
               {order.lines.map((line, index) => (
-                <li key={`${line.menuItemId}-${index}`} className="flex items-start gap-2.5">
+                <li
+                  key={`${line.menuItemId}-${index}`}
+                  className="flex items-start gap-2.5"
+                >
                   <VegMark isVeg={line.isVeg} size="sm" className="mt-1" />
                   <span className="min-w-0 flex-1">
                     <span className="nums block text-sm text-ink">
@@ -227,9 +251,15 @@ export function OrderTracking({ id }: { id: string }) {
                 />
               )}
               {order.packagingCharge > 0 && (
-                <Row label={t.cartPage.packaging} value={formatPrice(order.packagingCharge)} />
+                <Row
+                  label={t.cartPage.packaging}
+                  value={formatPrice(order.packagingCharge)}
+                />
               )}
-              <Row label={t.cartPage.gst(order.taxRate)} value={formatPrice(order.tax)} />
+              <Row
+                label={t.cartPage.gst(order.taxRate)}
+                value={formatPrice(order.tax)}
+              />
               <div className="mt-1 flex justify-between gap-4 border-t border-hairline pt-3">
                 <dt className="text-base font-semibold text-ink">{t.cartPage.total}</dt>
                 <dd>
@@ -249,7 +279,11 @@ export function OrderTracking({ id }: { id: string }) {
           <Card className="p-5 print:hidden">
             <h2 className="text-sm font-semibold text-ink">{t.track.pickupTitle}</h2>
             <p className="mt-2 flex items-start gap-2.5 text-sm text-ink">
-              <MapPin size={18} className="mt-0.5 shrink-0 text-brand" aria-hidden="true" />
+              <MapPin
+                size={18}
+                className="mt-0.5 shrink-0 text-brand"
+                aria-hidden="true"
+              />
               {STORE.addressFull}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">

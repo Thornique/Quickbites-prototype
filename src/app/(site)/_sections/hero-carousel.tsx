@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBanners } from "@/features/content";
+import { useOutletId } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,8 @@ const INTERVAL_MS = 6000;
 export function HeroCarousel() {
   const t = useT();
   const pick = usePick();
-  const { data: banners, isLoading } = useBanners(true);
+  const outletId = useOutletId();
+  const { data: banners, isLoading } = useBanners(outletId, true);
 
   const [index, setIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
