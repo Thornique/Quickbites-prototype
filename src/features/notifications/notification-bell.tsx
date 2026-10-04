@@ -10,24 +10,27 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import type { AppNotification } from "@/types";
+import type { AppNotification, OutletId } from "@/types";
 import { useNotificationActions, useNotifications, useUnreadCount } from "./index";
 import { NotificationList } from "./notification-list";
 
 export interface NotificationBellProps {
   /** Where "See all" goes — customers and admins have different pages. */
   allHref?: string;
+  /** Narrows the bell to one outlet. The admin topbar passes its scope. */
+  outletId?: OutletId;
   className?: string;
 }
 
 export function NotificationBell({
   allHref = "/account/notifications",
+  outletId,
   className,
 }: NotificationBellProps) {
   const t = useT();
   const [isOpen, setIsOpen] = useState(false);
-  const { data: notifications, isLoading } = useNotifications(12);
-  const { data: unread = 0 } = useUnreadCount();
+  const { data: notifications, isLoading } = useNotifications(12, outletId);
+  const { data: unread = 0 } = useUnreadCount(outletId);
   const { markRead, markAllRead } = useNotificationActions();
 
   const handleClick = (notification: AppNotification) => {

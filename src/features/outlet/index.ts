@@ -45,3 +45,9 @@ export function useOutletId(): OutletId {
 export { OutletProvider } from "./provider";
 export { OutletSwitch } from "./outlet-switch";
 export { OutletBadge } from "./outlet-badge";
+
+/* Admin panel. The storefront never imports these. */
+export { AdminOutletSwitcher } from "./admin-outlet-switcher";
+export { RequireOutlet } from "./require-outlet";
+export { useAdminOutlet } from "./use-admin-outlet";
+export type { AdminOutletSnapshot } from "./use-admin-outlet";

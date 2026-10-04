@@ -49,7 +49,12 @@ export function CategoryRail() {
             <h2 className="text-display text-2xl text-ink uppercase sm:text-3xl lg:text-4xl">
               {t.categories.title}
             </h2>
-            <p className="mt-1.5 text-sm text-ink-muted">{t.categories.description}</p>
+            <p className="mt-1.5 text-sm text-ink-muted">
+              {t.categories.description(
+                categories?.length ?? 0,
+                Object.values(counts ?? {}).reduce((sum, n) => sum + n, 0),
+              )}
+            </p>
           </div>
 
           <Link

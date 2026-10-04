@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
+import { OutletBadge, useAdminOutlet } from "@/features/outlet";
 import { useReviews } from "@/features/reviews";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
@@ -39,7 +40,9 @@ function Stars({ rating }: { rating: number }) {
           strokeWidth={1.75}
           aria-hidden="true"
           className={cn(
-            star <= rating ? "fill-mustard text-mustard" : "fill-transparent text-hairline",
+            star <= rating
+              ? "fill-mustard text-mustard"
+              : "fill-transparent text-hairline",
           )}
         />
       ))}
@@ -49,8 +52,9 @@ function Stars({ rating }: { rating: number }) {
 
 function ReviewsModule() {
   const t = useT();
+  const { outletId, isAll } = useAdminOutlet();
   // Unapproved reviews are the whole point of this screen, so read them all.
-  const { data: reviews, isLoading } = useReviews(false);
+  const { data: reviews, isLoading } = useReviews(outletId, false);
   const [rating, setRating] = useState<string>(ALL);
   const [replying, setReplying] = useState<Review | null>(null);
   const [reply, setReply] = useState("");
@@ -76,6 +80,16 @@ function ReviewsModule() {
   };
 
   const columns: AdminColumn<Review>[] = [
+    ...(isAll
+      ? [
+          {
+            id: "outlet",
+            header: t.adm.outlet.outletColumn,
+            sortValue: (row: Review) => row.outletId,
+            cell: (row: Review) => <OutletBadge outletId={row.outletId} />,
+          } satisfies AdminColumn<Review>,
+        ]
+      : []),
     {
       id: "customer",
       header: t.adm.reviews.colCustomer,

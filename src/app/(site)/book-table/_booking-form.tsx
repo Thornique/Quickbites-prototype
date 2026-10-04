@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useSession } from "@/features/auth";
 import { useBookingSlots } from "@/features/bookings";
-import { useOutlet } from "@/features/outlet";
+import { OutletBadge, useOutlet } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatSlotLabel, toDateKey } from "@/lib/format";
@@ -169,6 +169,16 @@ export function BookingForm() {
   return (
     <Card className="p-5 sm:p-6">
       <form onSubmit={onSubmit} className="grid gap-5" noValidate>
+        {/*
+          Which shop the table is at. Both take bookings, and the switch that
+          decides it is up in the header — so say it here rather than let
+          somebody book the wrong room.
+        */}
+        <p className="flex flex-wrap items-center gap-2 rounded-control border border-hairline bg-sand-50 px-3 py-2 text-sm text-ink">
+          <OutletBadge outletId={outletId} />
+          <span className="min-w-0">{pick(outlet.address)}</span>
+        </p>
+
         {/* Date rail */}
         <div className="grid gap-1.5">
           <Label>{t.booking.date}</Label>

@@ -84,7 +84,6 @@ export const enSite = {
     closedNow: "We're closed right now",
     opensAt: (time: string) => `Ordering opens at ${time}`,
     pickUpAt: "Pick up at",
-    addressShort: "Bombay Bazar, Khandwa",
     dineInOrTakeaway: "Takeaway or dine in — no delivery",
     prepaidNote: "Takeaway orders are prepaid — so we cook only for you, fresh.",
     busyNow: (count: number) =>
@@ -93,7 +92,8 @@ export const enSite = {
 
   categories: {
     title: "Browse the menu",
-    description: "Eight sections, 40 items, most of them vegetarian.",
+    description: (sections: number, items: number) =>
+      `${sections} sections, ${items} items, most of them vegetarian.`,
     itemCount: (count: number) => (count === 1 ? "1 item" : `${count} items`),
     seeAll: "See all",
     scrollLeft: "Scroll categories left",
@@ -146,7 +146,7 @@ export const enSite = {
       },
       {
         title: "Pick up or sit down",
-        body: "Watch the live status and collect from Bombay Bazar when it says ready — or take a seat and we'll bring it over.",
+        body: "Watch the live status and collect from the counter when it says ready — or take a seat and we'll bring it over.",
       },
     ],
   },
@@ -170,9 +170,9 @@ export const enSite = {
 
   location: {
     eyebrow: "Find us",
-    title: "Bombay Bazar, Khandwa",
+    title: "Where to find us",
     description:
-      "Parking is easiest in the side lane after 7 PM. We're a two-minute walk from the bus stand.",
+      "Both counters are a short walk from the bus stand. Parking is easiest in the side lane after 7 PM.",
     mapLabel: "Map showing Quick Bites, Khandwa",
     loadMap: "Load map",
     mapNote: "Loads Google Maps",
@@ -498,7 +498,7 @@ export const enSite = {
     eyebrow: "About us",
     title: "Made fresh, served fast",
     intro:
-      "One counter at Bombay Bazar, a kitchen you can see into, and food that leaves the counter hot.",
+      "Two counters in Khandwa, kitchens you can see into, and food that leaves hot.",
     valuesTitle: "What we hold to",
     hygieneTitle: "Kitchen & hygiene",
     hygienePoints: [
@@ -522,7 +522,7 @@ export const enSite = {
     eyebrow: "Gallery",
     title: "The counter, the kitchen, the food",
     description:
-      "Photographs from our counter at Bombay Bazar — no stock food styling.",
+      "Photographs from our own counters in Khandwa — no stock food styling.",
     filterAll: "All",
     filterFood: "Food",
     filterCafe: "Cafe",

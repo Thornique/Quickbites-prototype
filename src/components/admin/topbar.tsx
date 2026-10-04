@@ -22,8 +22,9 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { Switch } from "@/components/ui/switch";
 import { useSession, useSessionActions } from "@/features/auth";
 import { NotificationBell } from "@/features/notifications";
+import { AdminOutletSwitcher, useAdminOutlet } from "@/features/outlet";
 import { useOpenState, useSettings } from "@/features/settings";
-import { useT } from "@/i18n";
+import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { can } from "@/lib/permissions";
 import { setAcceptingOrders, setStoreOpen } from "@/services/settings";
@@ -45,12 +46,17 @@ function initialsOf(name: string): string {
 function StoreSwitches() {
   const t = useT();
   const { user } = useSession();
-  const { data: settings } = useSettings();
-  const { data: openState } = useOpenState();
+  const { outletId } = useAdminOutlet();
+  const { data: settings } = useSettings(outletId ?? "restaurant");
+  const { data: openState } = useOpenState(outletId ?? "restaurant");
   const [isSaving, setIsSaving] = useState(false);
 
   const mayEdit = can(user, "SETTINGS");
-  if (!settings) return null;
+  /*
+    Open/closed belongs to one outlet, so the combined view has nothing
+    honest to switch. The scope picker is right next door.
+  */
+  if (!outletId || !settings) return null;
 
   const run = async (action: () => Promise<unknown>, message: string) => {
     setIsSaving(true);
@@ -72,7 +78,7 @@ function StoreSwitches() {
       tone: settings.isOpen,
       onChange: (next: boolean) =>
         run(
-          () => setStoreOpen(next),
+          () => setStoreOpen(outletId, next),
           next ? t.adm.shell.openSaved : t.adm.shell.closedSaved,
         ),
     },
@@ -85,7 +91,7 @@ function StoreSwitches() {
       tone: settings.acceptingOrders,
       onChange: (next: boolean) =>
         run(
-          () => setAcceptingOrders(next),
+          () => setAcceptingOrders(outletId, next),
           next ? t.adm.shell.acceptingSaved : t.adm.shell.pausedSaved,
         ),
     },
@@ -141,8 +147,10 @@ export function AdminTopbar({
   onToggleCollapsed: () => void;
 }) {
   const t = useT();
+  const pick = usePick();
   const router = useRouter();
   const { user, isSuperAdmin } = useSession();
+  const { outletId: outletScope, lockedOutlet } = useAdminOutlet();
   const { signOut } = useSessionActions();
   const [isNavOpen, setIsNavOpen] = useState(false);
 
@@ -178,9 +186,13 @@ export function AdminTopbar({
         <Link href="/admin" className="shrink-0" aria-label={t.admin.panel}>
           <Wordmark className="h-4 sm:h-5" />
         </Link>
-        <Badge variant="muted" className="hidden sm:inline-flex">
+        <Badge variant="muted" className="hidden lg:inline-flex">
           {t.admin.panel}
         </Badge>
+
+        {/* Which outlet is being run. A switcher for the owner, a label
+            for an admin who only has one. */}
+        <AdminOutletSwitcher />
         {/* Nobody should mistake the demo for the live till. */}
         <Badge variant="warning" title={t.common.prototypeNote}>
           {t.common.prototype}
@@ -198,7 +210,7 @@ export function AdminTopbar({
             <ExternalLink size={14} aria-hidden="true" />
           </Link>
 
-          <NotificationBell allHref="/admin/notifications" />
+          <NotificationBell allHref="/admin/notifications" outletId={outletScope} />
           <LanguageToggle className="hidden sm:inline-flex" />
 
           {user && (
@@ -220,12 +232,16 @@ export function AdminTopbar({
                   <span className="block truncate text-xs font-normal text-ink-muted">
                     {user.email}
                   </span>
-                  <Badge
-                    variant={isSuperAdmin ? "default" : "secondary"}
-                    className="mt-2"
-                  >
-                    {t.roles[user.role]}
-                  </Badge>
+                  <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                    <Badge variant={isSuperAdmin ? "default" : "secondary"}>
+                      {t.roles[user.role]}
+                    </Badge>
+                    <Badge variant="muted">
+                      {lockedOutlet
+                        ? pick(lockedOutlet.name)
+                        : t.adm.outlet.superAdminAllOutlets}
+                    </Badge>
+                  </span>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>

@@ -82,7 +82,6 @@ export const hiSite: SiteDictionary = {
     closedNow: "अभी हम बंद हैं",
     opensAt: (time: string) => `${time} बजे से ऑर्डर शुरू`,
     pickUpAt: "यहाँ से लीजिए",
-    addressShort: "बॉम्बे बाज़ार, खंडवा",
     dineInOrTakeaway: "टेकअवे या यहीं बैठकर — डिलीवरी नहीं",
     prepaidNote:
       "टेकअवे ऑर्डर पहले से चुकाए जाते हैं — इसलिए हम सिर्फ़ आपके लिए, ताज़ा बनाते हैं।",
@@ -92,7 +91,8 @@ export const hiSite: SiteDictionary = {
 
   categories: {
     title: "मेन्यू देखिए",
-    description: "आठ हिस्से, 40 चीज़ें — ज़्यादातर शाकाहारी।",
+    description: (sections: number, items: number) =>
+      `${sections} हिस्से, ${items} चीज़ें — ज़्यादातर शाकाहारी।`,
     itemCount: (count: number) => (count === 1 ? "1 चीज़" : `${count} चीज़ें`),
     seeAll: "सब देखें",
     scrollLeft: "श्रेणियाँ बाएँ ले जाएँ",
@@ -144,7 +144,7 @@ export const hiSite: SiteDictionary = {
       },
       {
         title: "ले जाइए या बैठिए",
-        body: "लाइव स्टेटस देखिए और तैयार होते ही बॉम्बे बाज़ार से ले जाइए — या बैठ जाइए, हम टेबल पर ले आएँगे।",
+        body: "लाइव स्टेटस देखिए और तैयार होते ही काउंटर से ले जाइए — या बैठ जाइए, हम टेबल पर ले आएँगे।",
       },
     ],
   },
@@ -168,7 +168,7 @@ export const hiSite: SiteDictionary = {
 
   location: {
     eyebrow: "हम यहाँ हैं",
-    title: "बॉम्बे बाज़ार, खंडवा",
+    title: "हमें यहाँ पाइए",
     description:
       "शाम 7 बजे के बाद साइड गली में पार्किंग सबसे आसान। बस स्टैंड से दो मिनट की दूरी।",
     mapLabel: "Quick Bites, खंडवा का नक्शा",
@@ -496,7 +496,7 @@ export const hiSite: SiteDictionary = {
     eyebrow: "हमारे बारे में",
     title: "ताज़ा बना, जल्दी परोसा",
     intro:
-      "बॉम्बे बाज़ार का एक काउंटर, ऐसी रसोई जो आप देख सकते हैं, और खाना जो काउंटर से गरम निकलता है।",
+      "खंडवा में दो काउंटर, ऐसी रसोई जो आप देख सकते हैं, और खाना जो गरम निकलता है।",
     valuesTitle: "हम जिन बातों पर टिके हैं",
     hygieneTitle: "रसोई और साफ़-सफ़ाई",
     hygienePoints: [
@@ -518,7 +518,7 @@ export const hiSite: SiteDictionary = {
   gallery: {
     eyebrow: "गैलरी",
     title: "काउंटर, रसोई और खाना",
-    description: "बॉम्बे बाज़ार के हमारे काउंटर की तस्वीरें — कोई स्टॉक फ़ोटो नहीं।",
+    description: "खंडवा में हमारे अपने काउंटरों की तस्वीरें — कोई स्टॉक फ़ोटो नहीं।",
     filterAll: "सभी",
     filterFood: "खाना",
     filterCafe: "कैफ़े",

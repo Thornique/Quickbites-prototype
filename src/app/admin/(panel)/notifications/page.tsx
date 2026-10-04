@@ -8,12 +8,17 @@ import {
   useNotificationActions,
   useNotifications,
 } from "@/features/notifications";
+import { useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 
 /** Full notification history for the signed-in admin. */
 export default function AdminNotificationsPage() {
   const t = useT();
-  const { data: notifications, isLoading } = useNotifications();
+  // Narrowed to the outlet being run, so a coffee alert stays on coffee.
+  const { data: notifications, isLoading } = useNotifications(
+    undefined,
+    useAdminOutlet().outletId,
+  );
   const { markRead, markAllRead } = useNotificationActions();
   const hasUnread = (notifications ?? []).some((n) => !n.readAt);
 

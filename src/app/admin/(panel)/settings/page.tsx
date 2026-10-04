@@ -15,12 +15,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequireAdmin, useSession } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import { usePrepEstimate, useSettings } from "@/features/settings";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate } from "@/lib/format";
 import { resetDemo, updateSettings } from "@/services/settings";
-import { WEEKDAYS, type StoreSettings, type Weekday } from "@/types";
+import { WEEKDAYS, type OutletId, type StoreSettings, type Weekday } from "@/types";
 
 type Patch = Partial<Omit<StoreSettings, "id" | "createdAt">>;
 
@@ -57,11 +58,11 @@ function NumberField({
   );
 }
 
-function SettingsModule() {
+function SettingsModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const { isSuperAdmin } = useSession();
-  const { data: settings } = useSettings();
-  const { data: estimate } = usePrepEstimate();
+  const { data: settings } = useSettings(outletId);
+  const { data: estimate } = usePrepEstimate(outletId);
 
   const [draft, setDraft] = useState<StoreSettings | null>(null);
   const [tab, setTab] = useState("store");
@@ -74,6 +75,11 @@ function SettingsModule() {
     if (settings) setDraft(settings);
   }, [settings]);
 
+  // A different outlet is a different record, so drop the half-edited draft.
+  useEffect(() => {
+    setDraft(null);
+  }, [outletId]);
+
   if (!draft) return <Skeleton className="h-96 w-full rounded-card" />;
 
   const patch = (next: Patch) =>
@@ -82,8 +88,8 @@ function SettingsModule() {
   const save = async () => {
     setIsSaving(true);
     try {
-      const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = draft;
-      await updateSettings(rest);
+      const { id: _id, outletId: _o, createdAt: _c, updatedAt: _u, ...rest } = draft;
+      await updateSettings(outletId, rest);
       toast.success(t.adm.settings.saved);
     } catch (caught) {
       toast.error(toErrorMessage(caught));
@@ -210,7 +216,9 @@ function SettingsModule() {
           </ul>
 
           <div className="mt-5 border-t border-hairline pt-4">
-            <h2 className="text-sm font-semibold text-ink">{t.adm.settings.holidays}</h2>
+            <h2 className="text-sm font-semibold text-ink">
+              {t.adm.settings.holidays}
+            </h2>
             <p className="mt-0.5 text-xs text-ink-muted">
               {t.adm.settings.holidaysHint}
             </p>
@@ -469,7 +477,9 @@ function SettingsModule() {
 export default function AdminSettingsPage() {
   return (
     <RequireAdmin permission="SETTINGS">
-      <SettingsModule />
+      <RequireOutlet>
+        {(outletId) => <SettingsModule outletId={outletId} />}
+      </RequireOutlet>
     </RequireAdmin>
   );
 }

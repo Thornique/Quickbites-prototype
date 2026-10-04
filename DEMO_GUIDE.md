@@ -10,7 +10,13 @@ This is a **working prototype** of the Quick Bites website and admin panel. Ever
 click, click it — the menu, the cart, paying, the kitchen screen, the reports. It all behaves
 like the real thing.
 
-Three things to understand before you show it:
+**There are two shops in here, not one.** "Quick Bites" at Bombay Bazar is the restaurant;
+"Quick Bites Coffee" on Nagchun Road is the coffee shop. One website, one admin panel, and a
+toggle in the header that swaps between them — menu, prices, offers, opening hours, colour and
+all. The two keep **separate carts, separate stock, separate coupons and separate token
+numbers** (A-series at the restaurant, C-series at coffee). See section 4a.
+
+Three more things to understand before you show it:
 
 **There is no server and no database.** The whole thing runs inside the web browser. When you
 place an order, the order is saved into the browser's own storage, not sent anywhere.
@@ -36,21 +42,24 @@ Do this **before** the client is in the room.
 ### a. Open the app and let it load
 
 Open the site once and wait for it to finish loading. The first load builds all the demo data
-(menu, 60 days of past orders, customers, reviews). After that it is instant.
+for **both shops** (two menus, 45 days of past orders each, customers, reviews). It takes a few
+seconds. After that it is instant.
 
 ### b. Check the shop is open — this one catches people out
 
-The cafe's hours are **10:00 AM to 11:00 PM**. If you demo outside those hours, the site
-correctly shows **"Closed"** and the **Add buttons are greyed out** — you will not be able to
-put anything in the cart, and the demo stops dead.
+Each shop keeps its **own** hours: the restaurant is **10:00 AM to 11:00 PM**, the coffee shop
+**7:30 AM to 10:30 PM**. If you demo outside those hours, that shop correctly shows **"Closed"**
+and its **Add buttons are greyed out** — you will not be able to put anything in the cart, and
+the demo stops dead.
 
-If you are demoing early morning or late at night:
+If you are demoing early morning or late at night, do this **for each shop you plan to show**:
 
-1. Go to the admin panel → **Settings** → **Hours**
+1. Go to the admin panel → pick the outlet in the **topbar switcher** → **Settings** → **Hours**
 2. Set the opening time to `00:00` and the closing time to `23:59` for every day
 3. **Save changes**
+4. Switch the topbar to the other outlet and repeat
 
-The site will immediately start taking orders. Set it back afterwards if you like.
+That shop will immediately start taking orders. Set it back afterwards if you like.
 
 ### c. Decide whether to reset
 
@@ -67,11 +76,17 @@ Resetting wipes anything you created and rebuilds the original demo data. It tak
 
 | Who | Email | Password | What they can do |
 | --- | --- | --- | --- |
-| Owner (super admin) | `owner@quickbites.in` | `Owner@123` | Everything, including staff and reset |
-| Manager (admin) | `manager@quickbites.in` | `Manager@123` | Orders, menu, inventory, coupons, enquiries, bookings. **Not** reports, customers, content, reviews, staff or settings |
-| Customer | `demo@quickbites.in` | `Demo@123` | Ordinary customer with past orders |
+| Owner (super admin) | `owner@quickbites.in` | `Owner@123` | Everything, **both outlets**, including staff and reset |
+| Restaurant manager | `manager@quickbites.in` | `Manager@123` | Orders, menu, inventory, coupons, enquiries, bookings — **restaurant only**. **Not** reports, customers, content, reviews, staff or settings |
+| Coffee manager | `coffee@quickbites.in` | `Coffee@123` | The same permissions — **coffee shop only** |
+| Customer | `demo@quickbites.in` | `Demo@123` | Ordinary customer with past orders at both shops |
 
 The customer signs in at `/login`. The admins sign in at a **separate** screen, `/admin/login`.
+
+**Customers are shared; admins are not.** One customer account orders from either shop. Each
+admin is tied to one outlet and simply cannot see the other one's orders, menu, stock or
+takings — not hidden, genuinely refused. Only the owner sees both, and only the owner gets the
+**Restaurant / Coffee / All outlets** switcher in the topbar.
 
 You can be signed in as a customer in one tab and as the owner in another at the same time —
 they are kept separate on purpose, and that is exactly how you run the demo.
@@ -89,6 +104,26 @@ Put them side by side if the screen allows. The whole point is that the client s
 tab react while you act as a customer.
 
 ---
+
+### Minute 0 · The two shops (do this first)
+
+**Tab 1.** On a first visit the home page opens with a **two-card choice** — "Where are you
+ordering from?" — the restaurant and the coffee shop side by side. Pick **Quick Bites Coffee**.
+
+Everything changes at once, and it is worth pausing on:
+
+- The wordmark becomes **QUICK BITES COFFEE** and the red turns **coffee brown**.
+- The menu is the coffee menu — espresso, frappés, bakes. No burgers anywhere.
+- The address, the phone, the opening hours and the offers line are the coffee shop's.
+
+Use the **Restaurant | Coffee** toggle in the header to switch back and forth. Two things to
+show the client while you do:
+
+- **The carts stay apart.** Put a latte in the coffee cart, switch to the restaurant, and the
+  restaurant cart is still its own — the cart page even says *"1 item is still waiting in your
+  Coffee cart"* with a button to go back to it. Nothing is merged and nothing is lost.
+- **Links are shareable.** `?outlet=coffee` on any URL opens that shop directly, which is what
+  a WhatsApp link or a QR code on the coffee counter would use.
 
 ### Minute 0–2 · The shopfront
 
@@ -126,8 +161,11 @@ tab react while you act as a customer.
 10. Takeaway is **prepaid and online only** — there is no cash option, deliberately, because
     the kitchen should not cook for someone who might not turn up. Choose **UPI**, let the
     simulated payment succeed.
-11. You land on the **order tracking page** with a big **token number** (like `#A23`) and the
-    message **"Waiting for the cafe to confirm."**
+11. You land on the **order tracking page** with a big **token number** and the message
+    **"Waiting for the cafe to confirm."** The token says which counter to stand at: an
+    **A-series** number (`A23`) at the restaurant, a **C-series** one (`C14`) at the coffee
+    shop, and the page carries an outlet badge next to it. Each shop counts its own tokens from
+    1 each morning.
 
 > Leave this tab open. Do not close it. It is about to come alive.
 
@@ -178,9 +216,23 @@ wording follows the order type.)
     ready time**. Every one exports to **CSV**, and the page prints.
 20. **Inventory** — mark an item **sold out**. Flip to Tab 1 and show it greyed out on the
     menu **instantly**. This usually gets the biggest reaction.
-21. **Staff** — open the manager's permissions and show the checkboxes. Sign in as the manager
-    in a private window and show that Reports, Staff and Settings are simply not there for
-    them. The owner cannot be deleted or demoted by anyone.
+21. **Staff** — open the manager's permissions and show the checkboxes, and the **Outlet**
+    choice above them. Create a new admin, set the outlet to **Quick Bites Coffee**, then sign
+    in as them in a private window: they land on a panel that says **"Working at: Quick Bites
+    Coffee"**, with no switcher, and the restaurant's orders, menu and stock are not there at
+    all. The owner cannot be deleted or demoted by anyone.
+
+### Minute 10 · Both shops at once (owner only)
+
+22. In the topbar switcher choose **All outlets**. The orders board now shows both shops side
+    by side, every card badged **Restaurant** or **Coffee**, with A-series and C-series tokens
+    mixed together — which is exactly what the owner wants to see from home.
+23. Open **Reports** on "All outlets". The top of the page gains a **By outlet** block: net
+    sales, orders, average order and items for each shop, with the combined totals underneath.
+    It exports to CSV like everything else.
+24. Try **Menu** while still on "All outlets". It asks you to **pick an outlet first** — a menu
+    item, a coupon or a set of opening hours belongs to one shop and cannot be saved to both.
+    That is the one deliberate limit of the combined view.
 
 Other things to show if there is time: **Menu** (add an item, upload a photo), **Coupons**,
 **Customers** (history and block), **Enquiries** (with Call and WhatsApp buttons),
@@ -194,7 +246,10 @@ website change).
 
 | Problem | Fix |
 | --- | --- |
-| Add buttons are greyed out | The shop is closed. Admin → Settings → Hours → widen the hours |
+| Add buttons are greyed out | That shop is closed. Admin → pick the outlet → Settings → Hours → widen the hours |
+| A screen says "Pick an outlet first" | The topbar is on **All outlets**. Catalogue, stock, coupons, content and settings need a specific shop — choose one |
+| An admin "cannot see" an order | They are assigned to the other outlet. Only the owner sees both |
+| The menu looks wrong for the shop you meant | Check the **Restaurant / Coffee** toggle in the site header |
 | Nothing is on the menu, pages look empty | Reload the page once; the demo data builds on first load |
 | Admin tab does not react to the customer tab | They must be the **same browser**. Different browsers, or a private window, are separate worlds |
 | Numbers look wrong after practising | Admin → Settings → Demo → Reset demo data |
@@ -212,8 +267,8 @@ Two ways:
 2. In development only, `/dev/data` has the same reset plus a view of what is stored. That page
    is switched off in the deployed version.
 
-Reset rebuilds the menu, the 60 days of order history, customers, reviews and settings exactly
-as they started. Anything you created is gone.
+Reset rebuilds both menus, 45 days of order history for each shop, customers, reviews and both
+sets of settings exactly as they started. Anything you created is gone.
 
 ---
 
@@ -235,5 +290,8 @@ real build swaps the foundations underneath.
 - **Proper hosting.** The real product runs on a **VPS** with the cafe's own domain, backups,
   and an SSL certificate — not the free demo hosting this prototype uses.
 
-Things that carry over unchanged: the whole design, the bilingual content, the menu structure,
-the order and payment rules, the admin screens and the reports.
+- **Per-outlet printers and screens.** Each counter gets its own kitchen display and its own
+  bill printer, instead of both boards living in one browser.
+
+Things that carry over unchanged: the whole design, the bilingual content, the two-outlet
+structure, the menu, the order and payment rules, the admin screens and the reports.

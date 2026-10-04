@@ -13,14 +13,27 @@ interface PageProps {
  * Items an admin adds later are not in this list, so the route falls back to
  * rendering on demand and the client half resolves the slug from localStorage
  * — which is where the live menu actually lives.
+ *
+ * Slugs are unique within an outlet, not across both — both counters sell a
+ * "cold-coffee" — so the list is de-duplicated. The page resolves which of
+ * the two to show from the active outlet on the client.
  */
 export function generateStaticParams() {
-  return SEED_MENU_ITEMS.map((item) => ({ slug: item.slug }));
+  return [...new Set(SEED_MENU_ITEMS.map((item) => item.slug))].map((slug) => ({
+    slug,
+  }));
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const item = SEED_MENU_ITEMS.find((candidate) => candidate.slug === slug);
+  /*
+    Where a slug exists at both outlets, the restaurant's copy supplies the
+    shared metadata: it is the default outlet, so it is what a cold visitor
+    following the link is shown first.
+  */
+  const matches = SEED_MENU_ITEMS.filter((candidate) => candidate.slug === slug);
+  const item =
+    matches.find((candidate) => candidate.outletId === "restaurant") ?? matches[0];
 
   if (!item) {
     return { title: "Menu item", robots: { index: false, follow: true } };

@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
 import { useCustomer, useCustomers } from "@/features/customers";
 import { useOrders } from "@/features/orders";
+import { OutletBadge, useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate, formatDateTime, formatPrice } from "@/lib/format";
@@ -34,7 +35,16 @@ function CustomerSheet({
 }) {
   const t = useT();
   const { data: customer } = useCustomer(customerId ?? "");
-  const { data: orders } = useOrders({ customerId: customerId ?? undefined });
+  /*
+    An assigned admin sees only their own outlet's orders for this customer —
+    narrowed by the service either way, but passing the scope keeps the super
+    admin's selection honest too.
+  */
+  const { outletId } = useAdminOutlet();
+  const { data: orders } = useOrders({
+    customerId: customerId ?? undefined,
+    outletId,
+  });
   const [notes, setNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -149,6 +159,7 @@ function CustomerSheet({
                     </span>
                   </span>
                   <span className="flex items-center gap-2">
+                    <OutletBadge outletId={order.outletId} variant="plain" />
                     <StatusBadge status={order.status} orderType={order.orderType} />
                     <PaymentBadge order={order} />
                     <span className="nums font-semibold text-ink">
@@ -299,7 +310,8 @@ function CustomersModule() {
               </p>
             </div>
             <p className="nums mt-1 text-xs text-ink-muted">
-              {row.orderCount} · {row.lastOrderAt ? formatDate(row.lastOrderAt) : t.adm.customers.never}
+              {row.orderCount} ·{" "}
+              {row.lastOrderAt ? formatDate(row.lastOrderAt) : t.adm.customers.never}
             </p>
           </Card>
         )}

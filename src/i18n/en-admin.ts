@@ -5,6 +5,25 @@
  * a change to back-office wording can never touch the storefront.
  */
 const admin = {
+  /** Outlet scope: the topbar switcher and the "pick an outlet" gate. */
+  outlet: {
+    switcherLabel: "Outlet",
+    allOutlets: "All outlets",
+    combined: "Combined",
+    workingAt: "Working at",
+    pickTitle: "Pick an outlet first",
+    pickBody:
+      "This screen belongs to one shop — a menu item, a coupon or a set of opening hours cannot be saved to both. Choose which one you are working on.",
+    outletColumn: "Outlet",
+    perOutlet: "Per outlet",
+    restaurantLabel: "Restaurant",
+    coffeeLabel: "Coffee",
+    assignOutlet: "Outlet",
+    assignOutletHint: "An admin can only see and change this outlet's data.",
+    assignOutletRequired: "Choose which outlet this admin works at.",
+    superAdminAllOutlets: "All outlets",
+  },
+
   nav: {
     operations: "Operations",
     catalogue: "Catalogue",
@@ -98,7 +117,7 @@ const admin = {
     greetingMorning: (name: string) => `Good morning, ${name}`,
     greetingAfternoon: (name: string) => `Good afternoon, ${name}`,
     greetingEvening: (name: string) => `Good evening, ${name}`,
-    greetingDate: (date: string) => `${date} at Bombay Bazar, Khandwa.`,
+    greetingDate: (date: string) => `${date} in Khandwa.`,
     attention: "Needs your attention",
     attentionCount: (count: number) =>
       count === 1 ? "1 thing waiting" : `${count} things waiting`,
@@ -610,6 +629,7 @@ const admin = {
     ctaLabelEn: "Button text (English)",
     ctaLabelHi: "Button text (Hindi)",
     ctaHref: "Button link",
+    hoursNote: "Opening hours, as shown",
     offersStrip: "Offers strip",
     offersStripHint: "The scrolling line above the home page sections.",
     aboutStory: "About — story",
@@ -640,6 +660,7 @@ const admin = {
     subtitle: "How the cafe is doing. Every table exports to CSV.",
     compare: "vs previous period",
     print: "Print",
+    byOutlet: "By outlet",
     salesSummary: "Sales summary",
     grossSales: "Gross sales",
     discounts: "Discounts",

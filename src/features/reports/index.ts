@@ -15,7 +15,9 @@ import {
   getSalesSummary,
   type ReportScope,
 } from "@/services/reports";
+import type { DateRange } from "@/services/reports";
 import type { OutletId } from "@/types";
+import { useAdminOutlet } from "../outlet";
 import { useStoreQuery } from "../use-store-query";
 
 /**
@@ -42,6 +44,20 @@ function useScopedReport<T>(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const stable = useMemo(() => scope, [key]);
   return useStoreQuery(() => loader(stable), ["orders"], [key]);
+}
+
+/**
+ * Folds the admin panel's outlet scope into a plain date range.
+ *
+ * Every chart takes a range from the period picker and has no business knowing
+ * about outlets, so this is where the two meet — one call per chart instead of
+ * threading the scope through two pages of props.
+ */
+export function useReportScope(range: DateRange): ReportScope {
+  const { outletId } = useAdminOutlet();
+  const key = range.from.getTime() + "|" + range.to.getTime() + "|" + (outletId ?? "");
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => ({ ...range, outletId }), [key]);
 }
 
 export function useDashboardKpis(outletId?: OutletId) {

@@ -22,28 +22,26 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
+import { OutletBadge, useAdminOutlet } from "@/features/outlet";
 import { useBookings, useBookingSlots } from "@/features/bookings";
 import { useSettings } from "@/features/settings";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate, formatSlotLabel, toDateKey } from "@/lib/format";
 import { updateBookingStatus } from "@/services/bookings";
-import {
-  BOOKING_STATUSES,
-  type BookingStatus,
-  type TableBooking,
-} from "@/types";
+import { BOOKING_STATUSES, type BookingStatus, type TableBooking } from "@/types";
 import { cn } from "@/lib/utils";
 
 const ALL = "ALL";
 
-const TONE: Record<BookingStatus, "warning" | "veg" | "success" | "danger" | "muted"> = {
-  PENDING: "warning",
-  CONFIRMED: "veg",
-  SEATED: "success",
-  CANCELLED: "danger",
-  NO_SHOW: "muted",
-};
+const TONE: Record<BookingStatus, "warning" | "veg" | "success" | "danger" | "muted"> =
+  {
+    PENDING: "warning",
+    CONFIRMED: "veg",
+    SEATED: "success",
+    CANCELLED: "danger",
+    NO_SHOW: "muted",
+  };
 
 /** Confirm or cancel, with the message the guest receives. */
 function StatusDialog({
@@ -98,13 +96,25 @@ function StatusDialog({
   );
 }
 
-/** One day's slots, with how full each one is. */
-function DayView({ onAct }: { onAct: (booking: TableBooking, next: BookingStatus) => void }) {
+/**
+ * One day's slots, with how full each one is.
+ *
+ * Capacity is one room's capacity, so this view needs a specific outlet. On
+ * the combined scope it falls back to the restaurant's floor — the list tab
+ * is the one that spans both.
+ */
+function DayView({
+  onAct,
+}: {
+  onAct: (booking: TableBooking, next: BookingStatus) => void;
+}) {
   const t = useT();
+  const { outletId } = useAdminOutlet();
+  const forSlots = outletId ?? "restaurant";
   const [date, setDate] = useState(() => toDateKey(new Date()));
-  const { data: bookings, isLoading } = useBookings({ date });
-  const { data: slots } = useBookingSlots(date);
-  const { data: settings } = useSettings();
+  const { data: bookings, isLoading } = useBookings({ date, outletId: forSlots });
+  const { data: slots } = useBookingSlots(forSlots, date);
+  const { data: settings } = useSettings(forSlots);
 
   const capacity = settings?.maxCoversPerSlot ?? 0;
   const live = (bookings ?? []).filter(
@@ -132,7 +142,9 @@ function DayView({ onAct }: { onAct: (booking: TableBooking, next: BookingStatus
             className="h-9 w-44"
           />
         </div>
-        <p className="nums pb-2 text-sm text-ink-muted">{formatDate(`${date}T00:00:00`)}</p>
+        <p className="nums pb-2 text-sm text-ink-muted">
+          {formatDate(`${date}T00:00:00`)}
+        </p>
       </div>
 
       {isLoading && <Skeleton className="h-48 w-full rounded-card" />}
@@ -191,10 +203,7 @@ function DayView({ onAct }: { onAct: (booking: TableBooking, next: BookingStatus
                         {t.adm.bookings.status[booking.status]}
                       </Badge>
                       {booking.status === "PENDING" && (
-                        <Button
-                          size="xs"
-                          onClick={() => onAct(booking, "CONFIRMED")}
-                        >
+                        <Button size="xs" onClick={() => onAct(booking, "CONFIRMED")}>
                           {t.adm.bookings.confirm}
                         </Button>
                       )}
@@ -221,10 +230,11 @@ function DayView({ onAct }: { onAct: (booking: TableBooking, next: BookingStatus
 
 function BookingsModule() {
   const t = useT();
+  const { outletId, isAll } = useAdminOutlet();
   const [view, setView] = useState("list");
   const [status, setStatus] = useState<BookingStatus | typeof ALL>(ALL);
   const { data: bookings, isLoading } = useBookings(
-    status === ALL ? {} : { status },
+    status === ALL ? { outletId } : { status, outletId },
   );
 
   const [acting, setActing] = useState<TableBooking | null>(null);
@@ -243,6 +253,16 @@ function BookingsModule() {
   };
 
   const columns: AdminColumn<TableBooking>[] = [
+    ...(isAll
+      ? [
+          {
+            id: "outlet",
+            header: t.adm.outlet.outletColumn,
+            sortValue: (row: TableBooking) => row.outletId,
+            cell: (row: TableBooking) => <OutletBadge outletId={row.outletId} />,
+          } satisfies AdminColumn<TableBooking>,
+        ]
+      : []),
     {
       id: "when",
       header: t.adm.bookings.colWhen,
@@ -250,8 +270,12 @@ function BookingsModule() {
       searchValue: (row) => `${row.name} ${row.phone} ${row.id}`,
       cell: (row) => (
         <span className="nums block">
-          <span className="font-semibold text-ink">{formatDate(`${row.date}T00:00:00`)}</span>
-          <span className="block text-xs text-ink-muted">{formatSlotLabel(row.time)}</span>
+          <span className="font-semibold text-ink">
+            {formatDate(`${row.date}T00:00:00`)}
+          </span>
+          <span className="block text-xs text-ink-muted">
+            {formatSlotLabel(row.time)}
+          </span>
         </span>
       ),
     },
@@ -316,11 +340,7 @@ function BookingsModule() {
               <Button size="xs" variant="outline" onClick={() => act(row, "SEATED")}>
                 {t.adm.bookings.markSeated}
               </Button>
-              <Button
-                size="xs"
-                variant="ghost"
-                onClick={() => act(row, "NO_SHOW")}
-              >
+              <Button size="xs" variant="ghost" onClick={() => act(row, "NO_SHOW")}>
                 {t.adm.bookings.markNoShow}
               </Button>
             </>
@@ -356,7 +376,11 @@ function BookingsModule() {
               value={status}
               onValueChange={(value) => setStatus(value as BookingStatus)}
             >
-              <SelectTrigger size="sm" aria-label={t.adm.common.status} className="w-40">
+              <SelectTrigger
+                size="sm"
+                aria-label={t.adm.common.status}
+                className="w-40"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -395,7 +419,11 @@ function BookingsModule() {
                 </Badge>
               </div>
               {row.status === "PENDING" && (
-                <Button size="sm" className="mt-2" onClick={() => act(row, "CONFIRMED")}>
+                <Button
+                  size="sm"
+                  className="mt-2"
+                  onClick={() => act(row, "CONFIRMED")}
+                >
                   {t.adm.bookings.confirm}
                 </Button>
               )}

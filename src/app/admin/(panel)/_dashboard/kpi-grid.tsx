@@ -12,7 +12,8 @@ import { resolvePreset } from "@/components/admin/date-range-picker";
 import { StatCard } from "@/components/admin/stat-card";
 import { useSession } from "@/features/auth";
 import { useOperationalCounts } from "@/features/orders";
-import { useDashboardKpis, useRevenueByDay } from "@/features/reports";
+import { useAdminOutlet } from "@/features/outlet";
+import { useDashboardKpis, useReportScope, useRevenueByDay } from "@/features/reports";
 import { useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
 import { can } from "@/lib/permissions";
@@ -34,10 +35,11 @@ import { can } from "@/lib/permissions";
 /** Money — REPORTS only. */
 function MoneyKpis() {
   const t = useT();
-  const { data: kpis, isLoading } = useDashboardKpis();
+  const { outletId } = useAdminOutlet();
+  const { data: kpis, isLoading } = useDashboardKpis(outletId);
   // A 30-day series so revenue can carry a sparkline.
   const range = useMemo(() => resolvePreset("last30"), []);
-  const { data: revenueByDay } = useRevenueByDay(range);
+  const { data: revenueByDay } = useRevenueByDay(useReportScope(range));
 
   const cards = [
     {
@@ -70,7 +72,7 @@ function MoneyKpis() {
 /** What the counter is carrying right now — ORDERS only. */
 function OrderKpis() {
   const t = useT();
-  const { data: counts, isLoading } = useOperationalCounts();
+  const { data: counts, isLoading } = useOperationalCounts(useAdminOutlet().outletId);
 
   const cards = [
     {

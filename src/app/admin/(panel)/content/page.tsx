@@ -25,6 +25,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RequireAdmin } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import { useBanners, useGallery, useSiteContent } from "@/features/content";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
@@ -40,12 +41,14 @@ import {
   GALLERY_CATEGORIES,
   type Banner,
   type GalleryCategory,
+  type OutletId,
   type SiteContent,
 } from "@/types";
 
 type BannerDraft = Omit<Banner, "id" | "createdAt" | "updatedAt">;
 
-const emptyBanner = (sortOrder: number): BannerDraft => ({
+const emptyBanner = (sortOrder: number, outletId: OutletId): BannerDraft => ({
+  outletId,
   image: "",
   headline: { en: "", hi: "" },
   subhead: { en: "", hi: "" },
@@ -58,16 +61,20 @@ const emptyBanner = (sortOrder: number): BannerDraft => ({
 function BannerSheet({
   banner,
   nextSortOrder,
+  outletId,
   open,
   onOpenChange,
 }: {
   banner: Banner | null;
   nextSortOrder: number;
+  outletId: OutletId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
-  const [draft, setDraft] = useState<BannerDraft>(() => emptyBanner(nextSortOrder));
+  const [draft, setDraft] = useState<BannerDraft>(() =>
+    emptyBanner(nextSortOrder, outletId),
+  );
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -76,7 +83,7 @@ function BannerSheet({
       const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = banner;
       setDraft(rest);
     } else {
-      setDraft(emptyBanner(nextSortOrder));
+      setDraft(emptyBanner(nextSortOrder, outletId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, banner?.id]);
@@ -101,7 +108,9 @@ function BannerSheet({
     }
   };
 
-  const pairs: Array<[keyof BannerDraft & ("headline" | "subhead" | "ctaLabel"), string, string]> = [
+  const pairs: Array<
+    [keyof BannerDraft & ("headline" | "subhead" | "ctaLabel"), string, string]
+  > = [
     ["headline", t.adm.content.headlineEn, t.adm.content.headlineHi],
     ["subhead", t.adm.content.subheadEn, t.adm.content.subheadHi],
     ["ctaLabel", t.adm.content.ctaLabelEn, t.adm.content.ctaLabelHi],
@@ -173,10 +182,10 @@ function BannerSheet({
   );
 }
 
-function BannersTab() {
+function BannersTab({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const pick = usePick();
-  const { data: banners } = useBanners(false);
+  const { data: banners } = useBanners(outletId, false);
   const [editing, setEditing] = useState<Banner | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [deleting, setDeleting] = useState<Banner | null>(null);
@@ -210,10 +219,14 @@ function BannersTab() {
               />
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-ink">{pick(banner.headline)}</p>
-                <p className="truncate text-xs text-ink-muted">{pick(banner.subhead)}</p>
+                <p className="truncate text-xs text-ink-muted">
+                  {pick(banner.subhead)}
+                </p>
                 <p className="nums truncate text-xs text-ink-muted">{banner.ctaHref}</p>
               </div>
-              {!banner.isActive && <Badge variant="muted">{t.adm.common.inactive}</Badge>}
+              {!banner.isActive && (
+                <Badge variant="muted">{t.adm.common.inactive}</Badge>
+              )}
               <div className="flex shrink-0 gap-1">
                 <Button
                   variant="ghost"
@@ -243,6 +256,7 @@ function BannersTab() {
       <BannerSheet
         banner={editing}
         nextSortOrder={rows.length + 1}
+        outletId={outletId}
         open={isOpen}
         onOpenChange={setIsOpen}
       />
@@ -264,28 +278,35 @@ function BannersTab() {
   );
 }
 
-/** Address, phone, WhatsApp, email and the two social links. */
-function ContactTab() {
+/**
+ * Address, hours, phone, WhatsApp and the offers strip — per outlet — plus the
+ * one email inbox and the two social links, which both shops share.
+ */
+function ContactTab({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const { data: content } = useSiteContent();
-  const [draft, setDraft] = useState<SiteContent["contact"] | null>(null);
+  const [draft, setDraft] = useState<SiteContent["outlets"][OutletId] | null>(null);
+  const [email, setEmail] = useState("");
   const [social, setSocial] = useState<SiteContent["social"] | null>(null);
-  const [strip, setStrip] = useState({ en: "", hi: "" });
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!content) return;
-    setDraft(content.contact);
+    setDraft(content.outlets[outletId]);
+    setEmail(content.contact.email);
     setSocial(content.social);
-    setStrip(content.offersStrip);
-  }, [content]);
+  }, [content, outletId]);
 
-  if (!draft || !social) return null;
+  if (!draft || !social || !content) return null;
 
   const save = async () => {
     setIsSaving(true);
     try {
-      await updateSiteContent({ contact: draft, social, offersStrip: strip });
+      await updateSiteContent({
+        outlets: { ...content.outlets, [outletId]: draft },
+        contact: { email },
+        social,
+      });
       toast.success(t.adm.content.contentSaved);
     } catch (caught) {
       toast.error(toErrorMessage(caught));
@@ -338,11 +359,12 @@ function ContactTab() {
             onChange={(event) => setDraft({ ...draft, whatsapp: event.target.value })}
           />
         </FormField>
+        {/* One inbox for both outlets, so this is not per outlet. */}
         <FormField id="ct-email" label={t.adm.content.email}>
           <Input
             {...fieldAria("ct-email")}
-            value={draft.email}
-            onChange={(event) => setDraft({ ...draft, email: event.target.value })}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
         </FormField>
       </div>
@@ -352,7 +374,9 @@ function ContactTab() {
           <Input
             {...fieldAria("ct-instagram")}
             value={social.instagram}
-            onChange={(event) => setSocial({ ...social, instagram: event.target.value })}
+            onChange={(event) =>
+              setSocial({ ...social, instagram: event.target.value })
+            }
           />
         </FormField>
         <FormField id="ct-facebook" label={t.adm.content.facebook}>
@@ -365,6 +389,33 @@ function ContactTab() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
+        <FormField id="ct-hours-en" label={`${t.adm.content.hoursNote} (EN)`}>
+          <Input
+            {...fieldAria("ct-hours-en")}
+            value={draft.hoursNote.en}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                hoursNote: { ...draft.hoursNote, en: event.target.value },
+              })
+            }
+          />
+        </FormField>
+        <FormField id="ct-hours-hi" label={`${t.adm.content.hoursNote} (हिं)`}>
+          <Input
+            {...fieldAria("ct-hours-hi")}
+            value={draft.hoursNote.hi}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                hoursNote: { ...draft.hoursNote, hi: event.target.value },
+              })
+            }
+          />
+        </FormField>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
         <FormField
           id="ct-strip-en"
           label={`${t.adm.content.offersStrip} (EN)`}
@@ -372,15 +423,25 @@ function ContactTab() {
         >
           <Input
             {...fieldAria("ct-strip-en", undefined, t.adm.content.offersStripHint)}
-            value={strip.en}
-            onChange={(event) => setStrip({ ...strip, en: event.target.value })}
+            value={draft.offersStrip.en}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                offersStrip: { ...draft.offersStrip, en: event.target.value },
+              })
+            }
           />
         </FormField>
         <FormField id="ct-strip-hi" label={`${t.adm.content.offersStrip} (हिं)`}>
           <Input
             {...fieldAria("ct-strip-hi")}
-            value={strip.hi}
-            onChange={(event) => setStrip({ ...strip, hi: event.target.value })}
+            value={draft.offersStrip.hi}
+            onChange={(event) =>
+              setDraft({
+                ...draft,
+                offersStrip: { ...draft.offersStrip, hi: event.target.value },
+              })
+            }
           />
         </FormField>
       </div>
@@ -400,10 +461,10 @@ function ContactTab() {
   );
 }
 
-function GalleryTab() {
+function GalleryTab({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const pick = usePick();
-  const { data: images } = useGallery();
+  const { data: images } = useGallery(outletId);
   const [category, setCategory] = useState<GalleryCategory>("FOOD");
   const [picked, setPicked] = useState<string[]>([]);
   const [altEn, setAltEn] = useState("");
@@ -417,6 +478,7 @@ function GalleryTab() {
     try {
       for (const src of picked) {
         await addGalleryImage({
+          outletId,
           src,
           alt: { en: altEn || "Quick Bites", hi: altHi || "क्विक बाइट्स" },
           category,
@@ -536,7 +598,7 @@ function GalleryTab() {
   );
 }
 
-function ContentModule() {
+function ContentModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const [tab, setTab] = useState("banners");
 
@@ -552,9 +614,9 @@ function ContentModule() {
         </Tabs>
       </PageHeader>
 
-      {tab === "banners" && <BannersTab />}
-      {tab === "contact" && <ContactTab />}
-      {tab === "gallery" && <GalleryTab />}
+      {tab === "banners" && <BannersTab outletId={outletId} />}
+      {tab === "contact" && <ContactTab outletId={outletId} />}
+      {tab === "gallery" && <GalleryTab outletId={outletId} />}
     </>
   );
 }
@@ -562,7 +624,9 @@ function ContentModule() {
 export default function AdminContentPage() {
   return (
     <RequireAdmin permission="CONTENT">
-      <ContentModule />
+      <RequireOutlet>
+        {(outletId) => <ContentModule outletId={outletId} />}
+      </RequireOutlet>
     </RequireAdmin>
   );
 }

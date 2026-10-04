@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/features/orders";
+import { useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toDateKey } from "@/lib/format";
 import { flagsFor } from "@/services/orders";
@@ -23,10 +24,15 @@ import { useOrderClock } from "./_use-order-clock";
  * are due to start; otherwise tomorrow's eleven o'clock booking sits in "Needs
  * verification" all evening getting in the way.
  */
-export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => void }) {
+export function OrdersBoard({
+  onOpenDetail,
+}: {
+  onOpenDetail: (order: Order) => void;
+}) {
   const t = useT();
   const now = useOrderClock();
-  const { data: orders, isLoading, refetch } = useOrders({ status: "ALL" });
+  const { outletId } = useAdminOutlet();
+  const { data: orders, isLoading, refetch } = useOrders({ status: "ALL", outletId });
 
   /*
     Re-read on every tick, not just on a write.
@@ -81,10 +87,17 @@ export function OrdersBoard({ onOpenDetail }: { onOpenDetail: (order: Order) => 
     for (const status of ["PLACED", "PREPARING", "READY"] as const) {
       buckets[status].sort((a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt));
     }
-    buckets.HANDED_OVER.sort((a, b) => Date.parse(b.updatedAt ?? b.createdAt) - Date.parse(a.updatedAt ?? a.createdAt));
+    buckets.HANDED_OVER.sort(
+      (a, b) =>
+        Date.parse(b.updatedAt ?? b.createdAt) - Date.parse(a.updatedAt ?? a.createdAt),
+    );
 
     return [
-      { key: "PLACED" as const, label: t.adm.orders.columns.verify, rows: buckets.PLACED },
+      {
+        key: "PLACED" as const,
+        label: t.adm.orders.columns.verify,
+        rows: buckets.PLACED,
+      },
       {
         key: "PREPARING" as const,
         label: t.adm.orders.columns.preparing,

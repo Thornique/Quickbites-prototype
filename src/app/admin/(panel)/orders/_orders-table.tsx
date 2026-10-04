@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useOrders } from "@/features/orders";
+import { useAdminOutlet } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { formatDateTime, formatPrice } from "@/lib/format";
 import type { DateRange } from "@/services/reports";
@@ -38,7 +39,11 @@ const ALL = "ALL";
  * on Saturday, which payments failed, who ordered dine-in. Exports what the
  * filters left, not the whole history.
  */
-export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => void }) {
+export function OrdersTable({
+  onOpenDetail,
+}: {
+  onOpenDetail: (order: Order) => void;
+}) {
   const t = useT();
   const pick = usePick();
 
@@ -48,8 +53,10 @@ export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => 
   const [payment, setPayment] = useState<PaymentStatus | typeof ALL>(ALL);
   const [orderType, setOrderType] = useState<OrderType | typeof ALL>(ALL);
 
+  const { outletId } = useAdminOutlet();
   const { data: orders, isLoading } = useOrders({
     status: "ALL",
+    outletId,
     from: range.from.toISOString(),
     to: range.to.toISOString(),
   });
@@ -150,7 +157,9 @@ export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => 
       id: "status",
       header: t.adm.orders.colStatus,
       sortValue: (order) => order.status,
-      cell: (order) => <StatusBadge status={order.status} orderType={order.orderType} />,
+      cell: (order) => (
+        <StatusBadge status={order.status} orderType={order.orderType} />
+      ),
     },
     {
       id: "payment",
@@ -172,7 +181,11 @@ export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => 
       />
 
       <Select value={status} onValueChange={(value) => setStatus(value as OrderStatus)}>
-        <SelectTrigger size="sm" aria-label={t.adm.orders.filterStatus} className="w-36">
+        <SelectTrigger
+          size="sm"
+          aria-label={t.adm.orders.filterStatus}
+          className="w-36"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -189,7 +202,11 @@ export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => 
         value={payment}
         onValueChange={(value) => setPayment(value as PaymentStatus)}
       >
-        <SelectTrigger size="sm" aria-label={t.adm.orders.filterPayment} className="w-40">
+        <SelectTrigger
+          size="sm"
+          aria-label={t.adm.orders.filterPayment}
+          className="w-40"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -271,7 +288,9 @@ export function OrdersTable({ onOpenDetail }: { onOpenDetail: (order: Order) => 
             <PaymentBadge order={order} />
           </div>
           <p className="mt-1.5 truncate text-xs text-ink-muted">
-            {order.lines.map((line) => `${line.quantity}× ${pick(line.name)}`).join(", ")}
+            {order.lines
+              .map((line) => `${line.quantity}× ${pick(line.name)}`)
+              .join(", ")}
           </p>
         </Card>
       )}

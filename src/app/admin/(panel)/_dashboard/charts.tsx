@@ -28,6 +28,7 @@ import {
   useOrdersByHour,
   usePaymentSplit,
   usePrepTimeAccuracy,
+  useReportScope,
   useRevenueByDay,
 } from "@/features/reports";
 import { useT } from "@/i18n";
@@ -49,7 +50,7 @@ function hourLabel(hour: number): string {
 
 export function RevenueChart({ range }: { range: DateRange }) {
   const t = useT();
-  const { data, isLoading } = useRevenueByDay(range);
+  const { data, isLoading } = useRevenueByDay(useReportScope(range));
   const rows = (data ?? []).map((day) => ({ ...day, label: shortDate(day.date) }));
 
   return (
@@ -67,11 +68,23 @@ export function RevenueChart({ range }: { range: DateRange }) {
               <stop offset="100%" stopColor={CHART_COLORS.brand} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <XAxis dataKey="label" {...AXIS_PROPS} interval="preserveStartEnd" minTickGap={24} />
-          <YAxis {...AXIS_PROPS} width={52} tickFormatter={(value) => `₹${value / 1000}k`} />
+          <XAxis
+            dataKey="label"
+            {...AXIS_PROPS}
+            interval="preserveStartEnd"
+            minTickGap={24}
+          />
+          <YAxis
+            {...AXIS_PROPS}
+            width={52}
+            tickFormatter={(value) => `₹${value / 1000}k`}
+          />
           <Tooltip
             {...TOOLTIP_STYLE}
-            formatter={(value) => [formatPrice(Number(value)), t.adm.dashboard.todayRevenue]}
+            formatter={(value) => [
+              formatPrice(Number(value)),
+              t.adm.dashboard.todayRevenue,
+            ]}
           />
           <Area
             type="monotone"
@@ -94,8 +107,8 @@ export function OrdersByHourChart() {
   const t = useT();
   const today = useMemo(() => resolvePreset("today"), []);
   const month = useMemo(() => resolvePreset("last30"), []);
-  const { data: todayHours, isLoading } = useOrdersByHour(today);
-  const { data: monthHours } = useOrdersByHour(month);
+  const { data: todayHours, isLoading } = useOrdersByHour(useReportScope(today));
+  const { data: monthHours } = useOrdersByHour(useReportScope(month));
 
   const rows = (todayHours ?? []).map((count, hour) => ({
     hour: hourLabel(hour),
@@ -147,7 +160,7 @@ export function OrdersByHourChart() {
 
 export function TopItemsChart({ range }: { range: DateRange }) {
   const t = useT();
-  const { data, isLoading } = useItemPerformance(range);
+  const { data, isLoading } = useItemPerformance(useReportScope(range));
   const rows = (data ?? []).slice(0, 5).map((item) => ({
     name: item.name.length > 18 ? `${item.name.slice(0, 17)}…` : item.name,
     revenue: item.revenue,
@@ -173,7 +186,10 @@ export function TopItemsChart({ range }: { range: DateRange }) {
             width={110}
             tickMargin={4}
           />
-          <Tooltip {...TOOLTIP_STYLE} formatter={(value) => formatPrice(Number(value))} />
+          <Tooltip
+            {...TOOLTIP_STYLE}
+            formatter={(value) => formatPrice(Number(value))}
+          />
           <Bar dataKey="revenue" fill={CHART_COLORS.mustard} radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
@@ -218,7 +234,7 @@ function SplitDonut({
         </div>
 
         {/* A legend with the numbers, since a donut alone cannot be read. */}
-        <ul className="min-w-0 flex-1 grid gap-1.5">
+        <ul className="grid min-w-0 flex-1 gap-1.5">
           {rows.map((row) => (
             <li key={row.label} className="flex items-center gap-2 text-xs">
               <span
@@ -226,7 +242,9 @@ function SplitDonut({
                 className="size-2.5 shrink-0 rounded-sm"
                 style={{ background: row.color }}
               />
-              <span className="min-w-0 flex-1 truncate text-ink-muted">{row.label}</span>
+              <span className="min-w-0 flex-1 truncate text-ink-muted">
+                {row.label}
+              </span>
               <span className="nums font-semibold text-ink">{row.value}</span>
               <span className="nums w-10 text-right text-ink-muted">
                 {total === 0 ? "0%" : `${Math.round((row.value / total) * 100)}%`}
@@ -241,7 +259,7 @@ function SplitDonut({
 
 export function OrderTypeSplitChart({ range }: { range: DateRange }) {
   const t = useT();
-  const { data, isLoading } = useOrderTypeSplit(range);
+  const { data, isLoading } = useOrderTypeSplit(useReportScope(range));
 
   const rows = (data ?? []).map((row) => ({
     label: row.orderType === "TAKEAWAY" ? t.orderType.takeaway : t.orderType.dineIn,
@@ -260,7 +278,7 @@ export function OrderTypeSplitChart({ range }: { range: DateRange }) {
 
 export function PaymentSplitChart({ range }: { range: DateRange }) {
   const t = useT();
-  const { data, isLoading } = usePaymentSplit(range);
+  const { data, isLoading } = usePaymentSplit(useReportScope(range));
 
   const colors = {
     ONLINE_UPI: CHART_COLORS.brand,
@@ -280,14 +298,18 @@ export function PaymentSplitChart({ range }: { range: DateRange }) {
   }));
 
   return (
-    <SplitDonut title={t.adm.dashboard.paymentSplit} rows={rows} isLoading={isLoading} />
+    <SplitDonut
+      title={t.adm.dashboard.paymentSplit}
+      rows={rows}
+      isLoading={isLoading}
+    />
   );
 }
 
 /** Promised vs actual: the one number that says whether the board is honest. */
 export function OnTimeCard({ range }: { range: DateRange }) {
   const t = useT();
-  const { data, isLoading } = usePrepTimeAccuracy(range);
+  const { data, isLoading } = usePrepTimeAccuracy(useReportScope(range));
   const percent = data?.onTimePercent ?? 0;
 
   return (

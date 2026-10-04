@@ -141,7 +141,7 @@ export function AdminLoginForm() {
           <DemoAccounts
             className="mt-7"
             tone="dark"
-            show={["superAdmin", "admin"]}
+            show={["superAdmin", "admin", "coffeeAdmin"]}
             onFill={(email, password) => {
               setValue("email", email, { shouldValidate: true });
               setValue("password", password, { shouldValidate: true });

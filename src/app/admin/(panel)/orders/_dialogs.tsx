@@ -43,7 +43,8 @@ export function AcceptDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
-  const { data: estimate } = usePrepEstimate();
+  // The queue at the order's own counter, not whichever one is selected.
+  const { data: estimate } = usePrepEstimate(order.outletId);
   const [minutes, setMinutes] = useState(15);
   const [isCustom, setIsCustom] = useState(false);
 

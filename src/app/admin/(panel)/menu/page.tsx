@@ -27,6 +27,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { VegMark } from "@/components/ui/veg-mark";
 import { RequireAdmin } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import { useCategories, useMenu } from "@/features/menu";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
@@ -36,16 +37,19 @@ import {
   duplicateMenuItem,
   setMenuItemAvailability,
 } from "@/services/menu";
-import type { MenuItem } from "@/types";
+import type { MenuItem, OutletId } from "@/types";
 import { MenuItemSheet } from "./_item-sheet";
 
 const ALL = "ALL";
 
-function MenuModule() {
+function MenuModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const pick = usePick();
-  const { data: items, isLoading } = useMenu({ includeUnavailable: true });
-  const { data: categories } = useCategories();
+  const { data: items, isLoading } = useMenu({
+    outletId,
+    includeUnavailable: true,
+  });
+  const { data: categories } = useCategories(outletId);
 
   const [categoryId, setCategoryId] = useState<string>(ALL);
   const [editing, setEditing] = useState<MenuItem | null>(null);
@@ -54,7 +58,9 @@ function MenuModule() {
 
   const rows = useMemo(
     () =>
-      (items ?? []).filter((item) => categoryId === ALL || item.categoryId === categoryId),
+      (items ?? []).filter(
+        (item) => categoryId === ALL || item.categoryId === categoryId,
+      ),
     [items, categoryId],
   );
 
@@ -231,7 +237,11 @@ function MenuModule() {
         description={t.adm.menu.subtitle}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => void bulkAvailability(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void bulkAvailability(true)}
+            >
               {t.adm.menu.bulkAvailable}
             </Button>
             <Button
@@ -312,7 +322,12 @@ function MenuModule() {
         onRowClick={openEdit}
       />
 
-      <MenuItemSheet item={editing} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      <MenuItemSheet
+        item={editing}
+        outletId={outletId}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+      />
 
       <ConfirmDialog
         open={!!deleting}
@@ -334,7 +349,7 @@ function MenuModule() {
 export default function AdminMenuPage() {
   return (
     <RequireAdmin permission="MENU">
-      <MenuModule />
+      <RequireOutlet>{(outletId) => <MenuModule outletId={outletId} />}</RequireOutlet>
     </RequireAdmin>
   );
 }

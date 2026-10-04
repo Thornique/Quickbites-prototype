@@ -25,7 +25,12 @@ import { useCategories } from "@/features/menu";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { createMenuItem, updateMenuItem } from "@/services/menu";
-import { MENU_ITEM_TAGS, type MenuItem, type MenuItemTag } from "@/types";
+import {
+  MENU_ITEM_TAGS,
+  type MenuItem,
+  type MenuItemTag,
+  type OutletId,
+} from "@/types";
 import { cn } from "@/lib/utils";
 import { OptionGroupsEditor } from "./_option-groups";
 
@@ -41,8 +46,9 @@ function slugify(value: string): string {
 
 type Draft = Omit<MenuItem, "id" | "createdAt" | "updatedAt">;
 
-function emptyDraft(categoryId: string): Draft {
+function emptyDraft(categoryId: string, outletId: OutletId): Draft {
   return {
+    outletId,
     slug: "",
     categoryId,
     name: { en: "", hi: "" },
@@ -70,20 +76,23 @@ function emptyDraft(categoryId: string): Draft {
  */
 export function MenuItemSheet({
   item,
+  outletId,
   open,
   onOpenChange,
 }: {
   /** null = create. */
   item: MenuItem | null;
+  outletId: OutletId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
   const pick = usePick();
-  const { data: categories } = useCategories();
-  const { data: inventory } = useInventory();
+  const { data: categories } = useCategories(outletId);
+  // Only this outlet's stock can be linked — a latte cannot consume buns.
+  const { data: inventory } = useInventory(outletId);
 
-  const [draft, setDraft] = useState<Draft>(() => emptyDraft(""));
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft("", outletId));
   const [slugTouched, setSlugTouched] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [tab, setTab] = useState("basics");
@@ -97,7 +106,7 @@ export function MenuItemSheet({
       const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = item;
       setDraft(rest);
     } else {
-      setDraft(emptyDraft(categories?.[0]?.id ?? ""));
+      setDraft(emptyDraft(categories?.[0]?.id ?? "", outletId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item?.id]);
@@ -111,11 +120,14 @@ export function MenuItemSheet({
     if (!open || item) return;
     const first = categories?.[0]?.id;
     if (first) {
-      setDraft((current) => (current.categoryId ? current : { ...current, categoryId: first }));
+      setDraft((current) =>
+        current.categoryId ? current : { ...current, categoryId: first },
+      );
     }
   }, [open, item, categories]);
 
-  const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }));
+  const patch = (next: Partial<Draft>) =>
+    setDraft((current) => ({ ...current, ...next }));
 
   const setNameEn = (value: string) =>
     setDraft((current) => ({
@@ -308,7 +320,9 @@ export function MenuItemSheet({
                 value={draft.calories ?? ""}
                 onChange={(event) =>
                   patch({
-                    calories: event.target.value ? Number(event.target.value) : undefined,
+                    calories: event.target.value
+                      ? Number(event.target.value)
+                      : undefined,
                   })
                 }
                 className="nums"
@@ -323,11 +337,7 @@ export function MenuItemSheet({
                 className="nums"
               />
             </FormField>
-            <FormField
-              id="mi-slug"
-              label={t.adm.menu.slug}
-              hint={t.adm.menu.slugHint}
-            >
+            <FormField id="mi-slug" label={t.adm.menu.slug} hint={t.adm.menu.slugHint}>
               <Input
                 {...fieldAria("mi-slug", undefined, t.adm.menu.slugHint)}
                 value={draft.slug}
@@ -412,16 +422,15 @@ export function MenuItemSheet({
               return (
                 <li key={link.inventoryItemId} className="flex items-end gap-2">
                   <div className="min-w-0 flex-1">
-                    <Label className="text-xs">{stock?.name ?? link.inventoryItemId}</Label>
+                    <Label className="text-xs">
+                      {stock?.name ?? link.inventoryItemId}
+                    </Label>
                     <p className="nums mt-1 text-xs text-ink-muted">
                       {stock ? `${stock.qty} ${stock.unit}` : ""}
                     </p>
                   </div>
                   <div className="grid w-28 gap-1.5">
-                    <Label
-                      htmlFor={`link-${link.inventoryItemId}`}
-                      className="text-xs"
-                    >
+                    <Label htmlFor={`link-${link.inventoryItemId}`} className="text-xs">
                       {t.adm.menu.quantityPerUnit}
                     </Label>
                     <Input
@@ -434,7 +443,10 @@ export function MenuItemSheet({
                         patch({
                           stockItemLinks: draft.stockItemLinks.map((entry) =>
                             entry.inventoryItemId === link.inventoryItemId
-                              ? { ...entry, quantityPerUnit: Number(event.target.value) }
+                              ? {
+                                  ...entry,
+                                  quantityPerUnit: Number(event.target.value),
+                                }
                               : entry,
                           ),
                         })
@@ -449,8 +461,9 @@ export function MenuItemSheet({
                     aria-label={t.adm.common.delete}
                     onClick={() =>
                       patch({
-                        stockItemLinks: draft.stockItemLinks.filter
-                          ((entry) => entry.inventoryItemId !== link.inventoryItemId),
+                        stockItemLinks: draft.stockItemLinks.filter(
+                          (entry) => entry.inventoryItemId !== link.inventoryItemId,
+                        ),
                       })
                     }
                   >

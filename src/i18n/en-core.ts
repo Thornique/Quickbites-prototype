@@ -69,9 +69,12 @@ export const enCore = {
 
     // Sign-in / sign-up brand panel
     panelHeading: "Hot food, ready when you walk in.",
-    panelBody: "Order from your phone, pay online, and collect at the counter in Bombay Bazar — no queue, no waiting for a table.",
-    panelPointPay: "Pay by UPI or card. Your order starts the moment the cafe confirms it.",
-    panelPointTrack: "Watch it move from preparing to ready, with the time we promised.",
+    panelBody:
+      "Order from your phone, pay online, and collect at the counter — no queue, no waiting for a table.",
+    panelPointPay:
+      "Pay by UPI or card. Your order starts the moment the cafe confirms it.",
+    panelPointTrack:
+      "Watch it move from preparing to ready, with the time we promised.",
     panelPointToken: "Show your token at the counter. That is the whole pickup.",
 
     // Customer sign-up
@@ -83,7 +86,7 @@ export const enCore = {
 
     // Admin
     adminTitle: "Staff sign-in",
-    adminSubtitle: "Quick Bites admin panel — Bombay Bazar, Khandwa.",
+    adminSubtitle: "Quick Bites admin panel — Khandwa.",
     adminCta: "Sign in to admin",
     backToSite: "Back to the website",
 
@@ -138,7 +141,8 @@ export const enCore = {
     title: "Demo accounts",
     subtitle: "Prototype only — these are seeded test logins, not real accounts.",
     superAdmin: "Super admin",
-    admin: "Admin (limited)",
+    admin: "Restaurant admin",
+    coffeeAdmin: "Coffee admin",
     customer: "Customer",
     fill: "Use this",
     filled: "Filled in",

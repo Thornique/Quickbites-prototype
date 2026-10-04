@@ -7,6 +7,24 @@ import type { AdminDictionary } from "./en-admin";
  */
 export const hiAdmin: AdminDictionary = {
   adm: {
+    outlet: {
+      switcherLabel: "आउटलेट",
+      allOutlets: "सभी आउटलेट",
+      combined: "संयुक्त",
+      workingAt: "यहाँ काम कर रहे हैं",
+      pickTitle: "पहले आउटलेट चुनें",
+      pickBody:
+        "यह स्क्रीन एक ही दुकान की है — मेन्यू आइटम, कूपन या खुलने का समय दोनों पर सेव नहीं हो सकता। बताइए आप किस पर काम कर रहे हैं।",
+      outletColumn: "आउटलेट",
+      perOutlet: "प्रति आउटलेट",
+      restaurantLabel: "रेस्टोरेंट",
+      coffeeLabel: "कॉफ़ी",
+      assignOutlet: "आउटलेट",
+      assignOutletHint: "यह एडमिन सिर्फ़ इसी आउटलेट का डेटा देख और बदल सकेगा।",
+      assignOutletRequired: "चुनें कि यह एडमिन किस आउटलेट पर काम करेगा।",
+      superAdminAllOutlets: "सभी आउटलेट",
+    },
+
     nav: {
       operations: "संचालन",
       catalogue: "कैटलॉग",
@@ -60,8 +78,7 @@ export const hiAdmin: AdminDictionary = {
       exportCsv: "सीएसवी निकालें",
       exported: (count: number) => `${count} पंक्तियाँ निकाली गईं`,
       rowsPerPage: "पंक्तियाँ",
-      of: (from: number, to: number, total: number) =>
-        `${total} में से ${from}–${to}`,
+      of: (from: number, to: number, total: number) => `${total} में से ${from}–${to}`,
       previous: "पिछला पेज",
       next: "अगला पेज",
       empty: "दिखाने के लिए कुछ नहीं",
@@ -101,7 +118,7 @@ export const hiAdmin: AdminDictionary = {
       greetingMorning: (name: string) => `सुप्रभात, ${name}`,
       greetingAfternoon: (name: string) => `नमस्कार, ${name}`,
       greetingEvening: (name: string) => `शुभ संध्या, ${name}`,
-      greetingDate: (date: string) => `${date} — बॉम्बे बाज़ार, खंडवा।`,
+      greetingDate: (date: string) => `${date} — खंडवा।`,
       attention: "आपके ध्यान की ज़रूरत",
       attentionCount: (count: number) =>
         count === 1 ? "1 काम बाकी" : `${count} काम बाकी`,
@@ -568,7 +585,8 @@ export const hiAdmin: AdminDictionary = {
       markSeated: "बैठ गए",
       markNoShow: "नहीं आए",
       updated: "बुकिंग बदली",
-      coversAt: (covers: number, capacity: number) => `${capacity} में से ${covers} सीट`,
+      coversAt: (covers: number, capacity: number) =>
+        `${capacity} में से ${covers} सीट`,
       slotFull: "यह समय भरा है",
       overCapacity: (over: number) => `${over} सीट ज़्यादा`,
       noneForDay: "इस दिन कोई बुकिंग नहीं",
@@ -613,6 +631,7 @@ export const hiAdmin: AdminDictionary = {
       ctaLabelEn: "बटन का शब्द (अंग्रेज़ी)",
       ctaLabelHi: "बटन का शब्द (हिन्दी)",
       ctaHref: "बटन का लिंक",
+      hoursNote: "खुलने का समय, जैसा दिखे",
       offersStrip: "ऑफ़र पट्टी",
       offersStripHint: "होम पेज के ऊपर चलने वाली लाइन।",
       aboutStory: "हमारे बारे में — कहानी",
@@ -643,6 +662,7 @@ export const hiAdmin: AdminDictionary = {
       subtitle: "कैफ़े कैसा चल रहा है। हर टेबल सीएसवी में निकलती है।",
       compare: "पिछली अवधि से",
       print: "प्रिंट",
+      byOutlet: "आउटलेट अनुसार",
       salesSummary: "बिक्री का सार",
       grossSales: "कुल बिक्री",
       discounts: "छूट",

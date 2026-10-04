@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import { useCategories, useCategoryCounts } from "@/features/menu";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
@@ -27,12 +28,13 @@ import {
   reorderCategories,
   updateCategory,
 } from "@/services/categories";
-import type { Category } from "@/types";
+import type { Category, OutletId } from "@/types";
 
 type Draft = Omit<Category, "id" | "createdAt" | "updatedAt">;
 
-function emptyDraft(sortOrder: number): Draft {
+function emptyDraft(sortOrder: number, outletId: OutletId): Draft {
   return {
+    outletId,
     slug: "",
     name: { en: "", hi: "" },
     description: { en: "", hi: "" },
@@ -45,16 +47,18 @@ function emptyDraft(sortOrder: number): Draft {
 function CategorySheet({
   category,
   nextSortOrder,
+  outletId,
   open,
   onOpenChange,
 }: {
   category: Category | null;
   nextSortOrder: number;
+  outletId: OutletId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
-  const [draft, setDraft] = useState<Draft>(() => emptyDraft(nextSortOrder));
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft(nextSortOrder, outletId));
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -63,12 +67,13 @@ function CategorySheet({
       const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = category;
       setDraft(rest);
     } else {
-      setDraft(emptyDraft(nextSortOrder));
+      setDraft(emptyDraft(nextSortOrder, outletId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, category?.id]);
+  }, [open, category?.id, outletId]);
 
-  const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }));
+  const patch = (next: Partial<Draft>) =>
+    setDraft((current) => ({ ...current, ...next }));
 
   const save = async () => {
     setIsSaving(true);
@@ -174,11 +179,11 @@ function CategorySheet({
   );
 }
 
-function CategoriesModule() {
+function CategoriesModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
   const pick = usePick();
-  const { data: categories, isLoading } = useCategories();
-  const { data: counts } = useCategoryCounts();
+  const { data: categories, isLoading } = useCategories(outletId);
+  const { data: counts } = useCategoryCounts(outletId);
 
   const [editing, setEditing] = useState<Category | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -305,6 +310,7 @@ function CategoriesModule() {
       <CategorySheet
         category={editing}
         nextSortOrder={rows.length + 1}
+        outletId={outletId}
         open={isSheetOpen}
         onOpenChange={setIsSheetOpen}
       />
@@ -329,7 +335,9 @@ function CategoriesModule() {
 export default function AdminCategoriesPage() {
   return (
     <RequireAdmin permission="MENU">
-      <CategoriesModule />
+      <RequireOutlet>
+        {(outletId) => <CategoriesModule outletId={outletId} />}
+      </RequireOutlet>
     </RequireAdmin>
   );
 }

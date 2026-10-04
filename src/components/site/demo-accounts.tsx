@@ -8,7 +8,7 @@ import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
 export interface DemoAccount {
-  key: "superAdmin" | "admin" | "customer";
+  key: "superAdmin" | "admin" | "coffeeAdmin" | "customer";
   label: string;
   email: string;
   password: string;
@@ -42,6 +42,7 @@ export function DemoAccounts({
   const LABELS: Record<DemoAccount["key"], string> = {
     superAdmin: t.demo.superAdmin,
     admin: t.demo.admin,
+    coffeeAdmin: t.demo.coffeeAdmin,
     customer: t.demo.customer,
   };
 

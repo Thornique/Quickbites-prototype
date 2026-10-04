@@ -59,12 +59,18 @@ export function DemoControls() {
     if (order?.paymentMethod === "CASH") setCashAmount(order.total);
   }, [order?.id, order?.paymentMethod, order?.total]);
 
-  /** Signs the manager in to the admin session once, then runs the action. */
+  /**
+   * Signs the owner in to the admin session once, then runs the action.
+   *
+   * The owner rather than a manager: these controls drive orders at either
+   * outlet, and an assigned admin is refused the other one's orders by the
+   * service — correctly, but it would make half this panel dead.
+   */
   const run = async (label: string, action: () => Promise<unknown>) => {
     setIsBusy(true);
     try {
       if (!(await getSession("admin"))) {
-        await signInAsAdmin("manager@quickbites.in", "Manager@123");
+        await signInAsAdmin("owner@quickbites.in", "Owner@123");
       }
       await action();
       toast.success(label);
@@ -82,9 +88,9 @@ export function DemoControls() {
     <Card className="p-5">
       <h2 className="text-sm font-semibold text-ink">Demo controls</h2>
       <p className="mt-1 text-xs text-ink-muted">
-        Signs the manager into the admin session and runs the real order services.
-        Open an order&apos;s tracking page in another tab and watch it react.
-        Replaced by the admin board in step 10.
+        Signs the manager into the admin session and runs the real order services. Open
+        an order&apos;s tracking page in another tab and watch it react. Replaced by the
+        admin board in step 10.
       </p>
 
       <div className="mt-4 grid gap-1.5">
@@ -98,7 +104,8 @@ export function DemoControls() {
           {orders.length === 0 && <option value="">No open orders</option>}
           {orders.map((o) => (
             <option key={o.id} value={o.id}>
-              {o.tokenNumber} · {o.id} · {o.orderType} · {o.status} · {o.paymentStatus}
+              {o.tokenNumber} · {o.outletId} · {o.id} · {o.orderType} · {o.status} ·{" "}
+              {o.paymentStatus}
             </option>
           ))}
         </select>
@@ -154,7 +161,9 @@ export function DemoControls() {
             <Button
               size="sm"
               disabled={isBusy}
-              onClick={() => void run("Payment verified", () => verifyPayment(order.id))}
+              onClick={() =>
+                void run("Payment verified", () => verifyPayment(order.id))
+              }
             >
               Verify payment
             </Button>
@@ -194,7 +203,9 @@ export function DemoControls() {
               size="sm"
               variant="outline"
               disabled={isBusy}
-              onClick={() => void run("Preparing", () => advanceOrder(order.id, "PREPARING"))}
+              onClick={() =>
+                void run("Preparing", () => advanceOrder(order.id, "PREPARING"))
+              }
             >
               Mark preparing
             </Button>

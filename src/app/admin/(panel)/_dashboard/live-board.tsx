@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBoardCounts } from "@/features/orders";
+import { useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,7 @@ import { cn } from "@/lib/utils";
  */
 export function LiveBoard() {
   const t = useT();
-  const { data: counts, isLoading } = useBoardCounts();
+  const { data: counts, isLoading } = useBoardCounts(useAdminOutlet().outletId);
 
   const stages = [
     {

@@ -20,6 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
 import { useEnquiries } from "@/features/enquiries";
+import { OutletBadge, useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDateTime } from "@/lib/format";
@@ -174,18 +175,30 @@ function EnquirySheet({
 function EnquiriesModule() {
   const t = useT();
   const [status, setStatus] = useState<EnquiryStatus | typeof ALL>(ALL);
+  const { outletId, isAll } = useAdminOutlet();
   const { data: enquiries, isLoading } = useEnquiries(
     status === ALL ? undefined : status,
+    outletId,
   );
   const [open, setOpen] = useState<Enquiry | null>(null);
 
   const columns: AdminColumn<Enquiry>[] = [
+    // Only worth a column when both inboxes are on screen at once.
+    ...(isAll
+      ? [
+          {
+            id: "outlet",
+            header: t.adm.outlet.outletColumn,
+            sortValue: (row: Enquiry) => row.outletId,
+            cell: (row: Enquiry) => <OutletBadge outletId={row.outletId} />,
+          } satisfies AdminColumn<Enquiry>,
+        ]
+      : []),
     {
       id: "from",
       header: t.adm.enquiries.colFrom,
       sortValue: (row) => row.name,
-      searchValue: (row) =>
-        `${row.name} ${row.phone} ${row.email} ${row.message}`,
+      searchValue: (row) => `${row.name} ${row.phone} ${row.email} ${row.message}`,
       cell: (row) => (
         <span className="block min-w-0">
           <span className="truncate font-medium text-ink">{row.name}</span>
@@ -230,7 +243,10 @@ function EnquiriesModule() {
 
   return (
     <>
-      <PageHeader title={t.adm.enquiries.title} description={t.adm.enquiries.subtitle} />
+      <PageHeader
+        title={t.adm.enquiries.title}
+        description={t.adm.enquiries.subtitle}
+      />
 
       <DataTable
         data={enquiries ?? []}

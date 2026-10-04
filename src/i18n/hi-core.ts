@@ -67,7 +67,8 @@ export const hiCore: CoreDictionary = {
     createOne: "खाता बनाइए",
 
     panelHeading: "गरम खाना, आप पहुँचें उससे पहले तैयार।",
-    panelBody: "फ़ोन से ऑर्डर कीजिए, ऑनलाइन भुगतान कीजिए, और बॉम्बे बाज़ार में काउंटर से ले जाइए — न लाइन, न टेबल का इंतज़ार।",
+    panelBody:
+      "फ़ोन से ऑर्डर कीजिए, ऑनलाइन भुगतान कीजिए, और काउंटर से ले जाइए — न लाइन, न टेबल का इंतज़ार।",
     panelPointPay: "UPI या कार्ड से भुगतान। कैफ़े के पक्का करते ही ऑर्डर बनना शुरू।",
     panelPointTrack: "बनने से तैयार होने तक देखिए, उसी समय के साथ जो हमने कहा था।",
     panelPointToken: "काउंटर पर अपना टोकन दिखाइए। बस इतना ही।",
@@ -79,7 +80,7 @@ export const hiCore: CoreDictionary = {
     signInInstead: "साइन इन करें",
 
     adminTitle: "स्टाफ़ साइन-इन",
-    adminSubtitle: "Quick Bites एडमिन पैनल — बॉम्बे बाज़ार, खंडवा।",
+    adminSubtitle: "Quick Bites एडमिन पैनल — खंडवा।",
     adminCta: "एडमिन में साइन इन करें",
     backToSite: "वेबसाइट पर वापस जाएँ",
 
@@ -132,7 +133,8 @@ export const hiCore: CoreDictionary = {
     title: "डेमो खाते",
     subtitle: "सिर्फ़ प्रोटोटाइप के लिए — ये टेस्ट लॉगिन हैं, असली खाते नहीं।",
     superAdmin: "सुपर एडमिन",
-    admin: "एडमिन (सीमित)",
+    admin: "रेस्टोरेंट एडमिन",
+    coffeeAdmin: "कॉफ़ी एडमिन",
     customer: "ग्राहक",
     fill: "इसे भरें",
     filled: "भर दिया",

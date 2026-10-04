@@ -5,6 +5,7 @@ import { PaymentBadge } from "@/components/admin/badges";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { VegMark } from "@/components/ui/veg-mark";
+import { OutletBadge } from "@/features/outlet";
 import { usePick, useT } from "@/i18n";
 import { formatPrice, formatTime } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,9 @@ export function OrderCard({
         "p-3",
         flags.isOverdue && "border-danger/40 bg-danger/5",
         !flags.isOverdue && flags.isStalePending && "border-warning/40 bg-warning/5",
-        !flags.isOverdue && !flags.isStalePending && flags.isDueToStart &&
+        !flags.isOverdue &&
+          !flags.isStalePending &&
+          flags.isDueToStart &&
           "border-brand/40 bg-brand/5",
       )}
     >
@@ -67,7 +70,9 @@ export function OrderCard({
         </div>
 
         <div className="shrink-0 text-right">
-          <p className="nums text-base font-bold text-ink">{formatPrice(order.total)}</p>
+          <p className="nums text-base font-bold text-ink">
+            {formatPrice(order.total)}
+          </p>
           <p className="nums mt-0.5 text-xs text-ink-muted">
             {t.adm.orders.itemCount(order.itemCount)}
           </p>
@@ -76,6 +81,12 @@ export function OrderCard({
 
       {/* Payment and timing. */}
       <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+        {/*
+          Which counter it belongs to. On the super admin's combined board
+          two A-series and C-series tokens sit side by side, and the badge is
+          what stops a coffee being carried to the kitchen.
+        */}
+        <OutletBadge outletId={order.outletId} />
         <PaymentBadge order={order} />
 
         {order.status === "PLACED" && (
@@ -103,7 +114,9 @@ export function OrderCard({
           </Badge>
         )}
 
-        {flags.isDueToStart && <Badge variant="default">{t.adm.orders.dueToStart}</Badge>}
+        {flags.isDueToStart && (
+          <Badge variant="default">{t.adm.orders.dueToStart}</Badge>
+        )}
 
         {order.isScheduled && order.scheduledFor && !flags.isDueToStart && (
           <Badge variant="muted">
@@ -131,7 +144,11 @@ export function OrderCard({
               )}
               {line.notes && (
                 <span className="mt-0.5 flex items-start gap-1 text-xs font-medium text-warning-dark">
-                  <StickyNote size={12} className="mt-0.5 shrink-0" aria-hidden="true" />
+                  <StickyNote
+                    size={12}
+                    className="mt-0.5 shrink-0"
+                    aria-hidden="true"
+                  />
                   {line.notes}
                 </span>
               )}

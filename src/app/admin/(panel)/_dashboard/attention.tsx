@@ -20,6 +20,7 @@ import { useBookings } from "@/features/bookings";
 import { useEnquiries } from "@/features/enquiries";
 import { useLowStock } from "@/features/inventory";
 import { useOperationalCounts } from "@/features/orders";
+import { useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { can } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
@@ -118,7 +119,7 @@ function useReport(report: Report, key: string, count: number | null): void {
 
 function OrderRows({ report }: { report: Report }) {
   const t = useT();
-  const { data, isLoading } = useOperationalCounts();
+  const { data, isLoading } = useOperationalCounts(useAdminOutlet().outletId);
 
   const overdue = data?.overdue ?? 0;
   const verify = data?.awaitingVerification ?? 0;
@@ -126,7 +127,9 @@ function OrderRows({ report }: { report: Report }) {
   useReport(
     report,
     "orders",
-    isLoading ? null : (overdue > 0 ? 1 : 0) + (verify > 0 ? 1 : 0) + (cash > 0 ? 1 : 0),
+    isLoading
+      ? null
+      : (overdue > 0 ? 1 : 0) + (verify > 0 ? 1 : 0) + (cash > 0 ? 1 : 0),
   );
 
   return (
@@ -205,7 +208,7 @@ function EnquiryRow({ report }: { report: Report }) {
 
 function StockRow({ report }: { report: Report }) {
   const t = useT();
-  const { data, isLoading } = useLowStock();
+  const { data, isLoading } = useLowStock(useAdminOutlet().outletId);
   const count = (data ?? []).length;
   useReport(report, "stock", isLoading ? null : count > 0 ? 1 : 0);
 
@@ -246,9 +249,7 @@ export function AttentionPanel() {
   const total = sources.reduce((sum, key) => sum + (counts[key] ?? 0), 0);
 
   return (
-    <Card
-      className={cn("p-4", !isLoading && total === 0 && "border-veg/25 bg-veg/5")}
-    >
+    <Card className={cn("p-4", !isLoading && total === 0 && "border-veg/25 bg-veg/5")}>
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h2 className="text-sm font-semibold text-ink">
           {!isLoading && total === 0

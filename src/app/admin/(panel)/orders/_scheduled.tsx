@@ -5,6 +5,7 @@ import { CalendarClock } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useOrders } from "@/features/orders";
+import { useAdminOutlet } from "@/features/outlet";
 import { useT } from "@/i18n";
 import { formatDate } from "@/lib/format";
 import type { Order } from "@/types";
@@ -26,7 +27,12 @@ export function ScheduledOrders({
 }) {
   const t = useT();
   const now = useOrderClock();
-  const { data: orders, isLoading } = useOrders({ status: "ALL", scheduledOnly: true });
+  const { outletId } = useAdminOutlet();
+  const { data: orders, isLoading } = useOrders({
+    status: "ALL",
+    outletId,
+    scheduledOnly: true,
+  });
 
   const days = useMemo(() => {
     const open = (orders ?? []).filter(

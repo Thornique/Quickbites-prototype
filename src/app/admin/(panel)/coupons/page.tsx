@@ -24,13 +24,19 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { RequireAdmin } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import { useCoupons } from "@/features/coupons";
 import { useCategories } from "@/features/menu";
 import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate, formatPrice } from "@/lib/format";
-import { couponState, createCoupon, deleteCoupon, updateCoupon } from "@/services/coupons";
-import type { Coupon, CouponType } from "@/types";
+import {
+  couponState,
+  createCoupon,
+  deleteCoupon,
+  updateCoupon,
+} from "@/services/coupons";
+import type { Coupon, CouponType, OutletId } from "@/types";
 import { cn } from "@/lib/utils";
 
 /** The basket the preview quotes against. */
@@ -42,11 +48,12 @@ function toDateInput(iso: string): string {
   return iso.slice(0, 10);
 }
 
-function emptyDraft(): Draft {
+function emptyDraft(outletId: OutletId): Draft {
   const today = new Date();
   const inAMonth = new Date(today);
   inAMonth.setMonth(inAMonth.getMonth() + 1);
   return {
+    outletId,
     code: "",
     description: { en: "", hi: "" },
     type: "PERCENT",
@@ -72,17 +79,20 @@ function discountOn(draft: Draft, basket: number): number {
 
 function CouponSheet({
   coupon,
+  outletId,
   open,
   onOpenChange,
 }: {
   coupon: Coupon | null;
+  outletId: OutletId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
   const pick = usePick();
-  const { data: categories } = useCategories();
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
+  // Category restrictions can only name this outlet's own categories.
+  const { data: categories } = useCategories(outletId);
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft(outletId));
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -91,12 +101,13 @@ function CouponSheet({
       const { id: _id, createdAt: _c, updatedAt: _u, usedCount: _n, ...rest } = coupon;
       setDraft(rest);
     } else {
-      setDraft(emptyDraft());
+      setDraft(emptyDraft(outletId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, coupon?.id]);
 
-  const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }));
+  const patch = (next: Partial<Draft>) =>
+    setDraft((current) => ({ ...current, ...next }));
 
   const saving = discountOn(draft, PREVIEW_BASKET);
 
@@ -128,7 +139,11 @@ function CouponSheet({
       isSubmitDisabled={draft.code.trim().length === 0 || draft.value <= 0}
     >
       <div className="grid gap-4">
-        <FormField id="cp-code" label={t.adm.coupons.code} hint={t.adm.coupons.codeHint}>
+        <FormField
+          id="cp-code"
+          label={t.adm.coupons.code}
+          hint={t.adm.coupons.codeHint}
+        >
           <Input
             {...fieldAria("cp-code", undefined, t.adm.coupons.codeHint)}
             value={draft.code}
@@ -270,7 +285,9 @@ function CouponSheet({
               type="date"
               value={toDateInput(draft.validFrom)}
               onChange={(event) =>
-                patch({ validFrom: new Date(`${event.target.value}T00:00:00`).toISOString() })
+                patch({
+                  validFrom: new Date(`${event.target.value}T00:00:00`).toISOString(),
+                })
               }
             />
           </FormField>
@@ -280,7 +297,9 @@ function CouponSheet({
               type="date"
               value={toDateInput(draft.validTo)}
               onChange={(event) =>
-                patch({ validTo: new Date(`${event.target.value}T23:59:59`).toISOString() })
+                patch({
+                  validTo: new Date(`${event.target.value}T23:59:59`).toISOString(),
+                })
               }
             />
           </FormField>
@@ -288,7 +307,9 @@ function CouponSheet({
 
         <div>
           <Label>{t.adm.coupons.categories}</Label>
-          <p className="mt-0.5 text-xs text-ink-muted">{t.adm.coupons.categoriesHint}</p>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            {t.adm.coupons.categoriesHint}
+          </p>
           <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
             {(categories ?? []).map((category) => (
               <li key={category.id} className="flex items-center gap-2">
@@ -324,9 +345,9 @@ function CouponSheet({
   );
 }
 
-function CouponsModule() {
+function CouponsModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
-  const { data: coupons, isLoading } = useCoupons();
+  const { data: coupons, isLoading } = useCoupons(outletId);
   const [editing, setEditing] = useState<Coupon | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [deleting, setDeleting] = useState<Coupon | null>(null);
@@ -369,9 +390,7 @@ function CouponsModule() {
       sortValue: (coupon) => coupon.value,
       cell: (coupon) => (
         <span className="nums text-ink">
-          {coupon.type === "PERCENT"
-            ? `${coupon.value}%`
-            : formatPrice(coupon.value)}
+          {coupon.type === "PERCENT" ? `${coupon.value}%` : formatPrice(coupon.value)}
           <span className="block text-xs text-ink-muted">
             {t.adm.coupons.minOrder}: {formatPrice(coupon.minOrder)}
           </span>
@@ -522,14 +541,21 @@ function CouponsModule() {
               </Badge>
             </div>
             <p className="nums mt-2 text-sm text-ink">
-              {coupon.type === "PERCENT" ? `${coupon.value}%` : formatPrice(coupon.value)}{" "}
+              {coupon.type === "PERCENT"
+                ? `${coupon.value}%`
+                : formatPrice(coupon.value)}{" "}
               · {t.adm.coupons.usageOf(coupon.usedCount, coupon.usageLimit)}
             </p>
           </Card>
         )}
       />
 
-      <CouponSheet coupon={editing} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      <CouponSheet
+        coupon={editing}
+        outletId={outletId}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+      />
 
       <ConfirmDialog
         open={!!deleting}
@@ -551,7 +577,9 @@ function CouponsModule() {
 export default function AdminCouponsPage() {
   return (
     <RequireAdmin permission="COUPONS">
-      <CouponsModule />
+      <RequireOutlet>
+        {(outletId) => <CouponsModule outletId={outletId} />}
+      </RequireOutlet>
     </RequireAdmin>
   );
 }

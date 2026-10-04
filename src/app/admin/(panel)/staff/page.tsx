@@ -16,8 +16,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { RequireAdmin, useSession } from "@/features/auth";
+import { OutletBadge } from "@/features/outlet";
 import { useActivityLog, useStaff } from "@/features/staff";
-import { useT } from "@/i18n";
+import { usePick, useT } from "@/i18n";
 import { toErrorMessage } from "@/lib/errors";
 import { formatDate, formatDateTime } from "@/lib/format";
 import {
@@ -26,7 +27,8 @@ import {
   resetAdminPassword,
   updateAdmin,
 } from "@/services/staff";
-import { PERMISSIONS, type Permission, type User } from "@/types";
+import { DEFAULT_OUTLET_ID, OUTLET_LIST } from "@/lib/outlets";
+import { PERMISSIONS, type OutletId, type Permission, type User } from "@/types";
 
 interface Draft {
   name: string;
@@ -34,6 +36,8 @@ interface Draft {
   phone: string;
   password: string;
   permissions: Permission[];
+  /** Every admin works at exactly one outlet. */
+  assignedOutletId: OutletId;
 }
 
 const emptyDraft = (): Draft => ({
@@ -42,6 +46,7 @@ const emptyDraft = (): Draft => ({
   phone: "",
   password: "",
   permissions: ["ORDERS"],
+  assignedOutletId: DEFAULT_OUTLET_ID,
 });
 
 /**
@@ -61,6 +66,7 @@ function StaffSheet({
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
+  const pick = usePick();
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -74,6 +80,7 @@ function StaffSheet({
             phone: admin.phone,
             password: "",
             permissions: admin.permissions,
+            assignedOutletId: admin.assignedOutletId ?? DEFAULT_OUTLET_ID,
           }
         : emptyDraft(),
     );
@@ -96,6 +103,7 @@ function StaffSheet({
           name: draft.name,
           phone: draft.phone,
           permissions: draft.permissions,
+          assignedOutletId: draft.assignedOutletId,
         });
         toast.success(t.adm.staff.updated);
       } else {
@@ -105,6 +113,7 @@ function StaffSheet({
           phone: draft.phone,
           password: draft.password,
           permissions: draft.permissions,
+          assignedOutletId: draft.assignedOutletId,
         });
         toast.success(t.adm.staff.created(draft.name));
       }
@@ -176,6 +185,35 @@ function StaffSheet({
         )}
 
         <div>
+          <Label>{t.adm.outlet.assignOutlet}</Label>
+          <p className="mt-0.5 text-xs text-ink-muted">
+            {t.adm.outlet.assignOutletHint}
+          </p>
+          <div
+            role="radiogroup"
+            aria-label={t.adm.outlet.assignOutlet}
+            className="mt-2 inline-flex items-center gap-0.5 rounded-pill border border-hairline bg-sand-50 p-0.5"
+          >
+            {OUTLET_LIST.map((outlet) => (
+              <button
+                key={outlet.id}
+                type="button"
+                role="radio"
+                aria-checked={draft.assignedOutletId === outlet.id}
+                onClick={() => setDraft({ ...draft, assignedOutletId: outlet.id })}
+                className={
+                  draft.assignedOutletId === outlet.id
+                    ? "rounded-pill bg-cocoa px-3 py-1.5 text-sm font-semibold text-white"
+                    : "rounded-pill px-3 py-1.5 text-sm font-semibold text-ink-muted transition-colors hover:bg-surface hover:text-ink"
+                }
+              >
+                {pick(outlet.name)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
           <Label>{t.adm.staff.permissions}</Label>
           <p className="mt-0.5 text-xs text-ink-muted">{t.adm.staff.permissionsHint}</p>
           <ul className="mt-2 grid gap-1.5 sm:grid-cols-2">
@@ -235,6 +273,19 @@ function StaffModule() {
           {t.roles[row.role]}
         </Badge>
       ),
+    },
+    {
+      id: "outlet",
+      header: t.adm.outlet.outletColumn,
+      sortValue: (row) => row.assignedOutletId ?? "",
+      cell: (row) =>
+        row.role === "SUPER_ADMIN" ? (
+          <Badge variant="muted">{t.adm.outlet.allOutlets}</Badge>
+        ) : row.assignedOutletId ? (
+          <OutletBadge outletId={row.assignedOutletId} />
+        ) : (
+          <span className="text-xs text-ink-muted">{t.adm.common.none}</span>
+        ),
     },
     {
       id: "permissions",

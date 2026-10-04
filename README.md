@@ -1,7 +1,9 @@
 # Quick Bites — prototype
 
-A clickable prototype of the website and admin panel for **Quick Bites**, a quick-service cafe
-in Khandwa, Madhya Pradesh.
+A clickable prototype of the website and admin panel for **Quick Bites** in Khandwa, Madhya
+Pradesh — **two outlets under one brand**: the restaurant at Bombay Bazar and Quick Bites
+Coffee on Nagchun Road. One site and one admin panel serve both; see
+[Outlets](#outlets) below.
 
 It is a **UI-only prototype**. There is no backend of any kind — no server code, no database,
 no API routes, no external services. Everything runs in the browser and all data lives in
@@ -21,8 +23,9 @@ npm ci          # or: npm install
 npm run dev     # http://localhost:3000
 ```
 
-The first page load seeds the demo data (menu, 60 days of orders, customers, reviews) into the
-browser. Nothing else to configure — there is no `.env`, no database, no keys.
+The first page load seeds the demo data for both outlets (two menus, 45 days of orders each,
+customers, reviews) into the browser. Nothing else to configure — there is no `.env`, no
+database, no keys.
 
 ## Scripts
 
@@ -49,16 +52,48 @@ node .next/standalone/server.js     # http://localhost:3000
 
 ## Demo accounts
 
-| Role | Email | Password |
-| --- | --- | --- |
-| Super admin | `owner@quickbites.in` | `Owner@123` |
-| Admin | `manager@quickbites.in` | `Manager@123` |
-| Customer | `demo@quickbites.in` | `Demo@123` |
+| Role | Email | Password | Outlet |
+| --- | --- | --- | --- |
+| Super admin | `owner@quickbites.in` | `Owner@123` | Both, plus a combined "All outlets" view |
+| Admin | `manager@quickbites.in` | `Manager@123` | Restaurant only |
+| Admin | `coffee@quickbites.in` | `Coffee@123` | Coffee shop only |
+| Customer | `demo@quickbites.in` | `Demo@123` | Shared — orders from either |
 
 Customers sign in at `/login`, admins at `/admin/login`. The two sessions are stored separately,
 so one browser can be signed in as both at once.
 
 Reset everything from **Admin → Settings → Demo → Reset demo data** (super admin only).
+
+## Outlets
+
+Two outlets, `restaurant` and `coffee`, share one codebase.
+
+- **Every business record carries an `outletId`**: categories, menu items (and the option
+  groups inside them), coupons, inventory, stock movements, orders, token counters, store
+  settings, banners, gallery, reviews, bookings, enquiries and notifications. `storeSettings`
+  is therefore a collection with one record per outlet (`store-settings:restaurant`,
+  `store-settings:coffee`) — each shop keeps its own hours, prep config, tax, packaging and
+  scheduling rules.
+- **Customers are shared, admins are not.** `User.assignedOutletId` is set on every `ADMIN`
+  and unset on the single `SUPER_ADMIN`.
+- **Access is enforced in `src/services`, not in the UI.** `services/outlets.ts` is the one
+  authority: admin-only reads narrow through `adminReadScope()`, and every admin write calls
+  `assertOutletAccess()` or `requireOutlet()`. Hiding a button is not access control.
+- **Counter tokens are per outlet and reset daily** — `A12` at the restaurant, `C12` at the
+  coffee shop. Order numbers stay one shared `QB-` series so `/order/QB-1234` resolves without
+  knowing the outlet.
+- **The storefront has one active outlet**, held in `store/outlet.ts`, persisted, and shareable
+  as `?outlet=coffee`. `features/outlet/provider.tsx` sets `data-outlet` on `<html>`, which
+  re-points `--color-brand` at the coffee palette — so every existing `bg-brand` / `text-brand`
+  utility follows the outlet without a component knowing about it.
+- **Each outlet keeps its own cart.** Switching swaps which basket is on screen; nothing is
+  merged or cleared.
+- **Slugs and coupon codes are unique within an outlet**, not across both, so menu item ids and
+  option ids are outlet-qualified (`item-coffee-cold-coffee`).
+- **The admin panel has an outlet scope**, in `store/admin-outlet.ts` and surfaced by
+  `AdminOutletSwitcher`. The super admin picks Restaurant, Coffee or All; an assigned admin
+  sees their outlet's name as plain text. Screens that cannot mean "both" — catalogue,
+  inventory, coupons, content, settings — are wrapped in `RequireOutlet`.
 
 ## Folder structure
 
@@ -80,12 +115,13 @@ src/
                      VegMark, Price, Tag, EmptyState, Skeleton…)
     site/            customer-facing composites (Header, Footer, MenuCard, CartDrawer…)
     admin/           admin composites (Sidebar, Topbar, DataTable, StatCard…)
-  features/<domain>/ thin hooks that re-read on cross-tab sync events
+  features/<domain>/ thin hooks that re-read on cross-tab sync events; `outlet/` holds the
+                     storefront switch, the admin scope and the RequireOutlet gate
   services/          one file per domain — plain typed functions over localStorage.
                      UI components never touch localStorage directly.
   storage/           localStorage adapter (namespaced keys, schema version, migrations),
                      seed loader, cross-tab sync (BroadcastChannel + storage event)
-  store/             zustand stores (cart, session, UI preferences)
+  store/             zustand stores (cart, session, active outlet, admin outlet scope)
   i18n/              en/hi dictionaries, provider, useT() and usePick() hooks
   data/seed/         seed data: categories, menu, coupons, users, orders, customers,
                      enquiries, bookings, reviews, gallery, banners, settings
@@ -137,8 +173,12 @@ These are deliberate. The prototype is scoped to prove the design and the flows.
 - **Passwords are hashed with SHA-256** via Web Crypto and stored in `localStorage`. That is
   fine for a prototype and **not** acceptable for production — the real build needs server-side
   hashing with a slow KDF.
-- **The cafe is closed outside 10:00–23:00**, which disables the Add buttons. Widen the hours in
-  Admin → Settings → Hours when demoing outside those times.
+- **Each outlet is closed outside its own hours** (restaurant 10:00–23:00, coffee 07:30–22:30),
+  which disables that shop's Add buttons. Widen the hours in Admin → pick the outlet →
+  Settings → Hours when demoing outside those times.
+- **The combined "All outlets" view is read-only in effect.** Catalogue, inventory, coupons,
+  content and settings ask you to pick an outlet first, because those records belong to one
+  shop and cannot be saved to both.
 - **Admin image uploads** go to IndexedDB, compressed to ≤200KB WebP. They live only in that
   browser.
 - **No automated tests and no CI.** Verification is `npm run lint`, `npm run typecheck`,
@@ -154,5 +194,6 @@ These are deliberate. The prototype is scoped to prove the design and the flows.
 ## What changes in the real product
 
 Server + database, real Razorpay payments, WhatsApp/SMS notifications, true multi-device sync,
-and hosting on a VPS with the client's own domain. The design, the bilingual content, the order
-and payment rules and the admin screens all carry over unchanged.
+per-outlet kitchen displays and bill printers, and hosting on a VPS with the client's own
+domain. The design, the bilingual content, the two-outlet structure, the order and payment
+rules and the admin screens all carry over unchanged.

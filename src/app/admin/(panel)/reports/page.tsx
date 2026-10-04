@@ -23,16 +23,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { RequireAdmin } from "@/features/auth";
+import { OutletBadge, useAdminOutlet } from "@/features/outlet";
 import {
   useItemPerformance,
   useOrderTypeSplit,
   useOrdersByHour,
   usePaymentSplit,
   usePrepTimeAccuracy,
+  useReportScope,
+  useSalesByOutlet,
   useSalesSummary,
 } from "@/features/reports";
-import { useT } from "@/i18n";
+import { usePick, useT } from "@/i18n";
 import { formatPrice } from "@/lib/format";
+import { getOutlet } from "@/lib/outlets";
 import { toCsv, type DateRange } from "@/services/reports";
 
 /** "14" → "2 PM". */
@@ -81,15 +85,21 @@ function CsvButton({
 
 function ReportsModule() {
   const t = useT();
+  const pick = usePick();
+  const { isAll } = useAdminOutlet();
   const [preset, setPreset] = useState<RangePreset>("last30");
   const [range, setRange] = useState<DateRange>(() => resolvePreset("last30"));
 
-  const { data: summary, isLoading } = useSalesSummary(range);
-  const { data: hours } = useOrdersByHour(range);
-  const { data: items } = useItemPerformance(range);
-  const { data: payments } = usePaymentSplit(range);
-  const { data: types } = useOrderTypeSplit(range);
-  const { data: prep } = usePrepTimeAccuracy(range);
+  // The period plus whichever outlet the topbar is scoped to.
+  const scope = useReportScope(range);
+
+  const { data: summary, isLoading } = useSalesSummary(scope);
+  const { data: hours } = useOrdersByHour(scope);
+  const { data: items } = useItemPerformance(scope);
+  const { data: payments } = usePaymentSplit(scope);
+  const { data: types } = useOrderTypeSplit(scope);
+  const { data: prep } = usePrepTimeAccuracy(scope);
+  const { data: byOutlet } = useSalesByOutlet(scope);
 
   const current = summary?.current;
   const top = (items ?? []).slice(0, 10);
@@ -125,6 +135,72 @@ function ReportsModule() {
           </>
         }
       />
+
+      {/*
+        0. Which outlet earned it. Only on the combined view: with one outlet
+           selected this table would be the summary above, repeated once.
+      */}
+      {isAll && byOutlet && byOutlet.length > 1 && (
+        <section className="mb-4">
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-ink">{t.adm.reports.byOutlet}</h2>
+            <CsvButton
+              name="sales-by-outlet"
+              label={t.adm.reports.byOutlet}
+              rows={byOutlet.map((row) => ({
+                outlet: getOutlet(row.outletId).name.en,
+                orders: row.summary.orderCount,
+                net_sales: row.summary.netSales,
+                items: row.summary.itemCount,
+                average_order_value: row.summary.averageOrderValue,
+              }))}
+            />
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {byOutlet.map((row) => (
+              <Card key={row.outletId} className="p-4">
+                <div className="flex items-center justify-between gap-2">
+                  <h3 className="text-display text-base text-ink uppercase">
+                    {pick(getOutlet(row.outletId).name)}
+                  </h3>
+                  <OutletBadge outletId={row.outletId} />
+                </div>
+                <dl className="mt-3 grid grid-cols-2 gap-3">
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.adm.reports.netSales}</dt>
+                    <dd className="nums text-lg font-bold text-ink">
+                      {formatPrice(row.summary.netSales)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">
+                      {t.adm.reports.orderCount}
+                    </dt>
+                    <dd className="nums text-lg font-bold text-ink">
+                      {row.summary.orderCount}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">{t.adm.reports.aov}</dt>
+                    <dd className="nums text-sm font-semibold text-ink">
+                      {formatPrice(row.summary.averageOrderValue)}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs text-ink-muted">
+                      {t.adm.reports.itemCount}
+                    </dt>
+                    <dd className="nums text-sm font-semibold text-ink">
+                      {row.summary.itemCount}
+                    </dd>
+                  </div>
+                </dl>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 1. Sales summary, against the previous period of equal length. */}
       <section>

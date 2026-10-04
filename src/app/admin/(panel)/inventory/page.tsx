@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RequireAdmin } from "@/features/auth";
+import { RequireOutlet } from "@/features/outlet";
 import {
   useInventory,
   useInventoryValuation,
@@ -36,11 +37,17 @@ import {
   stockStatus,
   updateInventoryItem,
 } from "@/services/inventory";
-import { INVENTORY_UNITS, type InventoryItem, type InventoryUnit } from "@/types";
+import {
+  INVENTORY_UNITS,
+  type InventoryItem,
+  type InventoryUnit,
+  type OutletId,
+} from "@/types";
 
 type Draft = Omit<InventoryItem, "id" | "createdAt" | "updatedAt">;
 
-const emptyDraft = (): Draft => ({
+const emptyDraft = (outletId: OutletId): Draft => ({
+  outletId,
   name: "",
   unit: "pcs",
   qty: 0,
@@ -52,15 +59,17 @@ const emptyDraft = (): Draft => ({
 /** Create or edit the stock record itself. */
 function StockItemSheet({
   item,
+  outletId,
   open,
   onOpenChange,
 }: {
   item: InventoryItem | null;
+  outletId: OutletId;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const t = useT();
-  const [draft, setDraft] = useState<Draft>(emptyDraft);
+  const [draft, setDraft] = useState<Draft>(() => emptyDraft(outletId));
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -69,12 +78,13 @@ function StockItemSheet({
       const { id: _id, createdAt: _c, updatedAt: _u, ...rest } = item;
       setDraft(rest);
     } else {
-      setDraft(emptyDraft());
+      setDraft(emptyDraft(outletId));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, item?.id]);
 
-  const patch = (next: Partial<Draft>) => setDraft((current) => ({ ...current, ...next }));
+  const patch = (next: Partial<Draft>) =>
+    setDraft((current) => ({ ...current, ...next }));
 
   const save = async () => {
     setIsSaving(true);
@@ -243,10 +253,10 @@ function HistorySheet({
   );
 }
 
-function InventoryModule() {
+function InventoryModule({ outletId }: { outletId: OutletId }) {
   const t = useT();
-  const { data: items, isLoading } = useInventory();
-  const { data: valuation } = useInventoryValuation();
+  const { data: items, isLoading } = useInventory(outletId);
+  const { data: valuation } = useInventoryValuation(outletId);
 
   const [editing, setEditing] = useState<InventoryItem | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -462,7 +472,12 @@ function InventoryModule() {
         )}
       />
 
-      <StockItemSheet item={editing} open={isSheetOpen} onOpenChange={setIsSheetOpen} />
+      <StockItemSheet
+        item={editing}
+        outletId={outletId}
+        open={isSheetOpen}
+        onOpenChange={setIsSheetOpen}
+      />
       <HistorySheet
         item={historyItem}
         open={!!historyItem}
@@ -497,7 +512,10 @@ function InventoryModule() {
               className="nums w-32"
             />
           </FormField>
-          <FormField id="si-reason" label={`${t.adm.common.reason} (${t.common.optional})`}>
+          <FormField
+            id="si-reason"
+            label={`${t.adm.common.reason} (${t.common.optional})`}
+          >
             <Input
               {...fieldAria("si-reason")}
               value={reason}
@@ -556,7 +574,9 @@ function InventoryModule() {
 export default function AdminInventoryPage() {
   return (
     <RequireAdmin permission="INVENTORY">
-      <InventoryModule />
+      <RequireOutlet>
+        {(outletId) => <InventoryModule outletId={outletId} />}
+      </RequireOutlet>
     </RequireAdmin>
   );
 }

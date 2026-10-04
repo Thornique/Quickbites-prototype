@@ -51,7 +51,7 @@ export function OrderActions({
   layout = "card",
 }: OrderActionsProps) {
   const t = useT();
-  const { data: settings } = useSettings();
+  const { data: settings } = useSettings(order.outletId);
   const [dialog, setDialog] = useState<DialogName | null>(null);
   const [isWorking, setIsWorking] = useState(false);
 
@@ -74,7 +74,8 @@ export function OrderActions({
     ? canStartKitchen(order, settings)
     : { ok: true as boolean, reason: undefined as string | undefined };
   const handoverGate = canHandOver(order);
-  const isCashUnpaid = order.paymentMethod === "CASH" && order.paymentStatus !== "VERIFIED";
+  const isCashUnpaid =
+    order.paymentMethod === "CASH" && order.paymentStatus !== "VERIFIED";
 
   /** The one button. */
   const primary = (() => {
@@ -97,7 +98,8 @@ export function OrderActions({
       case "PREPARING":
         return {
           label: t.adm.orders.markReady,
-          onClick: () => void run(() => advanceOrder(order.id, "READY"), t.adm.orders.markedReady),
+          onClick: () =>
+            void run(() => advanceOrder(order.id, "READY"), t.adm.orders.markedReady),
           disabled: false,
           reason: undefined,
         };
@@ -191,7 +193,6 @@ export function OrderActions({
               </>
             )}
 
-
             {isCashUnpaid && order.status !== "READY" && !isClosed && (
               <DropdownMenuItem onSelect={() => setDialog("cash")}>
                 {t.adm.orders.recordCash}
@@ -200,7 +201,9 @@ export function OrderActions({
 
             {order.status === "READY" && !isCashUnpaid && handoverGate.ok && (
               <DropdownMenuItem
-                onSelect={() => void run(() => handOver(order.id), t.adm.orders.handedOver)}
+                onSelect={() =>
+                  void run(() => handOver(order.id), t.adm.orders.handedOver)
+                }
               >
                 {order.orderType === "TAKEAWAY"
                   ? t.adm.orders.handOverTakeaway

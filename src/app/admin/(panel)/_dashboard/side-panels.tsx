@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLowStock } from "@/features/inventory";
+import { useAdminOutlet } from "@/features/outlet";
 import { useRecentActivity } from "@/features/reports";
 import { useT } from "@/i18n";
 import { formatDayTime } from "@/lib/format";
@@ -42,7 +43,7 @@ function PanelEmpty({
 /** Anything at or below its reorder level, worst first. */
 export function LowStockPanel() {
   const t = useT();
-  const { data: items, isLoading } = useLowStock();
+  const { data: items, isLoading } = useLowStock(useAdminOutlet().outletId);
   const rows = (items ?? []).slice(0, 6);
 
   return (
